@@ -1,7 +1,7 @@
 
 #include "EncoderParameters.h"
 
-void EncoderParameters::parse_cli(int argc, char **argv) {
+void EncoderParameters::parse_cli(int argc, char *argv[]) {
     for (int it = 1; it < argc; ++it) {
         std::string flag = argv[it];
 

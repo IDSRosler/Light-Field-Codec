@@ -23,7 +23,7 @@ public:
 
     EncoderParameters() = default;
 
-    void parse_cli(int argc, char **argv);
+    void parse_cli(int argc, char *argv[]);
 
     float getQp() const;
 
