@@ -384,8 +384,8 @@ void LightField::YCbCR2RGB() {
                                    + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
                                    + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
 
-                    rgb[icomp][mFirstPixelPosition + pixelCount] = clip(
-                            double(pixel[icomp] * clipval), 0.0, (double) clipval);
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval));
                 }
 
 
