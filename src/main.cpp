@@ -11,6 +11,7 @@
 #include "Typedef.h"
 #include "Time.h"
 #include "Prediction.h"
+#include "Tree.h"
 
 using namespace std;
 
@@ -22,6 +23,19 @@ void printVector(const std::string &msg, T *vet, int size) {
     }
     std::cout << std::endl;
 }
+
+#if HEXADECA_TREE
+vector<string> Split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+#endif
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
@@ -46,7 +60,7 @@ int main(int argc, char **argv) {
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
 
-    Prediction predictor;
+    //Prediction predictor;
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
                               encoderParameters.quant_weight_100);
@@ -68,6 +82,14 @@ int main(int argc, char **argv) {
 #endif
 
     std::string sep = ",";
+
+#if HEXADECA_TREE
+    uint hypercubo = 0;
+    Tree tree;
+    Node *root = nullptr;
+    string light_field_name = Split(encoderParameters.getPathInput(), '/').back();
+    tree.OpenFile(encoderParameters.getPathOutput());
+#endif
 
 #if TRACE_TRANSF
     std::ofstream file_traceTransf;
@@ -120,11 +142,22 @@ int main(int argc, char **argv) {
     total_time.tic();
 #endif
 
+#if HEXADECA_TREE
+    Point_4D hypercubo_pos;
+
+    for (it_pos.v = 0, hypercubo_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v, hypercubo_pos.v++) { // angular
+        for (it_pos.u = 0, hypercubo_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u, hypercubo_pos.u++) {
+
+            for (it_pos.y = 0, hypercubo_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y, hypercubo_pos.y++) { // spatial
+                for (it_pos.x = 0, hypercubo_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x, hypercubo_pos.x++) {
+#else
+
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
 
             for (it_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y) { // spatial
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
+#endif
 
                     dimBlock = Point4D(std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
                                        std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
@@ -166,10 +199,10 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif
-                        predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
-                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        /*predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);*/
 
-                        //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
 
 #if STATISTICS_TIME
                         t.toc();
@@ -216,6 +249,27 @@ int main(int argc, char **argv) {
                             temp_lre[i] = (int) std::trunc(qf4D[i]);
                         }
 
+#if HEXADECA_TREE
+                        root = tree.CreateRoot(light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
+                        tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
+
+#if HEXADECA_TREE_CODEC_MODE == 0
+                        tree.ComputeHierarchicalCBF();
+#elif HEXADECA_TREE_CODEC_MODE == 1
+                        tree.ComputeLastCBF();
+#elif HEXADECA_TREE_CODEC_MODE == 2
+                        tree.ComputeLastRun();
+#elif HEXADECA_TREE_CODEC_MODE == 3
+                        tree.ComputeMultipleLevesOfLastRun();
+#elif HEXADECA_TREE_CODEC_MODE == 4
+                        tree.ComputeLastRun_0_1();
+#endif
+
+                        tree.DeleteTree(&root);
+
+                        /*if (hypercubo == 1)
+                           exit(1);*/
+#endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
                         bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);
@@ -284,7 +338,7 @@ int main(int argc, char **argv) {
 #endif
 
                         transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
-                        predictor.rec(ti4D, pi4D, dimBlock);
+                        //predictor.rec(ti4D, pi4D, dimBlock);
 
 #if STATISTICS_TIME
                         ti.toc();
@@ -324,13 +378,16 @@ int main(int argc, char **argv) {
 #endif
                         encoder.write_completedBytes();
                     }
+#if HEXADECA_TREE
+                    hypercubo++;
+#endif
                 }
             }
         }
     }
 
-    lf.write(encoderParameters.getPathOutput());
-    encoder.finish_and_write();
+    //lf.write(encoderParameters.getPathOutput());
+    //encoder.finish_and_write();
     encoder.~EncBitstreamWriter();
 
 #if STATISTICS_TIME
@@ -340,6 +397,10 @@ int main(int argc, char **argv) {
     cout << "\n#########################################################" << endl;
     cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
     cout << "#########################################################" << endl;
+
+#if HEXADECA_TREE
+    tree.CloseFile();
+#endif
 
 #if STATISTICS_GLOBAL
     // TODO: statistics (global)

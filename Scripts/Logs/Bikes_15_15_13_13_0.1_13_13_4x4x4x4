@@ -1,0 +1,11 @@
+################ Encoder Parameters ################
+Input path: /media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/Full_datasets/Bikes/
+Output path: /media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/outputHexadecaTree/Bikes_15_15_13_13_0.1_13_13_4x4x4x4/
+
+LF Dim: {x: 0625, y: 0434, u: 0013, v: 0013}
+Block Dim: {x: 0015, y: 0015, u: 0013, v: 0013}
+
+QP: 0.1
+Quantization Weight (*100): {x: 0010, y: 0010, u: 0010, v: 0010}
+############################################
+
