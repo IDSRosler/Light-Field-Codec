@@ -285,6 +285,33 @@ src/EncoderParameters.cpp.s:
 	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.s
 .PHONY : src/EncoderParameters.cpp.s
 
+src/EntropyEncoder.o: src/EntropyEncoder.cpp.o
+
+.PHONY : src/EntropyEncoder.o
+
+# target to build an object file
+src/EntropyEncoder.cpp.o:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o
+.PHONY : src/EntropyEncoder.cpp.o
+
+src/EntropyEncoder.i: src/EntropyEncoder.cpp.i
+
+.PHONY : src/EntropyEncoder.i
+
+# target to preprocess a source file
+src/EntropyEncoder.cpp.i:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.i
+.PHONY : src/EntropyEncoder.cpp.i
+
+src/EntropyEncoder.s: src/EntropyEncoder.cpp.s
+
+.PHONY : src/EntropyEncoder.s
+
+# target to generate assembly for a file
+src/EntropyEncoder.cpp.s:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.s
+.PHONY : src/EntropyEncoder.cpp.s
+
 src/LRE.o: src/LRE.cpp.o
 
 .PHONY : src/LRE.o
@@ -582,6 +609,9 @@ help:
 	@echo "... src/EncoderParameters.o"
 	@echo "... src/EncoderParameters.i"
 	@echo "... src/EncoderParameters.s"
+	@echo "... src/EntropyEncoder.o"
+	@echo "... src/EntropyEncoder.i"
+	@echo "... src/EntropyEncoder.s"
 	@echo "... src/LRE.o"
 	@echo "... src/LRE.i"
 	@echo "... src/LRE.s"

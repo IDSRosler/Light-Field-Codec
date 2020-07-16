@@ -32,6 +32,14 @@ CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.o: ../src/EncoderPara
 CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.o: ../src/Point4D.h
 
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/EncBitstreamBuffer.h
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/EncoderParameters.h
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/EntropyEncoder.cpp
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/EntropyEncoder.h
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/Point4D.h
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/Tree.h
+CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o: ../src/Typedef.h
+
 CMakeFiles/Light_Field_Codec.dir/src/LRE.cpp.o: ../src/LRE.cpp
 CMakeFiles/Light_Field_Codec.dir/src/LRE.cpp.o: ../src/LRE.h
 
@@ -80,6 +88,7 @@ CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamBuffer.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamVLC.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamWriter.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncoderParameters.h
+CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EntropyEncoder.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/LRE.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/LightField.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Point4D.h

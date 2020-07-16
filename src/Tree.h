@@ -13,24 +13,11 @@
 #include "Typedef.h"
 
 #define HEXADECA 16
-#define SEP ","
 
 using namespace std;
 
 struct Point_4D{
     int x = 0, y = 0, u = 0, v = 0;
-};
-
-struct LF_Props{
-    string light_field_name;
-    uint hypercubo,
-         channel;
-
-    LF_Props(string light_field, uint hypercubo, uint channel){
-        this->light_field_name = light_field;
-        this->hypercubo = hypercubo;
-        this->channel = channel;
-    }
 };
 
 struct Hypercube{
@@ -65,9 +52,9 @@ struct Attributes{
 
     int max_value = 0;
 
-    float mean_value = 0; // Absolut mean
+    float mean_value = 0.0;
 
-    bool significant_value = false; // false - Haven't significant values | true - Have significant values
+    bool significant_value = false;
 };
 
 struct Node{
@@ -76,20 +63,14 @@ struct Node{
     Point_4D hypercube_dim{0,0,0,0};
     Point_4D node_pos{0,0,0,0};
 
-    int id = 0,
-        parent = 0;
-
     Attributes *att;
 
     vector<Node *> child;
 
-    Node(Point_4D start, Point_4D end, Point_4D hypercube_dim, int id, int parent){
+    Node(Point_4D start, Point_4D end, Point_4D hypercube_dim){
         this->start = start;
         this->end = end;
         this->hypercube_dim = hypercube_dim;
-
-        this->id = id;
-        this->parent = parent;
 
         this->att = nullptr;
 
@@ -110,36 +91,25 @@ struct Node{
 class Tree {
 public:
     Tree();
-    Node* CreateRoot(string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block);
-    void CreateTree(Node * root, uint level, const Point4D &pos, const Point_4D &hypercubo_pos, Point_4D middle_before);
-    void DeleteTree(Node** node_ref);
-    void OpenFile(string path);
-    void CloseFile();
+    Node* CreateRoot(int *bitstream, const Point4D &dim_block);
 
-    void ComputeHierarchicalCBF();
-    void ComputeLastCBF();
     void ComputeLastRun();
-    void ComputeLastRun_0_1();
-    void ComputeMultipleLevesOfLastRun();
+
+    void CreateTree(Node * root, const Point4D &pos, Point_4D middle_before);
+    void DeleteTree(Node** node_ref);
 
     ~Tree();
 
 private:
-    int BitsExpGolomb(int code);
     void ComputeAttributes(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
-    void _deleteTree(Node* node);
-    void HypercubePosition(Point_4D *middle);
-
-    void WriteAttributesInFile(uint level, Point_4D &pos, Node* node);
-    void WriteValuesInFile(uint level, Point_4D &pos,Point_4D &position, int value);
-
     void ComputePositions(Point_4D start, Point_4D middle_before, Point_4D middle);
-    void ComputeValues(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos);
-
     Point_4D ComputeStart(int index, Point_4D middle);
-    void SortBufferPositions();
 
-    void SetFileAttributs();
+    void HypercubePosition(Point_4D *middle);
+    void _deleteTree(Node* node);
+
+    int BitsExpGolomb(int code);
+    void SortBufferPositions();
 
     int index_sorted[256] = {
             0,1,4,5,16,17,20,21,64,65,68,69,80,81,84,85,2,3,6,7,18,19,22,23,66,67,70,71,82,83,86,87,8,9,12,13,24,25,28,29,72,73,76,77,88,89,92,93,10,
@@ -151,15 +121,8 @@ private:
             232,233,236,237,248,249,252,253,170,171,174,175,186,187,190,191,234,235,238,239,250,251,254,255
     };
 
-    ofstream file;
+    vector<Node *> order4_SubPartitionsBuffer;
 
-    vector<Node *> order8_SubPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST NO NÍVEL DE ORDEM 8
-    vector<Node *> order4_SubPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST NO NÍVEL DE ORDEM 4
-
-    int id = 0;
-    int CBF_bits_per_hypercube = 0;
-
-    LF_Props *props;
     Hypercube *hypercube = nullptr;
 
     Point_4D next_start_position = {0,0,0,0};

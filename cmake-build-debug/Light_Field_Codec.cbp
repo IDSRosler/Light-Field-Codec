@@ -120,6 +120,12 @@
 		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h">
 			<Option target="Light_Field_Codec"/>
 		</Unit>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
 		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/LRE.cpp">
 			<Option target="Light_Field_Codec"/>
 		</Unit>
