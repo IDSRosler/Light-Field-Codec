@@ -1,10 +1,10 @@
 #ifndef LIGHT_FIELD_CODEC_ENTROPYENCODER_H
 #define LIGHT_FIELD_CODEC_ENTROPYENCODER_H
 
-#include "EncBitstreamBuffer.h"
+#include "EncSymbol.h"
 #include "Tree.h"
 
-class EntropyEncoder : EncBitstreamBuffer{
+class EntropyEncoder : public EncSymbol{
 public:
     EntropyEncoder(EncoderParameters *parameters, uint bufferSize);
     ~EntropyEncoder();

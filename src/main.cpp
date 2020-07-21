@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
-    //EncBitstreamWriter encoder(&encoderParameters, 10000000);
+    EncBitstreamWriter encoder(&encoderParameters, 10000000);
     //encoder.writeHeader();
-    EntropyEncoder encoder(&encoderParameters, 10000000);
+    //EntropyEncoder encoder(&encoderParameters, 10000000);
 
 #if STATISTICS_LOCAL
     //    Statistics statistics_tf(encoderParameters.getPathOutput() + "localStatistics_transform.csv");
@@ -245,14 +245,14 @@ int main(int argc, char **argv) {
                         tree.ComputeLastRun();
                         tree.DeleteTree(&root);*/
 
-                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
+                        //encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
                         if (hypercubo == 1)
                            exit(1);
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
-                        //bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);
+                        bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);
 
 #if TRACE_QUANT
                         file_traceQuant <<

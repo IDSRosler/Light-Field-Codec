@@ -4,6 +4,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamBuffer.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamVLC.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamWriter.cpp.o"
+  "CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/LRE.cpp.o"

@@ -258,6 +258,33 @@ src/EncBitstreamWriter.cpp.s:
 	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamWriter.cpp.s
 .PHONY : src/EncBitstreamWriter.cpp.s
 
+src/EncSymbol.o: src/EncSymbol.cpp.o
+
+.PHONY : src/EncSymbol.o
+
+# target to build an object file
+src/EncSymbol.cpp.o:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.o
+.PHONY : src/EncSymbol.cpp.o
+
+src/EncSymbol.i: src/EncSymbol.cpp.i
+
+.PHONY : src/EncSymbol.i
+
+# target to preprocess a source file
+src/EncSymbol.cpp.i:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.i
+.PHONY : src/EncSymbol.cpp.i
+
+src/EncSymbol.s: src/EncSymbol.cpp.s
+
+.PHONY : src/EncSymbol.s
+
+# target to generate assembly for a file
+src/EncSymbol.cpp.s:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.s
+.PHONY : src/EncSymbol.cpp.s
+
 src/EncoderParameters.o: src/EncoderParameters.cpp.o
 
 .PHONY : src/EncoderParameters.o
@@ -606,6 +633,9 @@ help:
 	@echo "... src/EncBitstreamWriter.o"
 	@echo "... src/EncBitstreamWriter.i"
 	@echo "... src/EncBitstreamWriter.s"
+	@echo "... src/EncSymbol.o"
+	@echo "... src/EncSymbol.i"
+	@echo "... src/EncSymbol.s"
 	@echo "... src/EncoderParameters.o"
 	@echo "... src/EncoderParameters.i"
 	@echo "... src/EncoderParameters.s"

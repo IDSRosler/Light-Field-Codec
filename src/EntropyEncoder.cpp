@@ -1,6 +1,6 @@
 #include "EntropyEncoder.h"
 
-EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) : EncBitstreamBuffer(bufferSize){
+EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) : EncSymbol(bufferSize){
     this->parameters = parameters;
     this->open_file(this->parameters->getPathOutput() + "LightField.bin");
 }

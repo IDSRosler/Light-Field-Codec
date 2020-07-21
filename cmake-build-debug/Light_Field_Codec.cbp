@@ -114,6 +114,12 @@
 		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h">
 			<Option target="Light_Field_Codec"/>
 		</Unit>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
 		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.cpp">
 			<Option target="Light_Field_Codec"/>
 		</Unit>
