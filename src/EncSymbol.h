@@ -2,21 +2,29 @@
 #define LIGHT_FIELD_CODEC_ENCSYMBOL_H
 
 #include "EncBitstreamBuffer.h"
-#include <math.h>
 
-struct Symbol {
+#include <math.h>
+#include <vector>
+
+typedef struct Symbol {
     int value;
     int len;
-    unsigned int bitparttern;
-};
+    unsigned int bitpattern;
+}symbol;
 
 class EncSymbol : public EncBitstreamBuffer{
 public:
     EncSymbol(uint bufferSize = 50);
+
+    void encodeLast(int last);
+    void encodeRun(std::vector<int> run);
+
+    int writeSyntaxElement(int info, int len);
     ~EncSymbol();
+
 private:
     int expGolombEncode_ui(int value);
-    void writeCode2Buffer(Symbol *sym);
+    void writeCode2Buffer(symbol *sym);
 };
 
 

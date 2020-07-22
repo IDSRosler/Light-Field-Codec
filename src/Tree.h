@@ -93,7 +93,8 @@ public:
     Tree();
     Node* CreateRoot(int *bitstream, const Point4D &dim_block);
 
-    void ComputeLastRun();
+    int computeLast();
+    vector<int> ComputeRun(int last);
 
     void CreateTree(Node * root, const Point4D &pos, Point_4D middle_before);
     void DeleteTree(Node** node_ref);

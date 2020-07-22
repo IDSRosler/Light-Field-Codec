@@ -67,6 +67,10 @@ EncSymbol.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
 EncBitstreamBuffer.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
+math.h
+-
+vector
+-
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 string

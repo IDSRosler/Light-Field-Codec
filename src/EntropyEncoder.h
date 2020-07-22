@@ -10,6 +10,7 @@ public:
     ~EntropyEncoder();
 
     void encodeHypercube(int *bitstream, const Point4D &dim_block);
+    void finish_and_write();
     void write_completedBytes();
     uint getTotalBytes() const;
 

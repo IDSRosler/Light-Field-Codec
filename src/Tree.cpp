@@ -151,28 +151,37 @@ void Tree::HypercubePosition(Point_4D *middle) {
     this->hy_pos.v = (this->next_start_position.v != 0) ? this->next_start_position.v / middle->v : this->next_start_position.v;
 }
 
-void Tree::ComputeLastRun() {
-    int run = 0;
-    int bits_run = 0;
+int Tree::computeLast() {
+    int index;
+
     this->SortBufferPositions();
-    while (this->order4_SubPartitionsBuffer.size() > 0){ // Encontra o Last no buffer de ordem 4
-        if (this->order4_SubPartitionsBuffer.back()->att->significant_value != 0){
+
+    for (index = (this->order4_SubPartitionsBuffer.size() - 1); index >= 0; --index) {
+        if (this->order4_SubPartitionsBuffer[index]->att->significant_value != 0){
             break;
-        }else{
-            this->order4_SubPartitionsBuffer.pop_back();
         }
     }
-    while (this->order4_SubPartitionsBuffer.size() > 0){ // Calcula a corrida de blocos zerados
-        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 0){
-            run++;
-            this->order4_SubPartitionsBuffer.pop_back();
+    return index;
+}
+
+vector<int> Tree::ComputeRun(int last) {
+    vector<int> v_run;
+    int run = 0;
+    int index = last;
+
+    while (index >= 0){ // Calcula a corrida de blocos zerados
+        while (index >= 0 && this->order4_SubPartitionsBuffer[index]->att->significant_value == 0){
+            ++run;
+            --index;
         }
-        if (this->order4_SubPartitionsBuffer.size() > 0) {
-            this->order4_SubPartitionsBuffer.pop_back();
+        if (index >= 0){
+            --index;
         }
-        bits_run += this->BitsExpGolomb(run); //TODO: Encoder for subdivisions
+        v_run.push_back(run);
         run = 0;
     }
+
+    return v_run;
 }
 
 void Tree::SortBufferPositions() {
