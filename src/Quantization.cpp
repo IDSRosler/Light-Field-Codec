@@ -16,9 +16,9 @@ Quantization::Quantization(const Point4D &dimBlock, const EncoderParameters code
     lee_b0 = codec_parameters.lee_b0;
 }
 
-void Quantization::foward(const float *input, float *output) { foward(HAYAN, input, output); }
+void Quantization::foward(const float *input, float *output) { foward(HAIYAN, input, output); }
 
-void Quantization::inverse(const float *input, float *output) { inverse(HAYAN, input, output); }
+void Quantization::inverse(const float *input, float *output) { inverse(HAIYAN, input, output); }
 
 float *Quantization::get_volume(const QuantizationVolumeType type) {
     auto cache = &Quantization::cache_hayan;
@@ -90,7 +90,7 @@ float *Quantization::generate_volume(const QuantizationVolumeType type) {
                             else
                                 val = lee_a0 * (1 - std::exp(-lee_b0 * prod));
                         } break;
-                        case HAYAN: {
+                        case HAIYAN: {
                             val = 4 + qx + qy + qu + qv;
                         } break;
                     }
@@ -100,7 +100,7 @@ float *Quantization::generate_volume(const QuantizationVolumeType type) {
             }
         }
     }
-    if (type == HAYAN) volume[0] = 1.0;
+    if (type == HAIYAN) volume[0] = 1.0;
     return volume;
 }
 

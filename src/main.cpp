@@ -151,20 +151,22 @@ int main(int argc, char **argv) {
 
                     // std::cout << "Pos: " << it_pos << "\tBlock Size: " << dimBlock << std::endl;
 
-                    for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i)
-                        orig4D[i] = tf4D[i] = qf4D[i] = 0;
+                    
 
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
 #if STATISTICS_TIME
                         getBlock.tic();
 #endif
+                        for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i)
+                            orig4D[i] = tf4D[i] = qf4D[i] = 0;
+
                         lf.getBlock(orig4D, it_pos, dimBlock, stride_block,
                                     encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
                         getBlock.toc();
 #endif
-                        if (it_pos.y/15 == 1)
+                        if (it_pos.x + 15 > dimLF.x)
                         {
                             // Dummy variable for breakpoint and debugging
                             volatile int xxx = 0;
@@ -185,9 +187,12 @@ int main(int argc, char **argv) {
                         transform.set_position(it_channel, it_pos);
                         tree = transform.forward(transform_type, pf4D, qf4D, dimBlock);
 
-                        // printf("Pos(x=%02d,y=%02d,u=%02d,v=%02d,ch=%d) tree=%s\n", 
-                        //        it_pos.x / 15, it_pos.y / 15, it_pos.u / 15, it_pos.v / 15, it_channel,
-                        //        tree.c_str());
+                        if (false) {
+
+                        printf("Pos(x=%02d,y=%02d,u=%02d,v=%02d,ch=%d) tree=%s\n", 
+                               it_pos.x / 15, it_pos.y / 15, it_pos.u / 15, it_pos.v / 15, it_channel,
+                               tree.c_str());
+                        }
 
 #if STATISTICS_TIME
                         t.toc();
@@ -347,7 +352,8 @@ int main(int argc, char **argv) {
                             show_block(it_channel, pi4D, dimBlock, make_stride(Point4D(15,15,13,13)), "rec");
                         }
                         
-                        progress_bar(current_step++ / total_steps, 50);
+                        if (true)
+                            progress_bar(current_step++ / total_steps, 50);
                     }
                 }
             }

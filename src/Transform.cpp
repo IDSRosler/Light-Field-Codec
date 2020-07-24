@@ -78,18 +78,20 @@ Transform::Transform(Point4D &shape) {
     this->enforce_transform = TransformType::NO_TRANSFORM;
     stride = make_stride(shape);
     flat_size = stride.v * shape.v;
-    flat_p2 = std::pow(2, std::ceil(std::log2(flat_size)));
     partial_values = new float[flat_size];
-    wh_partial_values = new float[flat_p2];
+    fake_encoder = nullptr;    
 }
 
-Transform::Transform(EncoderParameters &params):
-    Transform(params.dim_block)
-     {codec_parameters = params;}
+Transform::Transform(EncoderParameters &params) : Transform(params.dim_block)
+{
+    codec_parameters = params;
+    fake_encoder = new EncBitstreamWriter(&codec_parameters, 10'000'000, true);
+}
 
-Transform::~Transform() {
+Transform::~Transform()
+{
+    delete fake_encoder;
     delete[] partial_values;
-    delete[] wh_partial_values;
 }
 
 float *Transform::sd_dst_vii(size_t size) {
@@ -133,151 +135,74 @@ auto Transform::get_transform_vector(TransformType transform) {
     }
 }
 
-void Transform::md_forward(TransformType type, float *input, float *output, Point4D &shape) {
-    size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
-    const float *pin = input;
+
+void Transform::md_fw_axis(int ax, TransformType type, float *input, float *output, Point4D &shape) {
+    int axis[3] = {0};
+    auto *p = axis;
+    for (int x = 0; x < 4; x++)
+        if (x != ax)
+            *p++ = x;
+    volatile int index;
+    for (int k = 0; k < shape[axis[2]]; ++k)
+        for (int j = 0; j < shape[axis[1]]; ++j)
+            for (int i = 0; i < shape[axis[0]]; ++i) {
+                index = k * stride[axis[2]] +
+                        j * stride[axis[1]] + 
+                        i * stride[axis[0]];
+                sd_forward(type,
+                           input + index, 
+                           output + index, 
+                           stride[ax], 
+                           shape[ax]);
+            }
+}
+
+void Transform::md_in_axis(int ax, TransformType type, float *input, float *output, Point4D &shape) {
+    int axis[3] = {0};
+    auto *p = axis;
+    for (int x = 0; x < 4; x++)
+        if (x != ax)
+            *p++ = x;
+    volatile int index;
+    for (int k = 0; k < shape[axis[2]]; ++k)
+        for (int j = 0; j < shape[axis[1]]; ++j)
+            for (int i = 0; i < shape[axis[0]]; ++i) {
+                index = k * stride[axis[2]] +
+                        j * stride[axis[1]] + 
+                        i * stride[axis[0]];
+                sd_inverse(type,
+                           input + index, 
+                           output + index, 
+                           stride[ax], 
+                           shape[ax]);
+            }
+}
+
+void Transform::md_forward(TransformType type, float *input, float *output, Point4D &shape)
+{
+    int ax_order[] = {0, 1, 2, 3};
+    float *pin = input;
     float *pout = output;
-    auto tx_vector = get_transform_vector(type);
-    auto tx = tx_vector.begin();
 
-    for (int v = 0; v < shape.v; ++v) {
-        for (int u = 0; u < shape.u; ++u) {
-            for (int y = 0; y < shape.y; ++y) {
-                sd_forward(*tx, pin, pout, stride.x, shape.x);
-                pin += stride.y;
-                pout += stride.y;
-            }
-            pin += (this->shape.y - shape.y) * stride.y;
-            pout += (this->shape.y - shape.y) * stride.y;
-        }
-        pin += (this->shape.u - shape.u) * stride.u;
-        pout += (this->shape.u - shape.u) * stride.u;
-    }
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-
-    for (int v = 0; v < shape.v; ++v) {
-        for (int u = 0; u < shape.u; ++u) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_forward(*tx, pin, pout, stride.y, shape.y);
-
-                ++pin, ++pout;
-            }
-            pin += (stride.u - stride.y) + (this->shape.x - shape.x);
-            pout += (stride.u - stride.y) + (this->shape.x - shape.x);
-        }
-        pin += (this->shape.u - shape.u) * stride.u;
-        pout += (this->shape.u - shape.u) * stride.u;
-    }
-
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-
-    for (int v = 0; v < shape.v; ++v) {
-        for (int y = 0; y < shape.y; ++y) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_forward(*tx, pin, pout, stride.u, shape.u);
-
-                ++pin, ++pout;
-            }
-            pin += (this->shape.x - shape.x);
-            pout += (this->shape.x - shape.x);
-        }
-        pin += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
-        pout += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
-    }
-
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-
-    for (int u = 0; u < shape.u; ++u) {
-        for (int y = 0; y < shape.y; ++y) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_forward(*tx, pin, pout, stride.v, shape.v);
-
-                ++pin, ++pout;
-            }
-            pin += (this->shape.x - shape.x);
-            pout += (this->shape.x - shape.x);
-        }
-        pin += (this->shape.y - shape.y) * stride.y;
-        pout += (this->shape.y - shape.y) * stride.y;
+    for (int i = 0; i < 4; i++) {
+        md_fw_axis(ax_order[i], type, pin, pout, shape);
+        pin = partial_values, pout = output;
+        if (i < 3)
+            std::copy(output, output + flat_size, partial_values);
     }
 }
 
 void Transform::md_inverse(TransformType type, float *input, float *output, Point4D &shape) {
-    size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
+    int ax_order[] = {3, 2, 1, 0};
 
     float *pin = (float *)input;
     float *pout = output;
-    auto tx_vector = get_transform_vector(type);
-    auto tx = tx_vector.rbegin();
 
-    for (int u = 0; u < shape.u; ++u) {
-        for (int y = 0; y < shape.y; ++y) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_inverse(*tx, pin, pout, stride.v, shape.v);
-
-                ++pin, ++pout;
-            }
-            pin += (this->shape.x - shape.x);
-            pout += (this->shape.x - shape.x);
-        }
-        pin += (this->shape.y - shape.y) * stride.y;
-        pout += (this->shape.y - shape.y) * stride.y;
-    }
-
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-
-    for (int v = 0; v < shape.v; ++v) {
-        for (int y = 0; y < shape.y; ++y) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_inverse(*tx, pin, pout, stride.u, shape.u);
-
-                ++pin, ++pout;
-            }
-            pin += (this->shape.x - shape.x);
-            pout += (this->shape.x - shape.x);
-        }
-        pin += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
-        pout += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
-    }
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-    for (int v = 0; v < shape.v; ++v) {
-        for (int u = 0; u < shape.u; ++u) {
-            for (int x = 0; x < shape.x; ++x) {
-                sd_inverse(*tx, pin, pout, stride.y, shape.y);
-
-                ++pin, ++pout;
-            }
-            pin += (stride.u - stride.y) + (this->shape.x - shape.x);
-            pout += (stride.u - stride.y) + (this->shape.x - shape.x);
-        }
-        pin += (this->shape.u - shape.u) * stride.u;
-        pout += (this->shape.u - shape.u) * stride.u;
-    }
-    std::copy(output, output + flat_size, partial_values);
-    pin = partial_values, pout = output;
-    ++tx;
-    for (int v = 0; v < shape.v; ++v) {
-        for (int u = 0; u < shape.u; ++u) {
-            for (int y = 0; y < shape.y; ++y) {
-                sd_inverse(*tx, pin, pout, stride.x, shape.x);
-                pin += stride.y;
-                pout += stride.y;
-            }
-            pin += (this->shape.y - shape.y) * stride.y;
-            pout += (this->shape.y - shape.y) * stride.y;
-        }
-        pin += (this->shape.u - shape.u) * stride.u;
-        pout += (this->shape.u - shape.u) * stride.u;
+    for (int i = 0; i < 4; i++) {
+        md_in_axis(ax_order[i], type, pin, pout, shape);
+        pin = partial_values, pout = output;
+        if (i < 3)
+            std::copy(output, output + flat_size, partial_values);
     }
 }
 
@@ -308,11 +233,15 @@ void Transform::set_position(int channel, const Point4D &current_pos) {
     this->position = current_pos;
 }
 
-auto Transform::get_quantization_procotol(TransformType transform) {
-    return Quantization::HAYAN;
-    switch (transform) {
-        case DCT_II: return Quantization::LEE;
-        default: return Quantization::HAYAN;
+auto Transform::get_quantization_procotol(TransformType transform)
+{
+    return Quantization::HAIYAN;
+    switch (transform)
+    {
+    case DCT_II:
+        return Quantization::LEE;
+    default:
+        return Quantization::HAIYAN;
     }
 }
 static float mse(float *original, float *reconstructed, unsigned size) {

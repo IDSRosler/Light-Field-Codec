@@ -5,6 +5,7 @@
 #include "Point4D.h"
 #include "Typedef.h"
 #include "EncoderParameters.h"
+#include "EncBitstreamWriter.h"
 #include <map>
 #include <string>
 #include <utility>
@@ -90,7 +91,14 @@ class Transform {
         MULTI,            /* Pick transform with smallest distortion rate */
     };
 
-    enum { NO_AXIS = 0, AXIS_X = 1, AXIS_Y = 2, AXIS_U = 4, AXIS_V = 8 };
+    enum
+    {
+        NO_AXIS = 0,
+        AXIS_X = 1,
+        AXIS_Y = 2,
+        AXIS_U = 4,
+        AXIS_V = 8
+    };
 
     EncoderParameters codec_parameters;
     bool disable_segmentation = false;
@@ -118,9 +126,8 @@ class Transform {
     Point4D position;
     int channel;
     size_t flat_size;
-    size_t flat_p2;
-    float *wh_partial_values;
     float *partial_values;
+    EncBitstreamWriter *fake_encoder;
 
     TransformType enforce_transform;
 
@@ -147,7 +154,10 @@ class Transform {
                            float *out,
                            const size_t offset,
                            const size_t size);
+    void md_fw_axis(int ax, TransformType type, float *input, float *output, Point4D &shape);
+    void md_in_axis(int ax, TransformType type, float *input, float *output, Point4D &shape);
 
+    auto get_block_bpp(float *block, Point4D &shape);
     auto calculate_distortion(float *block, float *result, Point4D &shape);
     auto calculate_tree(float *block, float *result, Point4D &shape, int level);
     void reconstruct_from_tree(Node *root, float *input, float *output, Point4D &shape);

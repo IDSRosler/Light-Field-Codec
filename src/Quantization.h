@@ -14,7 +14,7 @@ class Quantization {
 
 public:
     enum QuantizationVolumeType {
-        HAYAN = 1,
+        HAIYAN = 1,
         LEE = 2,
     };
     Quantization() = default;
