@@ -19,7 +19,8 @@
 
 #define DPCM_DC true
 
-#define HEXADECA_TREE true
+#define ENTROPY_ENCODER true
+
 #define HEXADECA_TREE_PARTITION 2 // 0: Original | 1: Order 8 | 2: Order 4
 
 #endif //TYPEDEF_H

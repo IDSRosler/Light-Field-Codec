@@ -128,7 +128,6 @@ void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, in
         for (int it_u = start_u; it_u < end_u; ++it_u) {
             for (int it_y = start_y; it_y < end_y; ++it_y) {
                 for (int it_x = start_x; it_x < end_x; ++it_x) {
-                    acc += abs(this->hypercube->data[it_x][it_y][it_u][it_v]);
                     if (abs(att->max_value) < abs(this->hypercube->data[it_x][it_y][it_u][it_v])) { att->max_value = abs(this->hypercube->data[it_x][it_y][it_u][it_v]);}
                     if (this->hypercube->data[it_x][it_y][it_u][it_v] != 0) {att->significant_value = true;}
                     if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 0) {++att->n_zero;}
@@ -151,7 +150,7 @@ void Tree::HypercubePosition(Point_4D *middle) {
     this->hy_pos.v = (this->next_start_position.v != 0) ? this->next_start_position.v / middle->v : this->next_start_position.v;
 }
 
-int Tree::computeLast() {
+int Tree::ComputeLast() {
     int index;
 
     this->SortBufferPositions();
@@ -196,10 +195,6 @@ void Tree::SortBufferPositions() {
     temp.clear();
 }
 
-int Tree::BitsExpGolomb(int code) {
-    return (floor(log2(code + 1))) * 2 + 1;
-}
-
 void Tree::_deleteTree(Node* node)
 {
     if (node == nullptr) return;
@@ -217,4 +212,6 @@ void Tree::DeleteTree(Node** node_ref)
 
     _deleteTree(*node_ref);
     *node_ref = nullptr;
+
+    this->order4_SubPartitionsBuffer.clear();
 }

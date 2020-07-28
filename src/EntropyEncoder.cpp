@@ -6,7 +6,6 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
 }
 
 EntropyEncoder::~EntropyEncoder() {
-    if (this->outputFile.is_open()) this->outputFile.close();
 }
 
 void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
@@ -14,10 +13,11 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
     vector<int> run;
     this->root = this->tree.CreateRoot(bitstream, dim_block);
     this->tree.CreateTree(this->root, dim_block, {0,0,0,0});
-    last  = this->tree.computeLast();
+    last  = this->tree.ComputeLast();
     this->encodeLast(last);
     run = this->tree.ComputeRun(last);
     this->encodeRun(run);
+    run.clear();
     this->tree.DeleteTree(&this->root);
 }
 
@@ -32,6 +32,7 @@ void EntropyEncoder::write_completedBytes() {
 void EntropyEncoder::finish_and_write() {
     this->writeSyntaxElement(0, this->bits_to_go);
     this->write_completedBytes();
+    if (this->outputFile.is_open()) this->outputFile.close();
 }
 
 uint EntropyEncoder::getTotalBytes() const {

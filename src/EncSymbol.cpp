@@ -2,7 +2,8 @@
 
 EncSymbol::EncSymbol(uint bufferSize) : EncBitstreamBuffer(bufferSize){}
 
-EncSymbol::~EncSymbol() {}
+EncSymbol::~EncSymbol() {
+}
 
 void EncSymbol::writeCode2Buffer(symbol *sym) {
     unsigned int mask = 1 << (sym->len - 1);

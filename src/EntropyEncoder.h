@@ -18,7 +18,7 @@ private:
     void open_file(const string &filename);
 
     Tree tree;
-    Node *root;
+    Node *root = nullptr;
     uint totalBytes{0};
     std::ofstream outputFile;
     EncoderParameters *parameters;

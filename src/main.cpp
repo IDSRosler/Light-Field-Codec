@@ -12,7 +12,6 @@
 #include "Time.h"
 #include "Prediction.h"
 #include "EntropyEncoder.h"
-#include "Tree.h"
 
 
 using namespace std;
@@ -26,7 +25,6 @@ void printVector(const std::string &msg, T *vet, int size) {
     std::cout << std::endl;
 }
 
-#if HEXADECA_TREE
 vector<string> Split(const string& s, char delimiter) {
     vector<string> tokens;
     string token;
@@ -37,7 +35,6 @@ vector<string> Split(const string& s, char delimiter) {
     }
     return tokens;
 }
-#endif
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
@@ -75,8 +72,6 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
-    //EncBitstreamWriter encoder(&encoderParameters, 10000000);
-    //encoder.writeHeader();
     EntropyEncoder encoder(&encoderParameters, 10000000);
 
 #if STATISTICS_LOCAL
@@ -85,12 +80,6 @@ int main(int argc, char **argv) {
 #endif
 
     std::string sep = ",";
-
-#if HEXADECA_TREE
-    uint hypercubo = 0;
-    /*Tree tree;
-    Node *root = nullptr;*/
-#endif
 
 #if TRACE_TRANSF
     std::ofstream file_traceTransf;
@@ -239,20 +228,12 @@ int main(int argc, char **argv) {
                             temp_lre[i] = (int) std::trunc(qf4D[i]);
                         }
 
-#if HEXADECA_TREE
-                        /*root = tree.CreateRoot(hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
-                        tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
-                        tree.ComputeLastRun();
-                        tree.DeleteTree(&root);*/
-
+#if ENTROPY_ENCODER
                         encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
                         /*if (hypercubo == 0){
-                            encoder.finish_and_write();
-                            encoder.~EntropyEncoder();
                             exit(1);
                         }*/
-
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
@@ -360,19 +341,13 @@ int main(int argc, char **argv) {
 #endif
                         encoder.write_completedBytes();
                     }
-#if HEXADECA_TREE
-                    hypercubo++;
-#endif
                 }
             }
         }
     }
 
     //lf.write(encoderParameters.getPathOutput());
-    /*encoder.finish_and_write();
-    encoder.~EncBitstreamWriter();*/
     encoder.finish_and_write();
-    encoder.~EntropyEncoder();
 
 #if STATISTICS_TIME
     total_time.toc();
