@@ -21,9 +21,13 @@ LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
     for (int i = 0; i < 3; i++) {
         this->rgb[i] = new LFSample[dim_lf.getNSamples()];
         this->yCbCr[i] = new float[dim_lf.getNSamples()];
+        this->yCbCr_original[i] = new float[dim_lf.getNSamples()];
     }
 
     this->read(path);
+
+    for (int i = 0; i < 3; i++)
+        std::copy(yCbCr[i], yCbCr[i] + dim_lf.getNSamples(), yCbCr_original[i]);
 }
 
 void LightField::read(const std::string &path) {
@@ -100,6 +104,8 @@ void LightField::read(const std::string &path) {
     }
 
     this->RGB2YCbCr();
+
+
 }
 
 void LightField::ReadPixelFromFile(int pixelPosition) {
@@ -177,11 +183,10 @@ void LightField::WritePixelToFile(int pixelPositionInCache) {
 }
 
 LightField::~LightField() {
-
     for (int i = 0; i < 3; ++i) {
         delete[] this->rgb[i];
-
         delete[] this->yCbCr[i];
+        delete[] this->yCbCr_original[i];
     }
 }
 
@@ -249,6 +254,7 @@ void LightField::RGB2YCbCr() {
     int cont = 0;
 
     int N = 10;
+
     double nd = (double) (1 << (N - 8));  // pow(2, (double)N - 8);
 
     double clipval = (double) (1 << N) - 1;
@@ -383,9 +389,8 @@ void LightField::YCbCR2RGB() {
                     pixel[icomp] = yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
                                    + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
                                    + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
-
-                    rgb[icomp][mFirstPixelPosition + pixelCount] = clip(
-                            double(pixel[icomp] * clipval), 0.0, (double) clipval);
+                    auto clipped_value = clip(double(pixel[icomp] * clipval), 0.0, (double) clipval);
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clipped_value);
                 }
 
 
