@@ -1,29 +1,29 @@
-#include "Time.h"
+#include "Timer.h"
 
-Time::Time() {
+Timer::Timer() {
     this->n_calls = 0;
     std::chrono::duration<double>::zero();
 }
 
-Time::Time(const Time &orig) {
+Timer::Timer(const Timer &orig) {
 }
 
-Time::~Time() = default;
+Timer::~Timer() = default;
 
-void Time::tic() {
+void Timer::tic() {
     this->start = std::chrono::system_clock::now();
     ++this->n_calls;
 }
 
-void Time::toc() {
+void Timer::toc() {
     this->end = std::chrono::system_clock::now();
     this->duration += this->end - this->start;
 }
 
-double Time::getTotalTime() {
+double Timer::getTotalTime() {
     return this->duration.count();
 }
 
-long Time::get_nCalls() {
+long Timer::get_nCalls() {
     return this->n_calls;
 }

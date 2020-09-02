@@ -1,17 +1,17 @@
-#ifndef LF_CODEC_TIME_H
-#define LF_CODEC_TIME_H
+#ifndef LF_CODEC_TIMER_H
+#define LF_CODEC_TIMER_H
 
 #include <ctime>
 #include <chrono>
 #include <iostream>
 
-class Time {
+class Timer {
 public:
-    Time();
+  Timer();
 
-    Time(const Time &orig);
+  Timer(const Timer &orig);
 
-    virtual ~Time();
+    virtual ~Timer();
 
     void tic();
 
@@ -28,4 +28,4 @@ private:
 };
 
 
-#endif //LF_CODEC_TIME_H
+#endif // LF_CODEC_TIMER_H
