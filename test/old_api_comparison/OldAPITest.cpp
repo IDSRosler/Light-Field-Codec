@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <gtest/gtest.h>
 
-#include "Time.h"
 #include "Transform.h"
 #include "deprecated/Transform.h"
 #include "utils.h"
@@ -105,7 +104,7 @@ TEST(BackwardsCompatibilityWithOldAPI, partial_size_dct) {
     for (int u = 0; u < shape.u; u++) {
       for (int y = 0; y < shape.y; y++) {
         for (int x = 0; x < shape.x; x++) {
-          auto index = offset(x, y, u, v, stride);
+          auto index = calc_offset(x, y, u, v, stride);
           if (!(v < smaller_shape.v && u < smaller_shape.u &&
                 y < smaller_shape.y && x < smaller_shape.x)) {
             ASSERT_EQ(temp1[index], MAGIC_NUMBER);
@@ -150,7 +149,7 @@ TEST(BackwardsCompatibilityWithOldAPI, partial_size_dst2) {
     for (int u = 0; u < shape.u; u++) {
       for (int y = 0; y < shape.y; y++) {
         for (int x = 0; x < shape.x; x++) {
-          auto index = offset(x, y, u, v, stride);
+          auto index = calc_offset(x, y, u, v, stride);
           if (!(v < smaller_shape.v && u < smaller_shape.u &&
                 y < smaller_shape.y && x < smaller_shape.x)) {
             ASSERT_EQ(transformed_signal[index], MAGIC_NUMBER);
