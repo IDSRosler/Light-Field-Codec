@@ -19,13 +19,20 @@ class Statistics {
 public:
     float epsilon = 1e-1;
 
-    explicit Statistics(const std::string &file = "");
+    Statistics() = default;
+
+    explicit Statistics(const std::string &file);
 
     virtual ~Statistics();
 
-    void write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::vector<LRE_struct> &lre_result, uint bits_per_4D_Block);
+    void write_headers(std::ofstream &output);
 
-    void write(Point4D &pos, Point4D &dimBlock, uint it_channel);
+    void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::vector<LRE_struct> &lre_result, std::size_t bits_per_4D_Block);
+
+    void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
+    void write(std::ostream &output, Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
+
+    
 
     double get_mean() const;
 
@@ -45,7 +52,7 @@ public:
 
     void compute(const std::vector<float> &input, const ushort *scan_order);
 
-    void compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block);
+    float compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block);
 
     static float min_vet(const std::vector<float> &input);
 
@@ -58,7 +65,7 @@ public:
     // static std::map<float, int> calculate_pdf(const std::vector<float> &input, unsigned range);
 
 private:
-    std::string sep{"\t"};
+    std::string sep{","};
 
     std::ofstream file_out;
     unsigned long num_zeros{}, num_ones{};

@@ -4,47 +4,95 @@
 
 #include <cmath>
 #include <cassert>
+Statistics::Statistics(const std::string &filename) {
+    file_out.open(filename);
+    assert(file_out.is_open());
+    write_headers(file_out);
+} 
 
-Statistics::Statistics(const std::string &file) {
-    if (!file.empty()) {
-        this->file_out.open(file);
-        assert(file_out.is_open());
-        this->sep = ",";
-    }
 
-    std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
-
-    output << "channel" << sep << "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v"
-           << sep << "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep << "dc" << sep
-           << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep << "v_maxAbs" << sep << "zeros"
-           << sep << "ones" << sep << "mean" << sep << "median" << sep << "std" << sep << "variance"
-           << sep << "energy" << sep << "entropy" << sep << "sse" << sep << "cov" << sep
-           << "run_count" << sep << "run_max" << sep << "run_mean" << sep << "run_std" << sep
-           << "run_var" << sep << "posSO_last_nzero" << sep << "posSO_last_nzeroone" << sep
-           << "pos_last_nzero" << sep << "pos_last_nzeroone" << sep << "bits_per_4D_Block"
-           << std::endl;
+void Statistics::write_headers(std::ofstream &output) {
+    output 
+        << "channel"                    << sep 
+        << "pos_x"                      << sep 
+        << "pos_y"                      << sep 
+        << "pos_u"                      << sep 
+        << "pos_v"                      << sep 
+        << "bl_x"                       << sep 
+        << "bl_y"                       << sep 
+        << "bl_u"                       << sep 
+        << "bl_v"                       << sep 
+        << "segment"                    << sep
+        << "dc"                         << sep           
+        << "v_min"                      << sep 
+        << "v_max"                      << sep 
+        << "v_minAbs"                   << sep 
+        << "v_maxAbs"                   << sep 
+        << "zeros"                      << sep 
+        << "ones"                       << sep 
+        << "mean"                       << sep 
+        << "median"                     << sep 
+        << "std"                        << sep 
+        << "variance"                   << sep 
+        << "energy"                     << sep 
+        << "entropy"                    << sep 
+        << "sse"                        << sep       
+        << "run_count"                  << sep 
+        << "run_max"                    << sep 
+        << "run_mean"                   << sep 
+        << "run_std"                    << sep           
+        << "run_var"                    << sep 
+        << "posSO_last_nzero"           << sep 
+        << "posSO_last_nzeroone"        << sep           
+        << "pos_last_nzero"             << sep 
+        << "pos_last_nzeroone"          << sep 
+        << "bits_per_4D_Block"          << std::endl;
 }
 
-void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
-    std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
-
-    output << it_channel << sep << pos.x << sep << pos.y << sep << pos.u << sep << pos.v << sep
-           << dimBlock.x << sep << dimBlock.y << sep << dimBlock.u << sep << dimBlock.v << sep
-           << this->dc << sep << this->v_min << sep << this->v_max << sep << this->v_minAbs << sep
-           << this->v_maxAbs << sep << this->num_zeros << sep << this->num_ones << sep
-           << this->v_mean << sep << this->v_median << sep << this->v_std << sep << this->v_variance
-           << sep << this->v_energy << sep << this->v_entropy << sep << this->sse << sep
-           << this->cov << sep << std::endl;
+void Statistics::write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment)
+{
+    write(file_out, pos, dimBlock, it_channel, segment);
+}
+void Statistics::write(std::ostream &output, Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment) {
+    std::stringstream ss;
+    ss << "\"" << segment << "\"";
+    output 
+        << it_channel                   << sep 
+        << pos.x                        << sep 
+        << pos.y                        << sep 
+        << pos.u                        << sep 
+        << pos.v                        << sep
+        << dimBlock.x                   << sep 
+        << dimBlock.y                   << sep 
+        << dimBlock.u                   << sep 
+        << dimBlock.v                   << sep
+        << ss.str()                     << sep
+        << this->dc                     << sep 
+        << this->v_min                  << sep 
+        << this->v_max                  << sep 
+        << this->v_minAbs               << sep
+        << this->v_maxAbs               << sep 
+        << this->num_zeros              << sep 
+        << this->num_ones               << sep
+        << this->v_mean                 << sep 
+        << this->v_median               << sep 
+        << this->v_std                  << sep 
+        << this->v_variance             << sep 
+        << this->v_energy               << sep 
+        << this->v_entropy              << sep 
+        << this->sse                    << sep
+        << this->cov                    << sep 
+        << std::endl;
 }
 
 void Statistics::write(Point4D &pos,
                        Point4D &dimBlock,
-                       uint it_channel,
+                       std::size_t it_channel,
                        std::vector<LRE_struct> &lre_result,
-                       uint bits_per_4D_Block) {
+                       std::size_t bits_per_4D_Block) {
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
-    uint max_run = 0;
+    std::size_t max_run = 0;
 
     std::vector<float> run_zeros;
 
@@ -57,28 +105,41 @@ void Statistics::write(Point4D &pos,
     this->run_var = Statistics::variance(run_zeros, this->run_mean);
     this->run_std = sqrt(this->run_var);
 
-    output << it_channel << sep << pos.x << sep << pos.y << sep << pos.u << sep << pos.v << sep <<
-
-    dimBlock.x << sep << dimBlock.y << sep << dimBlock.u << sep << dimBlock.v << sep <<
-
-    this->dc << sep << this->v_min << sep << this->v_max << sep << this->v_minAbs << sep
-           << this->v_maxAbs << sep <<
-
-    this->num_zeros << sep << this->num_ones << sep << this->v_mean << sep << this->v_median << sep
-           << this->v_std << sep << this->v_variance << sep << this->v_energy << sep
-           << this->v_entropy << sep <<
-
-    this->sse << sep << this->cov << sep <<
-
-    lre_result.size() << sep << max_run << sep <<
-
-    this->run_mean << sep << this->run_std << sep << this->run_var << sep <<
-
-    this->posSO_last_nzero << sep << this->posSO_last_nzeroone << sep <<
-
-    this->pos_last_nzero << sep << this->pos_last_nzeroone << sep << bits_per_4D_Block << sep <<
-
-    std::endl;
+    output 
+        << it_channel                  << sep 
+        << pos.x                       << sep 
+        << pos.y                       << sep 
+        << pos.u                       << sep 
+        << pos.v                       << sep 
+        << dimBlock.x                  << sep 
+        << dimBlock.y                  << sep 
+        << dimBlock.u                  << sep 
+        << dimBlock.v                  << sep 
+        << ""                          << sep
+        << this->dc                    << sep 
+        << this->v_min                 << sep 
+        << this->v_max                 << sep 
+        << this->v_minAbs              << sep        
+        << this->v_maxAbs              << sep 
+        << this->num_zeros             << sep 
+        << this->num_ones              << sep 
+        << this->v_mean                << sep 
+        << this->v_median              << sep           
+        << this->v_std                 << sep 
+        << this->v_variance            << sep 
+        << this->v_energy              << sep           
+        << this->v_entropy             << sep 
+        << this->sse                   << sep 
+        << lre_result.size()           << sep 
+        << max_run                     << sep 
+        << this->run_mean              << sep 
+        << this->run_std               << sep 
+        << this->run_var               << sep 
+        << this->posSO_last_nzero      << sep 
+        << this->posSO_last_nzeroone   << sep 
+        << this->pos_last_nzero        << sep 
+        << this->pos_last_nzeroone     << sep 
+        << bits_per_4D_Block           << std::endl;
 }
 
 Statistics::~Statistics() {
@@ -92,12 +153,12 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
     this->posSO_last_nzero = this->posSO_last_nzeroone = -1;
     this->pos_last_nzero = this->pos_last_nzeroone = -1;
 
-    for (int i = 0; i < input.size(); ++i) {
+    for (std::size_t i = 0; i < input.size(); ++i) {
         float value = input[scan_order ? scan_order[i] : i];
         assert(!std::isnan(value));
-        if (std::abs(value) <= this->epsilon) {
+        if (std::round(value) == 0) {
             ++this->num_zeros;
-        } else if (std::abs(value - 1) <= this->epsilon) { // epsilon = 0.1
+        } else if (std::round(value) == 1) { // epsilon = 0.1
             ++this->num_ones;
             this->posSO_last_nzero = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = i;
@@ -130,7 +191,7 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
     }
 }
 
-void Statistics::compute_sse(float *orig,
+float Statistics::compute_sse(float *orig,
                              float *ref,
                              const Point4D &dim_block,
                              const Point4D &stride_block) {
@@ -140,15 +201,14 @@ void Statistics::compute_sse(float *orig,
     float *it_orig = orig, *it_ref = ref;
 
     int count = 0;
-    for (int it_v = 0; it_v < dim_block.v; ++it_v) {
-        for (int it_u = 0; it_u < dim_block.u; ++it_u) {
-            for (int it_y = 0; it_y < dim_block.y; ++it_y) {
-                for (int it_x = 0; it_x < dim_block.x; ++it_x) {
-                    // uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
+    for (std::size_t it_v = 0; it_v < dim_block.v; ++it_v) {
+        for (std::size_t it_u = 0; it_u < dim_block.u; ++it_u) {
+            for (std::size_t it_y = 0; it_y < dim_block.y; ++it_y) {
+                for (std::size_t it_x = 0; it_x < dim_block.x; ++it_x) {
+                    // std::size_t pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
 
                     error = *it_ref - *it_orig;
                     this->sse += error * error;
-                    this->cov += *it_ref * *it_orig;
                     ++count;
                     it_orig += stride_block.x;
                     it_ref += stride_block.x;
@@ -162,10 +222,11 @@ void Statistics::compute_sse(float *orig,
         it_orig += stride_block.v;
         it_ref += stride_block.v;
     }
+    return sse;
 }
 
 float Statistics::entropy_vector(std::vector<int> values) {
-    std::vector<std::tuple<int, uint, float>> elements_count;
+    std::vector<std::tuple<int, std::size_t, float>> elements_count;
 
     std::sort(values.begin(), values.end());
     auto unique_values = values;
