@@ -1,8 +1,10 @@
 # Project specifics ignores
 
 output
+results
 Datasets
 build*
+cmake-build*
 bin
 .vscode
 .idea
