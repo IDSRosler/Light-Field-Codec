@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-
+set(CMAKE_CXX_STANDARD 17)
 set(libs_to_link 
     gtest_main
     lfcodec
@@ -11,6 +11,7 @@ add_subdirectory(block_compare_tests)
 add_subdirectory(block_segmentation_tests)
 add_subdirectory(block_tests)
 add_subdirectory(old_api_comparison)
+add_subdirectory(partial_block_transform)
 
 # set(This lfcodec-tests)
 
