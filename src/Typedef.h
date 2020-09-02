@@ -4,14 +4,14 @@
 
 #define USE_YCbCr 1 // 0: no, 1: mule, 2: other
 
+using index_t = unsigned;
+
 #define LFSample short
 
 #ifndef TRANSF_QUANT
 #define TRANSF_QUANT true
 #endif
-#ifndef QUANTIZATION
-#define QUANTIZATION true
-#endif
+
 #ifndef DPCM_DC
 #define DPCM_DC false
 #endif
@@ -36,21 +36,20 @@
 #ifndef LFCODEC_USE_PREDICTION
 #define LFCODEC_USE_PREDICTION true
 #endif
+#ifndef LFCODEC_ESTIMATE_SCAN_ORDER
+#define LFCODEC_ESTIMATE_SCAN_ORDER true
+#endif
+
 #ifndef LFCODEC_FORCE_DCT_NON_LUMA
 #define LFCODEC_FORCE_DCT_NON_LUMA true
 #endif
-#ifndef LFCODEC_TRANSFORM_HISTOGRAM
-#define LFCODEC_TRANSFORM_HISTOGRAM false
-#endif
-#ifndef LFCODEC_QUANTIZATION_EXTRA_VOLUMES
-#define LFCODEC_QUANTIZATION_EXTRA_VOLUMES true
-#endif
-#ifndef LFCODEC_USE_SEGMENTATION
-#define LFCODEC_USE_SEGMENTATION true
+
+#ifndef LFCODEC_TRACE_TRANSFORM
+#define LFCODEC_TRACE_TRANSFORM false
 #endif
 
-#ifndef LFCODEC_SEGMENTATION_MAX_LEVELS
-#define LFCODEC_SEGMENTATION_MAX_LEVELS 2
+#ifndef LFCODEC_USE_QUANTIZATION
+#define LFCODEC_USE_QUANTIZATION false
 #endif
 
 

@@ -13,45 +13,52 @@
 class Quantization {
 
 public:
-    enum QuantizationVolumeType {
-        HAIYAN = 1,
-        LEE = 2,
-    };
-    Quantization() = default;
+  enum QuantizationVolumeType {
+    HAIYAN = 1,
+    LEE = 2,
+    EXPONENTIAL = 3
+  };
 
-    Quantization(const Point4D &dimBlock, const EncoderParameters codec_parameters);
-    virtual ~Quantization();
-    void delete_volume();
+  Quantization() = default;
 
-    void set_lee_parameters(float C, float ai, float a0, float bi, float b0);
+  Quantization(const Point4D &dimBlock, const EncoderParameters codec_parameters);
 
-    void inverse(const float *input, float *output);
-    void foward(const float *input, float *output);
-    
-    void inverse(const QuantizationVolumeType type, const float *input, float *output);
-    void foward(const QuantizationVolumeType type, const float *input, float *output);
+  virtual ~Quantization();
+
+  void delete_volume();
+
+  void set_lee_parameters(float C, float ai, float a0, float bi, float b0);
+
+  void inverse(const float *input, float *output);
+
+  void foward(const float *input, float *output);
+
+  void inverse(const QuantizationVolumeType type, const float *input, float *output);
+
+  void foward(const QuantizationVolumeType type, const float *input, float *output);
+
+  float qp = 1;
+  float *get_volume(const QuantizationVolumeType type);
 private:
-    float qp = 1;
-    float lee_c = 10;
-    float lee_ai = 1023;
-    float lee_a0 = 1023;
-    float lee_bi = 0.04;
-    float lee_b0 = 0.01;
-    Point4D dim_block;
-    Point4D weight_100;
-    float *volume_hayan = nullptr;
-    float *volume_lee = nullptr;
-    static std::unordered_map<const Point4D, float *, Point4DHasher> cache_lee;
-    static std::unordered_map<const Point4D, float *, Point4DHasher> cache_hayan;
+  float *volume_hayan = nullptr;
+  float *volume_lee = nullptr;
+  float lee_c = 10;
+  float lee_ai = 1023;
+  float lee_a0 = 1023;
+  float lee_bi = 0.04;
+  float lee_b0 = 0.01;
+  Point4D dim_block;
+  Point4D weight_100;
+  
+  inline static std::unordered_map<const Point4D, float *, Point4DHasher> cache_lee;
+  inline static std::unordered_map<const Point4D, float *, Point4DHasher> cache_hayan;
 
 
-    
+  static float clip_min(float val, float min);
 
-    static float clip_min(float val, float min);
-    float* generate_volume(const QuantizationVolumeType type);
-    float* get_volume(const QuantizationVolumeType type);
+  float *generate_volume(const QuantizationVolumeType type);
+
 };
-
 
 
 #endif //QUANTIZATION_H

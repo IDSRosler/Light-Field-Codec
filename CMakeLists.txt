@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.10)
 project(LF_Codec)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-O3")
-
+add_compile_options(
+  "-Wall" "-Wpedantic" "-Wextra" "-fexceptions"
+  "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
+  "$<$<CONFIG:RELEASE>:-O3>"
+)
 
 if(NOT "$ENV{TRANSF_QUANT}" STREQUAL "")
     message(STATUS "Using TRANSF_QUANT=$ENV{TRANSF_QUANT}")
@@ -90,7 +93,7 @@ set(SOURCES
     src/Statistics.cpp
     src/LRE.cpp
     src/DpcmDC.cpp
-    src/Time.cpp
+    src/Timer.cpp
     src/CAVLC.cpp
     src/EncBitstreamWriter.cpp
     src/EncBitstreamVLC.cpp
@@ -98,10 +101,12 @@ set(SOURCES
     src/Prediction.cpp
     src/deprecated/OldTransform.cpp
     src/utils.cpp
+    src/ScanOrder.cpp
 )
 
 
 add_executable(LF_Codec src/main.cpp)
+
 add_library(lfcodec ${SOURCES})
 target_include_directories(lfcodec PRIVATE src)
 target_link_libraries(LF_Codec PUBLIC
@@ -113,5 +118,6 @@ find_package(OpenCV QUIET)
 add_compile_definitions(LFCODEC_USE_OPENCV=${OPENCV_FOUND})
 
 if(OPENCV_FOUND)
+    message(STATUS "OpenCV Found")
     target_link_libraries(lfcodec PUBLIC ${OpenCV_LIBS})
 endif()
