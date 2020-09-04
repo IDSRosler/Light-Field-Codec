@@ -249,7 +249,7 @@ std::vector<index_t> generate_z_order_curve(const Point4D &shape, Point4D &strid
 }
 
 
-std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(const char type, const Point4D& _offset, const Point4D& _shape,  bool unsafe) {
+std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(char type, const Point4D& _offset, const Point4D& _shape,  bool unsafe) {
     std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> stack = std::make_unique<std::deque<std::pair<Point4D, Point4D>>>();
 
     Point4D shape = _shape;
@@ -257,6 +257,9 @@ std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(const 
     Point4D new_shape = shape;
     Point4D new_offset = offset;
 
+    std::size_t minimum_size = type == 's'
+                               ? EncoderParameters::parameters.transform_min_spatial_size
+                               : EncoderParameters::parameters.transform_min_angular_size;
     std::size_t i = (type == 's') ? 0 : 2;
 
     new_shape[i] >>= 1;
@@ -319,7 +322,7 @@ std::vector<PartitionDescriptor> parse_descriptor(std::string_view descriptor, c
                 desc.transform = static_cast<int>(c - '0');
                 parsed_descriptors.push_back(desc);
                 
-                if (stack.size() > 0) {
+                if (!stack.empty()) {
                     auto front = stack.front();
                     stack.pop_front();
                     shape = front.first;
@@ -345,10 +348,10 @@ std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t t
                 auto ur_nodes = generate_full_binary_trees(x2); // up right
                 auto dl_nodes = generate_full_binary_trees(x3); // down left
                 auto dr_nodes = generate_full_binary_trees(total_nodes - x3 - x2 - x1 - 1); // down right
-                for (auto ul : ul_nodes)
-                for (auto ur : ur_nodes)
-                for (auto dl : dl_nodes)
-                for (auto dr:  dr_nodes) {
+                for (const auto& ul : ul_nodes)
+                for (const auto& ur : ur_nodes)
+                for (const auto& dl : dl_nodes)
+                for (const auto& dr:  dr_nodes) {
                       auto root = std::make_shared<tree_node>();
                       root->up_left = ul;
                       root->up_right = ur;
@@ -403,3 +406,47 @@ std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::s
     return converted;
 }
 
+
+
+//def verify_descriptor(desc):
+//    count = 1
+//    for c in desc:
+//        if count == 0:
+//            return False
+//
+//        if c in {'P', 's', 'a'}:
+//            count += 3
+//        elif c in {'T', '1', '2', '3'}:
+//            count -= 1
+//        else:
+//            return False
+//
+//    else:
+//        return count == 0
+
+bool is_valid_descriptor(const std::string& descriptor) {
+    int count = 1;
+    for (const auto& c: descriptor) {
+        if (count == 0)
+            return false;
+
+        switch(c) {
+            case 'P':
+            case 's':
+            case 'a':
+                count += 3;
+                break;
+
+            case 'T':
+            case '1':
+            case '2':
+            case '3':
+                count--;
+                break;
+
+            default:
+                return false;
+        }
+    }
+    return count == 0;
+}

@@ -94,7 +94,61 @@ TEST(PartialTransformTest, smaller_shape_at_corner_y)
     int counter = 0;
     int offset = calc_offset(x_offset, stride);
     FOREACH_4D_IDX(i, x_shape, stride)
-        block[i + offset] = static_cast<float>(counter++);
+                        block[i + offset] = static_cast<float>(counter++);
+
+    Transform tx(shape);
+    tx.md_forward(Transform::DCT_II, block, t_block, x_offset, x_shape);
+    tx.md_inverse(Transform::DCT_II, t_block, r_block, x_offset, x_shape);
+
+    std::transform(r_block, r_block + SIZE, r_block, std::roundf);
+    ASSERT_TRUE(std::equal(block, block + SIZE, r_block));
+}
+
+TEST(PartialTransformTest, smaller_shape_at_corner_u)
+{
+    constexpr std::size_t SIDE = 8;
+    constexpr std::size_t HALF_SIDE = SIDE >> 1;
+    constexpr std::size_t SIZE = SIDE * SIDE * SIDE * SIDE;
+    Point4D shape(SIDE, SIDE, SIDE, SIDE);
+    Point4D x_shape(HALF_SIDE, HALF_SIDE, HALF_SIDE, HALF_SIDE);
+    Point4D x_offset(0, 0, HALF_SIDE, 0);
+    Point4D stride = make_stride(shape);
+
+    float block[SIZE] = {0};
+    float t_block[SIZE] = {0};
+    float r_block[SIZE] = {0};
+
+    int counter = 0;
+    int offset = calc_offset(x_offset, stride);
+    FOREACH_4D_IDX(i, x_shape, stride)
+                        block[i + offset] = static_cast<float>(counter++);
+
+    Transform tx(shape);
+    tx.md_forward(Transform::DCT_II, block, t_block, x_offset, x_shape);
+    tx.md_inverse(Transform::DCT_II, t_block, r_block, x_offset, x_shape);
+
+    std::transform(r_block, r_block + SIZE, r_block, std::roundf);
+    ASSERT_TRUE(std::equal(block, block + SIZE, r_block));
+}
+
+TEST(PartialTransformTest, smaller_shape_at_corner_v)
+{
+    constexpr std::size_t SIDE = 8;
+    constexpr std::size_t HALF_SIDE = SIDE >> 1;
+    constexpr std::size_t SIZE = SIDE * SIDE * SIDE * SIDE;
+    Point4D shape(SIDE, SIDE, SIDE, SIDE);
+    Point4D x_shape(HALF_SIDE, HALF_SIDE, HALF_SIDE, HALF_SIDE);
+    Point4D x_offset(0, 0, 0, HALF_SIDE);
+    Point4D stride = make_stride(shape);
+
+    float block[SIZE] = {0};
+    float t_block[SIZE] = {0};
+    float r_block[SIZE] = {0};
+
+    int counter = 0;
+    int offset = calc_offset(x_offset, stride);
+    FOREACH_4D_IDX(i, x_shape, stride)
+                        block[i + offset] = static_cast<float>(counter++);
 
     Transform tx(shape);
     tx.md_forward(Transform::DCT_II, block, t_block, x_offset, x_shape);
@@ -112,7 +166,6 @@ TEST(PartialTransformTest, trimm_bigger_shape)
     Point4D shape(SIDE, SIDE, SIDE, SIDE);
     Point4D x_shape(BIGGER_SIZE, BIGGER_SIZE, BIGGER_SIZE, BIGGER_SIZE);
     Point4D x_offset(0, 0, 0, 0);
-    Point4D stride = make_stride(shape);
 
     float block[SIZE] = {0};
     float t_block[SIZE] = {0};
@@ -165,7 +218,6 @@ TEST(PartialTransformTest, mix_two_transforms)
     constexpr std::size_t SIZE = SIDE * SIDE * SIDE * SIDE;
 
     Point4D shape(SIDE, SIDE, SIDE, SIDE);
-    Point4D stride = make_stride(shape);
 
     Point4D dct_shape(HALF_SIDE, SIDE, SIDE, SIDE);
     Point4D dct_offset(0, 0, 0, 0);
@@ -198,7 +250,6 @@ TEST(PartialTransformTest, transfrom_from_descriptor)
     constexpr std::size_t SIZE = SIDE * SIDE * SIDE * SIDE;
 
     Point4D shape(SIDE, SIDE, SIDE, SIDE);
-    Point4D stride = make_stride(shape);
 
     Point4D quarter_shape(HALF_SIDE, HALF_SIDE, SIDE, SIDE);
 

@@ -68,7 +68,6 @@ struct tree_node
     }
 };
 
-constexpr static std::size_t minimum_size = 4;
 
 template <typename T>
 inline Point4D make_stride(T shape);
@@ -107,8 +106,8 @@ std::vector<index_t> generate_z_order_curve(const Point4D &shape, Point4D &strid
 std::vector<PartitionDescriptor> parse_descriptor(std::string_view descriptor, const Point4D &_shape, bool unsafe = false);
 std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t total_nodes);
 std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index);
-std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(const char type, const Point4D& _offset, const Point4D& _shape, bool unsafe = false);
-
+std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(char type, const Point4D& _offset, const Point4D& _shape, bool unsafe = false);
+bool is_valid_descriptor(const std::string& descriptor);
 
 template <typename T>
 inline Point4D make_stride(T shape)

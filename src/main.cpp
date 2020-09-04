@@ -31,9 +31,10 @@ int main(int argc, char **argv) {
   EncoderParameters encoderParameters;
   encoderParameters.parse_cli(argc, argv);
   encoderParameters.report();
+  std::cout.flush();
 
 #if STATISTICS_TIME
-  Time getBlock, rebuild, t, q, ti, qi, total_time;
+  Timer getBlock, rebuild, t, q, ti, qi, total_time;
 #endif
 
   if (encoderParameters.display_stages)
@@ -188,9 +189,6 @@ int main(int argc, char **argv) {
             std::transform(qf4D, qf4D + SIZE, temp_lre,
               [](auto value) { return static_cast<int>(value); });
 
-            // for (std::size_t i = 0; i < SIZE; ++i) {
-            //   temp_lre[i] = static_cast<int>(qf4D[i]);
-            // }
 
             auto lre_result = lre.encodeLRE(temp_lre, SIZE);
             auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
@@ -201,13 +199,10 @@ int main(int argc, char **argv) {
                      descriptor.c_str(), rd_cost, lre_size);
               fflush(stdout);
             }
+
+
             lre.decodeLRE(lre_result, SIZE, temp_lre);
-
             std::copy(temp_lre, temp_lre + SIZE, qi4D);
-            // for (std::size_t i = 0; i < SIZE; ++i) {
-            //   qi4D[i] = temp_lre[i];
-            // }
-
 
 #else // TRANSF_QUANT
             std::copy(pf4D, pf4D + SIZE, qf4D);
@@ -219,25 +214,22 @@ int main(int argc, char **argv) {
             ti.tic();
 #endif
 
+              transform.inverse(descriptor, qi4D, ti4D, dimBlock);
 
 #if STATISTICS_TIME
             ti.toc();
 #endif
 #else // TRANSF_QUANT
             std::copy(qi4D, qi4D + SIZE, ti4D);
-            // for (int i = 0; i < SIZE; ++i) {
-            //   ti4D[i] = qi4D[i];
-            // }
+
 #endif
-            transform.inverse(descriptor, qi4D, ti4D, dimBlock);
+
 
 #if LFCODEC_USE_PREDICTION
             predictor.rec(ti4D, pi4D, dimBlock);
 #else
             std::copy(ti4D, ti4D + SIZE, pi4D);
-            // for (std::size_t i = 0; i < SIZE; ++i) {
-            //   pi4D[i] = ti4D[i];
-            // }
+
 #endif
 
 #if STATISTICS_TIME
@@ -307,17 +299,12 @@ int main(int argc, char **argv) {
   total_time.toc();
 #endif
   auto size_bytes = encoder.getTotalBytes();
-  auto total_bpp = (float)(size_bytes * 10.0F) / (float)dimLF.getNSamples();
+  auto total_bpp = (float)(size_bytes * 1.25) / (float)dimLF.getNSamples();
 
   display_report(std::cout, "Total Bytes", size_bytes);
   display_report(std::cout, "Human readable size",
                  to_human_readable(size_bytes));
   display_report(std::cout, "Bpp", total_bpp);
-  if (encoderParameters.calculate_transform_usage) {
-    display_report(std::cout, "DCT-II Usage", transform_usage['1']);
-    display_report(std::cout, "DST-I Usage", transform_usage['2']);
-    display_report(std::cout, "DST-VII Usage", transform_usage['3']);
-  }
   if (encoderParameters.calculate_metrics) {
     display_report(std::cout, "PSNR-Y", psnr[0]);
     display_report(std::cout, "PSNR-U", psnr[1]);
@@ -327,21 +314,26 @@ int main(int argc, char **argv) {
     display_report(std::cout, "SSIM-U", ssim[1]);
     display_report(std::cout, "SSIM-V", ssim[2]);
     display_report(std::cout, "SSIM-YUV", mean_ssim);
+#if STATISTICS_TIME
+      display_report(std::cout, "Transform::forward time: ", t.getTotalTime());
+      display_report(std::cout, "Transform::inverse time: ", ti.getTotalTime());
+
+#endif
   }
   cout << std::endl;
 
 #if STATISTICS_TIME
-  std::ofstream file_time;
-  file_time.open(encoderParameters.getPathOutput() + "time.csv");
-  file_time << "GetBlock Time(sec)" << sep << "T Time(sec)" << sep
-            << "Q Time(sec)" << sep << "TI Time(sec)" << sep << "QI Time(sec)"
-            << sep << "Rebuild Time(sec)" << sep << "Total Time(sec)" << sep;
-  file_time << std::endl;
-  file_time << getBlock.getTotalTime() << sep << t.getTotalTime() << sep
-            << q.getTotalTime() << sep << ti.getTotalTime() << sep
-            << qi.getTotalTime() << sep << rebuild.getTotalTime() << sep
-            << total_time.getTotalTime() << sep;
-  file_time << std::endl;
+//  std::ofstream file_time;
+//  file_time.open(encoderParameters.getPathOutput() + "time.csv");
+//  file_time << "GetBlock Time(sec)" << sep << "T Time(sec)" << sep
+//            << "Q Time(sec)" << sep << "TI Time(sec)" << sep << "QI Time(sec)"
+//            << sep << "Rebuild Time(sec)" << sep << "Total Time(sec)" << sep;
+//  file_time << std::endl;
+//  file_time << getBlock.getTotalTime() << sep << t.getTotalTime() << sep
+//            << q.getTotalTime() << sep << ti.getTotalTime() << sep
+//            << qi.getTotalTime() << sep << rebuild.getTotalTime() << sep
+//            << total_time.getTotalTime() << sep;
+//  file_time << std::endl;
 #endif
 
   return 0;

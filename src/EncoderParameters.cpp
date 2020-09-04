@@ -1,5 +1,7 @@
 
 #include "EncoderParameters.h"
+#include "Transform.h"
+
 EncoderParameters EncoderParameters::parameters;
 
 void EncoderParameters::set_global_parameters() const {
@@ -61,18 +63,36 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->verbose = true;
         } else if (flag == "-experimental"){
             this->experimental = true;
-        } else if (flag == "-transform"){
-            this->transform = argv[++it];
-        } else if (flag == "-enforce-dct-for-non-luma") {
-            this->dct_for_non_luma = true;
-        } else if (flag == "-max-splits") {
-            this->max_splits = (int)strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-use-transforms") {
+            while(argv[++it][0] != '-') {
+                use_transforms.emplace_back(argv[it]);
+            }
+            it--;
+        } else if (flag == "-transform-min-angular-size") {
+            transform_min_angular_size = strtol(argv[++it], nullptr, 10);
+        }else if (flag == "-transform-min-spatial-size") {
+            transform_min_spatial_size = strtol(argv[++it], nullptr, 10);
+        }else if (flag == "-quadtree-max-inner-nodes") {
+            quadtree_max_inner_nodes = strtol(argv[++it], nullptr, 10);
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
         }
+
     }
 
+    int count = 0;
+    std::stringstream ss;
+    for (const auto& transform : use_transforms) {
+        if (count++ > 0)
+            ss << ", ";
+        ss << transform;
+        Transform::T_CHOICES.push_back(Transform::get_type(transform));
+    }
+    for (std::size_t n = 0; n <= quadtree_max_inner_nodes; n++)
+        Transform::QUADTREE_NODES_COUNT.push_back(4 * n + 1);
+
+    transforms_in_use = ss.str();
     this->dim_LF.updateNSamples();
     this->dim_block.updateNSamples();
     set_global_parameters();
@@ -84,19 +104,23 @@ const std::string &EncoderParameters::getPathInput() const { return this->path_i
 
 const std::string &EncoderParameters::getPathOutput() const { return this->path_output; }
 
+
+
 void EncoderParameters::report() {
     std::cout <<"[Report]\n";
-    display_report(std::cout, "Input path", this->path_input) ;
-    display_report(std::cout, "Output path", this->path_output) ;
-    display_report(std::cout, "LF Dim", this->dim_LF) ;
-    display_report(std::cout, "Block Dim", this->dim_block) ;
-    display_report(std::cout, "Transform", this->transform) ;
-    display_report(std::cout, "QP", this->qp) ;
-    display_report(std::cout, "Quantization Weight (*100)", this->quant_weight_100) ;
-    display_report(std::cout, "Lytro", (this->lytro ? "YES" : "NO")) ;
-    display_report(std::cout, "Lambda", this->lambda) ;
-    display_report(std::cout, "Max Split", this->max_splits) ;
-    display_report(std::cout, "Experimental Features", (this->experimental ? "YES" : "NO"))  ;
+    display_report(std::cout, "Input path", this->path_input);
+    display_report(std::cout, "Output path", this->path_output);
+    display_report(std::cout, "LF Dim", this->dim_LF);
+    display_report(std::cout, "Block Dim", this->dim_block);
+    display_report(std::cout, "Transform", transforms_in_use);
+    display_report(std::cout, "Transform Min angular size", transform_min_angular_size);
+    display_report(std::cout, "Transform Min spatial size", transform_min_spatial_size);
+    display_report(std::cout, "Quadtree max inner nodes", this->quadtree_max_inner_nodes);
+    display_report(std::cout, "QP", this->qp);
+    display_report(std::cout, "Quantization Weight (*100)", this->quant_weight_100);
+    display_report(std::cout, "Lytro", (this->lytro ? "YES" : "NO"));
+    display_report(std::cout, "Lambda", this->lambda);
+    display_report(std::cout, "Experimental Features", (this->experimental ? "YES" : "NO"));
     std::cout.flush();
 }
 

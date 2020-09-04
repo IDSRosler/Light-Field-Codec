@@ -22,7 +22,7 @@ using index_t = unsigned;
 #define STATISTICS_GLOBAL false
 #endif
 #ifndef STATISTICS_TIME
-#define STATISTICS_TIME false
+#define STATISTICS_TIME true
 #endif
 #ifndef TRACE_TRANSF
 #define TRACE_TRANSF false
