@@ -408,6 +408,7 @@ void Transform::set_position(int _channel, const Point4D &current_pos)
 std::pair<std::string, double> Transform::forward(const float *block, float *result, const Point4D &_shape)
 {
   float *tf_block = m_temp_tf_block.get();
+  m_min_rd_cost = std::numeric_limits<double>::infinity();
   for (const auto &tree_repr : tree_repr_vector) {
       std::deque<std::pair<Point4D, Point4D>> stack;
       stack.push_front(std::make_pair(_shape, Point4D(0, 0, 0, 0)));
@@ -469,6 +470,7 @@ void Transform::forward_fast(
 
     const auto symbol = descriptor[index];
     auto [shape, offset] = stack.front();
+    shape.updateNSamples();
     stack.pop_front();
     switch (symbol)
     {
