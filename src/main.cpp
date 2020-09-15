@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
               [](auto value) { return static_cast<int>(value); });
 
 
-                        auto lre_result = lre.encodeCZI(temp_lre_encoded, 0, SIZE);
+                        auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
                         auto lre_size = encoder.write4DBlock(temp_lre_encoded, SIZE, lre_result);
 
             if (encoderParameters.verbose) {
