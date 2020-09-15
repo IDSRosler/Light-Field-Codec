@@ -423,6 +423,7 @@ void Transform::calculate_rd_cost(const float *block, const std::string& descrip
     std::string min_descriptor;
 
     int *lre_block = m_temp_lre_block.get();
+    float *t_block = m_temp_tf_block.get();
     float *r_block = m_temp_r_block.get();
     std::fill(lre_block, lre_block + flat_size, 0);
     double sse = std::inner_product(block,
