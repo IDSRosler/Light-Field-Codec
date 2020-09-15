@@ -430,24 +430,45 @@ void Transform::calculate_rd_cost(const float *block, const std::string& descrip
                                     r_block,
                                     0.0,
                                     [](auto acc, auto val) { return acc + val; },
-                                    [](auto blk, auto rec) { return std::pow(blk - rec, 2); });
+                                    [](auto blk, auto rec) { auto error = blk - rec; return error * error; });
 
-    std::transform(r_block, r_block + flat_size, lre_block, std::truncf);
-    auto mse = sse / flat_size;
-    auto lre_result = lre->encodeLRE(lre_block, flat_size);
-    auto lre_size = fake_encoder->write4DBlock(lre_block, flat_size, lre_result);
-    fake_encoder->reset();
-    double rd_cost = mse + codec_parameters.lambda * lre_size;
-    // std::cout << "[log] Pos(x=" << position.x << ","
-    //                        "y=" << position.y << ","
-    //                        "u=" << position.u << ","
-    //                        "v=" << position.v << ","
-    //                        "ch=" << channel << ") "
-    //                     "Descriptor(text=" << descriptor << ", "
-    //                                 "mse=" << mse << ", "
-    //                                 "lre_size=" << lre_size << ", "
-    //                                 "rd_cost=" << rd_cost << ")\n";
-    // std::cout.flush();
+    std::transform(t_block, t_block + flat_size, lre_block, std::truncf);
+    std::size_t lre_size, czi_size, encoding_size;
+    char encoding_type;
+    auto mse = sse / size;
+    // auto lre_result = lre->encodeLRE(lre_block, flat_size);
+    auto czi_result = lre->encodeCZI(lre_block, 0, flat_size);
+    lre_size = 10000000;
+    if (fake_encoder != nullptr) {
+        // lre_size = fake_encoder->write4DBlock(lre_block, size, lre_result);
+        czi_size = fake_encoder->write4DBlock(lre_block, size, czi_result);
+        fake_encoder->reset();
+    } else {
+        // lre_size = lre_result.size();
+        czi_size = czi_result.size();
+    }
+
+    if (lre_size < czi_size) {
+        encoding_size = lre_size;
+        encoding_type = 'L';
+    } else {
+        encoding_size = czi_size;
+        encoding_type = 'Z';
+    }
+
+    double rd_cost = mse + codec_parameters.lambda * encoding_size;
+#if false
+    std::cout << "[log] Pos(x=" << position.x << ","
+                           "y=" << position.y << ","
+                           "u=" << position.u << ","
+                           "v=" << position.v << ","
+                           "ch=" << channel << ") "
+                        "Descriptor(text=" << descriptor << ", "
+                                    "mse=" << mse << ", "
+                                    "lre_size=" << lre_size << ", "
+                                    "rd_cost=" << rd_cost << ")\n";
+    std::cout.flush();
+#endif
     if (rd_cost < m_min_rd_cost) {
         m_min_rd_cost = rd_cost;
         m_min_descriptor = descriptor;
