@@ -5,6 +5,16 @@
 #include <chrono>
 #include <iostream>
 
+
+#if LFCODEC_USE_TIMER
+#define TIMER_TIC(timer) (timer).tic()
+#define TIMER_TOC(timer) (timer).toc()
+#else
+#define TIMER_TIC(timer)
+#define TIMER_TOC(timer)
+#endif
+
+
 class Timer {
 public:
   Timer();
