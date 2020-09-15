@@ -435,7 +435,7 @@ void Transform::calculate_rd_cost(const float *block, const std::string& descrip
     std::transform(t_block, t_block + flat_size, lre_block, std::truncf);
     std::size_t lre_size, czi_size, encoding_size;
     char encoding_type;
-    auto mse = sse / size;
+    auto mse = sse / flat_size;
     // auto lre_result = lre->encodeLRE(lre_block, flat_size);
     auto czi_result = lre->encodeCZI(lre_block, 0, flat_size);
     lre_size = 10000000;
