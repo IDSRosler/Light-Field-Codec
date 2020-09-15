@@ -1,9 +1,18 @@
 #!/bin/bash
 
 # Default values
-BINARY="./cmake-build-release/LF_Codec"
-DATASET_DIR="../LFCodecResources/Datasets"
-RESULT_DIR="./results"
+if [ "$BINARY" != "" ]; then
+  echo "Variable BINARY not found. Using default value."
+  BINARY="./cmake-build-release/LF_Codec"
+fi
+if [ "$DATASET_DIR" != "" ]; then
+  echo "Variable DATASET_DIR not found. Using default value."
+  DATASET_DIR="../LFCodecResources/Datasets"
+fi
+if [ "RESULT_DIR" != "" ]; then
+  echo "Variable RESULT_DIR not found. Using default value."
+  RESULT_DIR="./results"
+fi
 
 QP=1
 QX=1
