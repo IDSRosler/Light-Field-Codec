@@ -441,7 +441,7 @@ void Transform::calculate_rd_cost(const float *block, const std::string& descrip
     lre_size = 10000000;
     if (fake_encoder != nullptr) {
         // lre_size = fake_encoder->write4DBlock(lre_block, size, lre_result);
-        czi_size = fake_encoder->write4DBlock(lre_block, size, czi_result);
+        czi_size = fake_encoder->write4DBlock(lre_block, flat_size, czi_result);
         fake_encoder->reset();
     } else {
         // lre_size = lre_result.size();
