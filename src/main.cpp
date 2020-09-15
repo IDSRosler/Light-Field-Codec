@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 
 
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
-                        auto lre_size = encoder.write4DBlock(temp_lre_encoded, SIZE, lre_result);
+                        auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
 
             if (encoderParameters.verbose) {
               printf("Pos(x=%02lu,y=%02lu,u=%02lu,v=%02lu,ch=%d) Descriptor(text=%s, rd_cost=%g) LRE=%u \n",
