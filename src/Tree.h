@@ -16,6 +16,23 @@
 
 using namespace std;
 
+struct SyntacticElements {
+    int last;                   // last significant element
+    vector<short int> sig;      // significant elements after the last
+    vector<short int> gr_one;   // indicates whether significant elements have an absolute value greater than 1
+    vector<short int> gr_two;   // indicates whether significant elements have an absolute value greater than 2
+    vector<short int> sign;     // sign of  significant elements (1 - negative | 0 - positive)
+    vector<int> rem;            // rest of the significant elements greater than one (and two)
+
+    void reset() {
+        this->last = -1;
+        this->gr_one.clear();
+        this->gr_two.clear();
+        this->sign.clear();
+        this->rem.clear();
+    }
+};
+
 struct Point_4D{
     int x = 0, y = 0, u = 0, v = 0;
 };
@@ -93,8 +110,9 @@ public:
     Tree();
     Node* CreateRoot(int *bitstream, const Point4D &dim_block);
 
-    int ComputeLast();
-    vector<int> ComputeRun(int last);
+    void ComputeLast(int &last);
+    void ComputeRun(vector<int> &v_run, int last);
+    void ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last);
 
     void CreateTree(Node * root, const Point4D &pos, Point_4D middle_before);
     void DeleteTree(Node** node_ref);
@@ -110,6 +128,7 @@ private:
     void _deleteTree(Node* node);
 
     void SortBufferPositions();
+    void LFBPUToVector(vector<int> &v_coefficients, int index);
 
     int index_sorted[256] = {
             0,1,4,5,16,17,20,21,64,65,68,69,80,81,84,85,2,3,6,7,18,19,22,23,66,67,70,71,82,83,86,87,8,9,12,13,24,25,28,29,72,73,76,77,88,89,92,93,10,

@@ -44,18 +44,7 @@ void Tree::CreateTree(Node * root, const Point4D &pos, Point_4D middle_before) {
     else return;
 
     if (root->hypercube_dim.x <= this->size || root->hypercube_dim.y <= this->size || root->hypercube_dim.u <= this->size || root->hypercube_dim.v <= this->size) {
-        /*if (HEXADECA_TREE_PARTITION == 0){
-            this->next_start_position.x = pos.x;
-            this->next_start_position.y = pos.y;
-            this->next_start_position.u = pos.u;
-            this->next_start_position.v = pos.v;
-        }
-        else if (HEXADECA_TREE_PARTITION == 1 || HEXADECA_TREE_PARTITION == 2){
-            this->next_start_position.x += pos.x;
-            this->next_start_position.y += pos.y;
-            this->next_start_position.u += pos.u;
-            this->next_start_position.v += pos.v;
-        }*/
+
         this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
 
         root->SetNodePosition(this->hy_pos);
@@ -150,7 +139,7 @@ void Tree::HypercubePosition(Point_4D *middle) {
     this->hy_pos.v = (this->next_start_position.v != 0) ? this->next_start_position.v / middle->v : this->next_start_position.v;
 }
 
-int Tree::ComputeLast() {
+void Tree::ComputeLast(int &last) {
     int index;
 
     this->SortBufferPositions();
@@ -160,11 +149,10 @@ int Tree::ComputeLast() {
             break;
         }
     }
-    return index;
+    last = index;
 }
 
-vector<int> Tree::ComputeRun(int last) {
-    vector<int> v_run;
+void Tree::ComputeRun(vector<int> &v_run, int last) {
     int run = 0;
     int index = last;
 
@@ -179,8 +167,70 @@ vector<int> Tree::ComputeRun(int last) {
         v_run.push_back(run);
         run = 0;
     }
+}
 
-    return v_run;
+void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last) {
+    int j;
+    vector<int> v_coefficients;
+    SyntacticElements elem;
+    elem.reset();
+    for (int i = 0; i <= last; ++i) {
+        this->LFBPUToVector(v_coefficients, i);
+        for (j = v_coefficients.size() - 1; j >= 0; --j) { // compute last (coefficient level)
+            if (v_coefficients[j] != 0) {
+                break;
+            }
+        }
+        elem.last = j;
+        for (int k = elem.last; k >= 0; --k) { // compute sig (coefficient level)
+            if (v_coefficients[k] == 0){
+                elem.sig.push_back(0);
+            }else {
+                elem.sig.push_back(1);
+                if (abs(v_coefficients[k]) > 1){ // > 1
+                    elem.gr_one.push_back(1);
+                    if (abs(v_coefficients[k]) > 2){ // > 2
+                        elem.gr_two.push_back(1);
+                        elem.rem.push_back(abs(v_coefficients[k]) - 3);
+                        if (v_coefficients[k] < 0) {
+                            elem.sign.push_back(1);
+                        } else {
+                            elem.sign.push_back(0);
+                        }
+                    } else { // = 2
+                        elem.gr_two.push_back(0);
+                        if (v_coefficients[k] < 0) {
+                            elem.sign.push_back(1);
+                        } else {
+                            elem.sign.push_back(0);
+                        }
+                    }
+                }else { // = 1
+                    elem.gr_one.push_back(0);
+                    if (v_coefficients[k] < 0) {
+                        elem.sign.push_back(1);
+                    } else {
+                        elem.sign.push_back(0);
+                    }
+                }
+            }
+        }
+        v_coefficients.clear();
+        lfbpu_elements.push_back(elem);
+        elem.reset();
+    }
+}
+
+void Tree::LFBPUToVector(vector<int> &v_coefficients, int index) {
+    for (int v = order4_SubPartitionsBuffer[index]->start.v ; v < order4_SubPartitionsBuffer[index]->end.v ; ++v) {
+        for (int u = order4_SubPartitionsBuffer[index]->start.u ; u < order4_SubPartitionsBuffer[index]->end.u ; ++u) {
+            for (int y = order4_SubPartitionsBuffer[index]->start.y ; y < order4_SubPartitionsBuffer[index]->end.y ; ++y) {
+                for (int x = order4_SubPartitionsBuffer[index]->start.x ; x < order4_SubPartitionsBuffer[index]->end.x ; ++x) {
+                    v_coefficients.push_back(this->hypercube->data[x][y][u][v]);
+                }
+            }
+        }
+    }
 }
 
 void Tree::SortBufferPositions() {

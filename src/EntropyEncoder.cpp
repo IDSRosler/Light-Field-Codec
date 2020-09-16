@@ -11,14 +11,24 @@ EntropyEncoder::~EntropyEncoder() {
 void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
     int last;
     vector<int> run;
-    this->root = this->tree.CreateRoot(bitstream, dim_block);
+    vector<SyntacticElements> lfbpu_elements; // light field base processing unit
+
+    this->root = this->tree.CreateRoot(bitstream, dim_block);    // create tree
     this->tree.CreateTree(this->root, dim_block, {0,0,0,0});
-    last  = this->tree.ComputeLast();
+
+    this->tree.ComputeLast(last);   // compute last (block level)
     this->encodeLast(last);
-    run = this->tree.ComputeRun(last);
+
+    this->tree.ComputeRun(run, last);  // compute run (block level)
     this->encodeRun(run);
     run.clear();
-    this->tree.DeleteTree(&this->root);
+
+    this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
+
+    // Todo: encoding of elements here
+
+    lfbpu_elements.clear();
+    this->tree.DeleteTree(&this->root); // delete tree
 }
 
 void EntropyEncoder::write_completedBytes() {

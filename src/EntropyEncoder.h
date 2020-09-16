@@ -4,6 +4,8 @@
 #include "EncSymbol.h"
 #include "Tree.h"
 
+using namespace std;
+
 class EntropyEncoder : public EncSymbol{
 public:
     EntropyEncoder(EncoderParameters *parameters, uint bufferSize);
