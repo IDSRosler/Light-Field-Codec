@@ -60,6 +60,10 @@ EncoderParameters.h
 EncBitstreamVLC.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 
+/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.cpp
+EncSymbol.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
+
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
 EncBitstreamBuffer.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
@@ -74,10 +78,6 @@ string
 Point4D.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.cpp
-EntropyEncoder.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h
 EncSymbol.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
@@ -89,10 +89,6 @@ iostream
 -
 vector
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.cpp
-LightField.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
 Typedef.h
@@ -118,10 +114,6 @@ iostream
 iomanip
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.cpp
-Prediction.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
 Typedef.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Typedef.h
@@ -132,12 +124,6 @@ Point4D.h
 string
 -
 cstring
--
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.cpp
-Quantization.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
-cmath
 -
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
@@ -178,12 +164,6 @@ chrono
 iostream
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.cpp
-cassert
--
-Transform.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
 zconf.h
 -
@@ -193,10 +173,6 @@ Point4D.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
 cmath
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.cpp
-Tree.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 vector

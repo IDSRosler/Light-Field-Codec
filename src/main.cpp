@@ -132,6 +132,8 @@ int main(int argc, char **argv) {
     total_time.tic();
 #endif
 
+    int hypercube = 0;
+
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
 
@@ -231,7 +233,7 @@ int main(int argc, char **argv) {
 #if ENTROPY_ENCODER
                         encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
-                        /*if (hypercubo == 0){
+                        /*if (hypercube == 1){
                             exit(1);
                         }*/
 #endif
@@ -341,6 +343,7 @@ int main(int argc, char **argv) {
 #endif
                         encoder.write_completedBytes();
                     }
+                    ++hypercube;
                 }
             }
         }

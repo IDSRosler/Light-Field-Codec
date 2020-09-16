@@ -11,54 +11,10 @@ void EncSymbol::writeCode2Buffer(symbol *sym) {
     uint *bits_to_go = &this->bits_to_go;
     int i;
 
-    if (sym->len < 33) {
-        for (i = 0; i < sym->len; i++) {
-            *byte_buf <<= 1u;
-
-            if (sym->bitpattern & mask)
-                *byte_buf |= 1u;
-
-            mask >>= 1u;
-
-            if ((--(*bits_to_go)) == 0) {
-                *bits_to_go = 8;
-                this->buffer[this->byte_pos++] = *byte_buf;
-                *byte_buf = 0;
-            }
-        }
-    } else { /*se->len >= 33*/
-        // zeros
-        for (i = 0; i < (sym->len - 32); i++) {
-            *byte_buf <<= 1u;
-
-            if ((--(*bits_to_go)) == 0) {
-                *bits_to_go = 8;
-                this->buffer[this->byte_pos++] = *byte_buf;
-                *byte_buf = 0;
-            }
-        }
-        // actual info
-        mask = 1u << 31u;
-        for (i = 0; i < 32; i++) {
-            *byte_buf <<= 1u;
-
-            if (sym->bitpattern & mask)
-                *byte_buf |= 1u;
-
-            mask >>= 1u;
-
-            if ((--(*bits_to_go)) == 0) {
-                *bits_to_go = 8;
-                this->buffer[this->byte_pos++] = *byte_buf;
-                *byte_buf = 0;
-            }
-        }
-    }
-
-    /*for (i = 0; i < sym->len; i++){
+    for (i = 0; i < sym->len; i++){
         *byte_buf <<= 1u;
 
-        if (sym->bitparttern & mask){
+        if (sym->bitpattern & mask){
             *byte_buf |= 1u;
         }
 
@@ -69,7 +25,7 @@ void EncSymbol::writeCode2Buffer(symbol *sym) {
             this->buffer[this->byte_pos++] = *byte_buf;
             *byte_buf = 0;
         }
-    }*/
+    }
 }
 
 void EncSymbol::encodeLast(int last) { // Max value 255 - 8 bits
