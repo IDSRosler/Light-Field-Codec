@@ -84,6 +84,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
 		<Unit filename="/home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.cpp">
 			<Option target="Light_Field_Codec"/>
 		</Unit>

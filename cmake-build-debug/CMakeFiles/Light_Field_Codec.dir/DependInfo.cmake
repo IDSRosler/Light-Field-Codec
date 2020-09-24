@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.cpp" "/home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/ArithmeticEncoder.cpp.o"
   "/home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.cpp" "/home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/CAVLC.cpp.o"
   "/home/igor/Documentos/Git/Light-Field-Codec/src/DpcmDC.cpp" "/home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/DpcmDC.cpp.o"
   "/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.cpp" "/home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamBuffer.cpp.o"

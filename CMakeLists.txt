@@ -38,4 +38,4 @@ add_executable(Light_Field_Codec
         src/Tree.h
         src/Typedef.h
         src/Prediction.cpp
-        src/Prediction.h src/EntropyEncoder.cpp src/EntropyEncoder.h src/EncSymbol.cpp src/EncSymbol.h)
+        src/Prediction.h src/EntropyEncoder.cpp src/EntropyEncoder.h src/EncSymbol.cpp src/EncSymbol.h src/ArithmeticEncoder.cpp src/ArithmeticEncoder.h)

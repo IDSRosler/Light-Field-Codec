@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/Light_Field_Codec.dir/src/ArithmeticEncoder.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/CAVLC.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/DpcmDC.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamBuffer.cpp.o"
