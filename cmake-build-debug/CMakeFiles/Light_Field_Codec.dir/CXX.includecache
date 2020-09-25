@@ -18,10 +18,6 @@ fstream
 iostream
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.cpp
-CAVLC.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.h
 limits.h
 -
@@ -34,31 +30,15 @@ assert.h
 LRE.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/LRE.h
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/DpcmDC.cpp
-cmath
--
-algorithm
--
-DpcmDC.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
 vector
 -
 ostream
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.cpp
-EncBitstreamBuffer.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
 algorithm
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.cpp
-EncBitstreamVLC.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 cstdio
@@ -88,17 +68,9 @@ EncBitstreamBuffer.h
 EncoderParameters.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.cpp
-EncBitstreamWriter.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
 EncBitstreamVLC.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.cpp
-EncSymbol.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
 EncBitstreamBuffer.h
@@ -107,10 +79,6 @@ math.h
 -
 vector
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.cpp
-EncoderParameters.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 string
@@ -130,19 +98,11 @@ ArithmeticEncoder.h
 Tree.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/LRE.cpp
-LRE.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/LRE.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/LRE.h
 iostream
 -
 vector
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.cpp
-LightField.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
 Typedef.h
@@ -160,10 +120,6 @@ cstring
 cassert
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.cpp
-Point4D.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
 zconf.h
 -
@@ -171,10 +127,6 @@ iostream
 -
 iomanip
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.cpp
-Prediction.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
 Typedef.h
@@ -188,12 +140,6 @@ string
 cstring
 -
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.cpp
-Quantization.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
-cmath
--
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
 cmath
 -
@@ -201,12 +147,6 @@ Typedef.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Point4D.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Statistics.cpp
-Statistics.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Statistics.h
-cmath
--
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Statistics.h
 cmath
@@ -230,10 +170,6 @@ Point4D.h
 LRE.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/LRE.h
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/Time.cpp
-Time.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Time.h
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/Time.h
 ctime
 -
@@ -241,12 +177,6 @@ chrono
 -
 iostream
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.cpp
-cassert
--
-Transform.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
 zconf.h
@@ -257,10 +187,6 @@ Point4D.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
 cmath
 -
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.cpp
-Tree.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 vector

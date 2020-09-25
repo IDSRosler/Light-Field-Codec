@@ -25,9 +25,9 @@ typedef struct {
     unsigned long int *cumulative_frequency;
 }Encoder_Probabilistic_Model;
 
-class ArithmeticEncoder : EncSymbol{
+class ArithmeticEncoder{
 public:
-    ArithmeticEncoder(void);
+    ArithmeticEncoder(Byte *buffer, uint *bits_to_go, Byte *byte_buf, uint *byte_pos);
 
     //ARITHMETIC ENCODER
     void Encode_symbol(int symbol, int model);
@@ -52,9 +52,11 @@ private:
     Code_Value low, high;                                       // Ends values in a range of current code-region
     long bits_to_follow;                                        // Number of opposite bits to output after the next bit.
 
-    /*//THE BIT BUFFER
-    Byte buffer;                                                // Bits buffered for output
-    int bits_to_go;                                             // Number of bits still in buffer*/
+    //THE BIT BUFFER
+    Byte *buffer;                                                // Bits buffered for output
+    Byte *byte_buf;
+    uint *bits_to_go;                                             // Number of bits still in buffer
+    uint *byte_pos;
 
     //PROBABILISTIC MODELS
     int number_of_models;
