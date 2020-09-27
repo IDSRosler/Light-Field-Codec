@@ -27,7 +27,7 @@ typedef struct {
 
 class ArithmeticEncoder{
 public:
-    ArithmeticEncoder(Byte *buffer, uint *bits_to_go, Byte *byte_buf, uint *byte_pos);
+    ArithmeticEncoder(Byte &buffer, uint &bits_to_go, Byte &byte_buf, uint &byte_pos);
 
     //ARITHMETIC ENCODER
     void Encode_symbol(int symbol, int model);

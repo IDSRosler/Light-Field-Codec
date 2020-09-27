@@ -19,13 +19,13 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
     this->tree.ComputeLast(last);   // compute last (block level)
     this->encodeLast(last);
 
-    //Todo: Fix last read and the buffer write
+    //Todo: Fix last read
 
     this->tree.ComputeRun(run, last);  // compute run (block level)
     this->encodeRun(run);
     run.clear();
 
-    //this->write_completedBytes();
+    this->write_completedBytes();
 
     this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
 

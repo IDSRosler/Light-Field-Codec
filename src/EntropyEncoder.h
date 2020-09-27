@@ -51,7 +51,7 @@ private:
 
     EncoderParameters *parameters;
 
-    ArithmeticEncoder arith_encoder = ArithmeticEncoder(this->buffer, &this->bits_to_go, &this->byte_buf, &this->byte_pos);
+    ArithmeticEncoder arith_encoder = ArithmeticEncoder(*this->buffer, this->bits_to_go, this->byte_buf, this->byte_pos);
 };
 
 #endif //LIGHT_FIELD_CODEC_ENTROPYENCODER_H

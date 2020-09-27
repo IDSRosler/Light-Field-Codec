@@ -6,15 +6,15 @@
  ****************************************************************************************************************
  */
 
-ArithmeticEncoder :: ArithmeticEncoder(Byte *buffer, uint *bits_to_go, Byte *byte_buf, uint *byte_pos) {
+ArithmeticEncoder :: ArithmeticEncoder(Byte &buffer, uint &bits_to_go, Byte &byte_buf, uint &byte_pos) {
     this->low = 0;
     this->high = Max_Value;
     this->bits_to_follow = 0;
 
-    this->buffer = buffer;
-    this->byte_pos = byte_pos;
-    this->bits_to_go = bits_to_go;
-    this->byte_buf = byte_buf;
+    this->buffer = &buffer;
+    this->byte_pos = &byte_pos;
+    this->bits_to_go = &bits_to_go;
+    this->byte_buf = &byte_buf;
 
     this->number_of_models = 0;
     this->model = nullptr;
@@ -73,24 +73,20 @@ void ArithmeticEncoder :: Bit_plus_follow(int bit) {
 
 // WRITE A BIT IN THE BUFFER
 void ArithmeticEncoder :: Output_bit(int bit) {
-    /*Byte *byte_buf = &this->byte_buf;
-    uint *bits_to_go = &this->bits_to_go;*/
     *this->byte_buf >>= 1;               // Shift a bit to right
     if (bit) *this->byte_buf |= 0x80;    // Put bit in top of buffer
     if ((--(*this->bits_to_go)) == 0){
         *this->bits_to_go = 8;
-        this->buffer[*this->byte_pos++] = *this->byte_buf;
+        this->buffer[(*this->byte_pos)++] = *this->byte_buf;
         *this->byte_buf = 0;
     }
 }
 
 // WRITE THE LAST BITS
 void ArithmeticEncoder :: Done_output_bits() {
-    /*Byte *byte_buf = &this->byte_buf;
-    uint *bits_to_go = &this->bits_to_go;*/
     *this->byte_buf = *this->byte_buf >> *this->bits_to_go;
     *this->bits_to_go = 8;
-    this->buffer[*this->byte_pos++] = *this->byte_buf;
+    this->buffer[(*this->byte_pos)++] = *this->byte_buf;
     *this->byte_buf = 0;
 }
 
@@ -99,9 +95,6 @@ void ArithmeticEncoder :: Reset() {
     this->low = 0;
     this->high = Max_Value;
     this->bits_to_follow = 0;
-
-    /*this->buffer = 0;
-    this->bits_to_go = 8;*/
 
     for (int i = 0; i < this->number_of_models; ++i) {
         if (this->model[i].cumulative_frequency != nullptr) free(this->model[i].cumulative_frequency);
