@@ -19,15 +19,14 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
     this->tree.ComputeLast(last);   // compute last (block level)
     this->encodeLast(last);
 
-    //Todo: Fix last read
-
     this->tree.ComputeRun(run, last);  // compute run (block level)
     this->encodeRun(run);
-    run.clear();
+    //run.clear();
 
     this->write_completedBytes();
 
-    this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
+    this->tree.ComputeSyntacticElements(lfbpu_elements, run ,last);  // compute syntactic elements (coefficients level)
+    run.clear();
 
     this->EncodeSyntacticElements(lfbpu_elements);
 
@@ -69,8 +68,9 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
             this->arith_encoder.Encode_symbol(sign, sign_model);
         }
         this->arith_encoder.Done_encoding();
-
-        //Todo: encode rem here
+        for (auto rem : lfbpu[i].rem){ // encode rem
+            this->encodeRem(rem);
+        }
     }
 }
 

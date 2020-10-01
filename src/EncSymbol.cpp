@@ -44,6 +44,10 @@ void EncSymbol::encodeRun(std::vector<int> run) {
     }
 }
 
+void EncSymbol::encodeRem(int rem) {
+    this->expGolombEncode_ui(rem);
+}
+
 int EncSymbol::expGolombEncode_ui(int value) {
     int m = 0, inf = 0;
     symbol sym{};

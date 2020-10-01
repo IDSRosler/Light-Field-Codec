@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
 #endif
 
     EntropyEncoder encoder(&encoderParameters, 10000000);
+    //EncBitstreamWriter encoder(&encoderParameters, 10000000);
 
 #if STATISTICS_LOCAL
     //    Statistics statistics_tf(encoderParameters.getPathOutput() + "localStatistics_transform.csv");
@@ -233,6 +234,7 @@ int main(int argc, char **argv) {
 #if ENTROPY_ENCODER
                         encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
+
                         /*if (hypercube == 1){
                             exit(1);
                         }*/
@@ -351,6 +353,7 @@ int main(int argc, char **argv) {
 
     //lf.write(encoderParameters.getPathOutput());
     encoder.finish_and_write();
+    //encoder.~EncBitstreamWriter();
 
 #if STATISTICS_TIME
     total_time.toc();

@@ -18,6 +18,7 @@ public:
 
     void encodeLast(int last);
     void encodeRun(std::vector<int> run);
+    void encodeRem(int rem);
 
     int writeSyntaxElement(int info, int len);
     ~EncSymbol();

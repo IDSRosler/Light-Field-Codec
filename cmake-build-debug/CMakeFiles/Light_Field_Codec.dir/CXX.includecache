@@ -6,47 +6,11 @@
 
 #IncludeRegexTransform: 
 
-/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.cpp
-ArithmeticEncoder.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.h
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.h
-EncSymbol.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
-fstream
--
-iostream
--
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
-algorithm
--
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
-EncBitstreamBuffer.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
-math.h
--
-vector
--
-
 /home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 string
 -
 Point4D.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.cpp
-EntropyEncoder.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h
-
-/home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h
-EncSymbol.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
-ArithmeticEncoder.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.h
-Tree.h
-/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Point4D.h
 zconf.h
@@ -55,6 +19,10 @@ iostream
 -
 iomanip
 -
+
+/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.cpp
+Tree.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Tree.h
 vector

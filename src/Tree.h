@@ -26,6 +26,7 @@ struct SyntacticElements {
 
     void reset() {
         this->last = -1;
+        this->sig.clear();
         this->gr_one.clear();
         this->gr_two.clear();
         this->sign.clear();
@@ -112,7 +113,7 @@ public:
 
     void ComputeLast(int &last);
     void ComputeRun(vector<int> &v_run, int last);
-    void ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last);
+    void ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, vector<int> run, int last);
 
     void CreateTree(Node * root, const Point4D &pos, Point_4D middle_before);
     void DeleteTree(Node** node_ref);
