@@ -25,7 +25,7 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
 
     this->write_completedBytes();
 
-    this->tree.ComputeSyntacticElements(lfbpu_elements, run ,last);  // compute syntactic elements (coefficients level)
+    this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
     run.clear();
 
     this->EncodeSyntacticElements(lfbpu_elements);
@@ -54,22 +54,24 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
     this->arith_encoder.Print_model(sign_model);*/
 
     for (int i = 0; i < lfbpu.size(); ++i) {
-        this->encodeLast(lfbpu[i].last); // encode last
-        for (auto sig: lfbpu[i].sig){ // encode sig
-            this->arith_encoder.Encode_symbol(sig, sig_model);
-        }
-        for (auto gr_one : lfbpu[i].gr_one){ // encode gr_one
-            this->arith_encoder.Encode_symbol(gr_one, gr_one_model);
-        }
-        for (auto gr_two : lfbpu[i].gr_two){ // encode gr_two
-            this->arith_encoder.Encode_symbol(gr_two, gr_two_model);
-        }
-        for (auto sign : lfbpu[i].sign){ // encode sign
-            this->arith_encoder.Encode_symbol(sign, sign_model);
-        }
-        this->arith_encoder.Done_encoding();
-        for (auto rem : lfbpu[i].rem){ // encode rem
-            this->encodeRem(rem);
+        if (lfbpu[i].last != -1){
+            this->encodeLast(lfbpu[i].last); // encode last
+            for (auto sig: lfbpu[i].sig){ // encode sig
+                this->arith_encoder.Encode_symbol(sig, sig_model);
+            }
+            for (auto gr_one : lfbpu[i].gr_one){ // encode gr_one
+                this->arith_encoder.Encode_symbol(gr_one, gr_one_model);
+            }
+            for (auto gr_two : lfbpu[i].gr_two){ // encode gr_two
+                this->arith_encoder.Encode_symbol(gr_two, gr_two_model);
+            }
+            for (auto sign : lfbpu[i].sign){ // encode sign
+                this->arith_encoder.Encode_symbol(sign, sign_model);
+            }
+            this->arith_encoder.Done_encoding();
+            for (auto rem : lfbpu[i].rem){ // encode rem
+                this->encodeRem(rem);
+            }
         }
     }
 }

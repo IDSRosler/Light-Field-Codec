@@ -169,13 +169,13 @@ void Tree::ComputeRun(vector<int> &v_run, int last) {
     }
 }
 
-void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, vector<int> run, int last) {
-    int j, r = 0;
+void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last) {
+    int j;
     vector<int> v_coefficients;
     SyntacticElements elem;
     elem.reset();
     //Todo: Look the index
-    for (int i = last; i > 0; i -= (run[r] + 1)) {
+    for (int i = last; i >= 0; --i) {
         this->LFBPUToVector(v_coefficients, i);
         for (j = v_coefficients.size() - 1; j >= 0; --j) { // compute last (coefficient level)
             if (v_coefficients[j] != 0) {
@@ -219,7 +219,6 @@ void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, v
         v_coefficients.clear();
         lfbpu_elements.push_back(elem);
         elem.reset();
-        r++;
     }
 }
 
