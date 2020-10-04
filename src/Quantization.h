@@ -21,7 +21,7 @@ public:
 
   Quantization() = default;
 
-  Quantization(const Point4D &dimBlock, const EncoderParameters codec_parameters);
+  Quantization(const Point4D &dimBlock, const EncoderParameters& codec_parameters);
 
   virtual ~Quantization();
 

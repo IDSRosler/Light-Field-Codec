@@ -19,6 +19,9 @@
 #include <iostream>
 #include <functional>
 #include <numeric>
+#include "Timer.h"
+
+
 
 class Transform {
 public:
@@ -46,6 +49,20 @@ public:
 
     EncoderParameters codec_parameters;
     bool disable_segmentation = false;
+
+    Timer m_timer_substr;
+    Timer m_timer_md_forward_fast;
+    Timer m_timer_md_inverse_fast;
+    Timer m_timer_split;
+    Timer m_timer_unique_ptr_alloc;
+    Timer m_timer_stack_copy;
+    Timer m_timer_rd_cost;
+    Timer m_timer_cache_copy_overhead;
+    char m_encoding_type;
+    std::uint64_t m_forward_count_n2 = 0;
+    std::uint64_t m_inverse_count_n2 = 0;
+    std::uint64_t m_forward_count_nlogn = 0;
+    std::uint64_t m_inverse_count_nlogn = 0;
 
     static void flush_cache();
 
@@ -137,6 +154,8 @@ private:
             const float *block,
             float *result,
             std::deque<std::pair<Point4D, Point4D>> stack);
+
+    void forward_deep_search(const std::string& tree_repr, const float *block, float *result, const Point4D& shape, const Point4D& stride);
 
     void calculate_rd_cost(const float *block, const std::string& descriptor);
 

@@ -10,13 +10,16 @@
 #include <iomanip>
 #include <fstream>
 
+
+
+
 #define FOREACH_4D_IDX(idx, shape, stride)                                               \
     for (std::remove_const<decltype(shape.v)>::type v = 0; v < shape.v; v++)             \
         for (std::remove_const<decltype(shape.u)>::type u = 0; u < shape.u; u++)         \
             for (std::remove_const<decltype(shape.y)>::type y = 0; y < shape.y; y++)     \
                 for (std::remove_const<decltype(shape.x)>::type x = 0; x < shape.x; x++) \
                     for (int _once = 1, idx = calc_offset(x, y, u, v, stride); _once; _once--)
-
+/*
 #define FOREACH_4D(ptr, start_ptr, shape, stride)                                 \
     for (int v = 0; v < shape.v; v++)                                             \
         for (int u = 0; u < shape.u; u++)                                         \
@@ -26,7 +29,7 @@
                          ({ptr = start_ptr + _index;_once });                     \
                          _once--)
 
-
+*/
 struct PartitionDescriptor
 {
     Point4D offset;
@@ -76,7 +79,8 @@ auto make_shapes(const std::vector<size_type> &from_shape,
                  const std::vector<size_type> &base_shape);
 template <typename size_type>
 auto make_shapes(const std::vector<size_type> &from_shape, int levels);
-inline int calc_offset(int x, int y, int u, int v, const Point4D &stride);
+
+inline int calc_offset(Point4D::value_type x, Point4D::value_type y, Point4D::value_type u, Point4D::value_type v, const Point4D &stride);
 inline int calc_offset(const Point4D &point, const Point4D &stride);
 template <typename T, typename size_type>
 void segment_block(const T *from_block,
@@ -108,6 +112,18 @@ std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t t
 std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index);
 std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(char type, const Point4D& _offset, const Point4D& _shape, bool unsafe = false);
 bool is_valid_descriptor(const std::string& descriptor);
+
+template <typename Iter, typename Func>
+void for_each_4d(const Iter *block, const Point4D& shape, const Point4D& stride, Func f) {
+    for (Point4D::value_type v = 0; v < shape.v; v++)
+        for (Point4D::value_type u = 0; u < shape.u; u++)
+            for (Point4D::value_type y = 0; y < shape.y; y++)
+                for (Point4D::value_type x = 0; x < shape.x; x++)
+                {
+                    auto offset = calc_offset(x, y, u, v, stride);
+                    f(block[offset]);
+                }
+}
 
 template <typename T>
 inline Point4D make_stride(T shape)
@@ -187,7 +203,8 @@ auto make_shapes(const std::vector<size_type> &from_shape, int levels)
     return shapes;
 }
 
-inline int calc_offset(int x, int y, int u, int v, const Point4D &stride)
+
+inline int calc_offset(Point4D::value_type x, Point4D::value_type y, Point4D::value_type u, Point4D::value_type v, const Point4D &stride)
 {
     return x * stride.x + y * stride.y + u * stride.u + v * stride.v;
 }

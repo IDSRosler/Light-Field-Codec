@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <cmath>
 
-Quantization::Quantization(const Point4D &dimBlock, const EncoderParameters codec_parameters) :
+Quantization::Quantization(const Point4D &dimBlock, const EncoderParameters& codec_parameters) :
     dim_block(dimBlock) {
   qp = codec_parameters.getQp();
   weight_100 = codec_parameters.quant_weight_100;

@@ -4,13 +4,12 @@
 
 LRE::LRE(bool is15x15x15x15) {
   Point4D shape, stride;
-
-
   if (is15x15x15x15)
     shape.set(15, 15, 15, 15);
   else
     shape.set(15, 15, 13, 13);
   shape.updateNSamples();
+  stride = make_stride(shape);
   // switch(EncoderParameters::parameters.scan_order)
   // {
   //   case EncoderParameters::Z_ORDER_CURVE:
@@ -26,6 +25,11 @@ LRE::LRE(bool is15x15x15x15) {
   scan_order = generate_scan_order(shape, stride);
 }
 
+
+LRE::LRE(const Point4D &shape) {
+    Point4D stride = make_stride(shape);
+    scan_order = generate_scan_order(shape, stride);
+}
 
 LRE::LRE(const LRE &orig) {
 }
@@ -120,4 +124,5 @@ int LRE::countZeroBefore(const int *v, std::size_t pos, std::size_t end, std::ve
 std::vector<index_t> LRE::getScanOrder() const {
     return this->scan_order;
 }
+
 

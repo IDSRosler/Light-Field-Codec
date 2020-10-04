@@ -16,7 +16,7 @@ class LRE {
 public:
     LRE() = default;
     LRE(bool is15x15x15x15);
-
+    LRE(const Point4D& shape);
     LRE(const LRE &orig);
 
     virtual ~LRE();
