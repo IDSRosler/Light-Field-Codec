@@ -36,9 +36,7 @@ Transform::Transform(Point4D &shape) {
             tree_repr_vector.push_back(tree->repr());
         }
     }
-//    std::unordered_set s(tree_repr_vector.begin(), tree_repr_vector.end());
-//    assert(s.size() == tree_repr_vector.size());
-//    exit(EXIT_SUCCESS);
+
 }
 
 Transform::Transform(EncoderParameters &params) : Transform(params.dim_block) {
@@ -356,32 +354,27 @@ void Transform::set_position(int _channel, const Point4D &current_pos) {
 
 std::pair<std::string, double> Transform::forward(const float *block, float *result, const Point4D &_shape) {
     float *tf_block = m_temp_tf_block.get();
-    double min_rd_cost = std::numeric_limits<double>::infinity();
-    std::string min_descriptor;
+    m_min_rd_cost = std::numeric_limits<double>::infinity();
     for (const auto &tree_repr : tree_repr_vector) {
-        m_min_rd_cost = std::numeric_limits<double>::infinity();
+
         std::deque<std::pair<Point4D, Point4D>> stack;
         stack.push_front(std::make_pair(_shape, Point4D(0, 0, 0, 0)));
         forward_fast(tree_repr, 0, block, tf_block, stack);
-#if true
-        std::cout << "[log] Pos(x=" << position.x << ","
-                               "y=" << position.y << ","
-                               "u=" << position.u << ","
-                               "v=" << position.v << ","
-                               "ch=" << channel << ") "
-                        "Descriptor(tree=" << tree_repr <<", "
-                                   "desc=" << m_min_descriptor << m_encoding_type << ", "
-                                   "rd_cost=" << m_min_rd_cost << ")\n";
-        std::cout.flush();
-#endif
-        if (m_min_rd_cost < min_rd_cost) {
-            min_rd_cost = m_min_rd_cost;
-            min_descriptor = m_min_descriptor;
-        }
+//#if true
+//        std::cout << "[log] Pos(x=" << position.x << ","
+//                               "y=" << position.y << ","
+//                               "u=" << position.u << ","
+//                               "v=" << position.v << ","
+//                               "ch=" << channel << ") "
+//                        "Descriptor(tree=" << tree_repr <<", "
+//                                   "desc=" << m_min_descriptor << m_encoding_type << ", "
+//                                   "rd_cost=" << m_min_rd_cost << ")\n";
+//        std::cout.flush();
+//#endif
     }
 
-    forward(min_descriptor, block, result, _shape);
-    return std::make_pair(m_min_descriptor, min_rd_cost);
+    forward(m_min_descriptor, block, result, _shape);
+    return std::make_pair(m_min_descriptor, m_min_rd_cost);
 }
 /***/
 void Transform::calculate_rd_cost(const float *block, const std::string &descriptor) {
