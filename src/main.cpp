@@ -54,18 +54,6 @@ int main(int argc, char **argv) {
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-    //float origBlock[3][encoderParameters.dim_block.getNSamples()],
-    //        predictedBlock[3][encoderParameters.dim_block.getNSamples()];
-    float *origBlock[3], *predictedBlock[3], *referenceBlock[3], *origBlockRGB[3], *predictedBlockRGB[3], *referenceBlockRGB[3];
-    for(int i = 0; i <3; ++i) {
-        origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        predictedBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        referenceBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
-        predictedBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
-        referenceBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
-    }
-
     //EDUARDO END
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
@@ -190,34 +178,10 @@ int main(int argc, char **argv) {
                         t.tic();
 #endif
                         //EDUARDO BEGIN
-
-                        //newPredictor[it_channel].get_referenceL(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
-                        //newPredictor[it_channel].get_referenceA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
-                        //newPredictor[it_channel].get_referenceLA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
-                        //newPredictor[it_channel].predictRef(orig4D, ref4D, encoderParameters.dim_block, pf4D);
-
-                        //newPredictor[it_channel].angularPredictRefVerticalMI(orig4D, ref4D, encoderParameters.dim_block, pf4D);
-                        //newPredictor[it_channel].angularPredictRefHorizontalMI(orig4D, ref4D, encoderParameters.dim_block, pf4D);
-
-                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
+                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, block, ref4D);
                         newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
-                        //float sad;
-                        //sad = newPredictor[it_channel].sadVertical(orig4D, pf4D, encoderParameters.dim_block);
-                        //sad = newPredictor[it_channel].sadHorizontal(orig4D, pf4D, encoderParameters.dim_block);
-
-                        /*
-                        float sse;
-                        sse = newPredictor[it_channel].sseVertical(orig4D, pf4D, encoderParameters.dim_block);
-                        cout << "\nSSE: " << sse;
-                        */
-
-                        //predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
-
                         newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
-
                         transform.dct_4d(res4D, tf4D, dimBlock, encoderParameters.dim_block);
-
-                        //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
                         //EDUARDO END
 
 
@@ -337,13 +301,7 @@ int main(int argc, char **argv) {
 
                         transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
                         //EDUARDO BEGIN
-
-                        //predictor.rec(ti4D, pi4D, dimBlock);
-                        //newPredictor->recRef(ti4D, dimBlock, pi4D);
-
                         newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
-                        //newPredictor->recResiduePred(res4D, pf4D, encoderParameters.dim_block, pi4D); //pular trans quant
-
                         //EDUARDO END
 
 #if STATISTICS_TIME
@@ -358,14 +316,7 @@ int main(int argc, char **argv) {
                         rebuild.tic();
 #endif
                         //EDUARDO BEGIN
-
-                        //lf.rebuild(orig4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
-                        //lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
-
-                        //lf.rebuild(pf4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);//ppm predição
                         lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);//ppm reconstruído
-                        //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);//ppm resíduo
-
                         //EDUARDO END
 
 #if STATISTICS_TIME
@@ -392,40 +343,9 @@ int main(int argc, char **argv) {
 
                         //EDUARDO BEGIN
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
-
-                        if (block == 80) {
-                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                                origBlock[it_channel][i] = orig4D[i];
-                                predictedBlock[it_channel][i] = pf4D[i];
-                                referenceBlock[it_channel][i] = ref4D[i];
-                            }
-                        }
-
                         //EDUARDO END
                         encoder.write_completedBytes();
                     }
-
-                    //EDUARDO BEGIN
-
-                    if (block == 80) {
-                        newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
-                        newPredictor->YCbCR2RGB(predictedBlock, encoderParameters.dim_block, predictedBlockRGB,
-                                                lf.mPGMScale);
-                        newPredictor->YCbCR2RGB(referenceBlock, encoderParameters.dim_block, referenceBlockRGB,
-                                                lf.mPGMScale);
-
-                        newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
-                                            lf.start_s,
-                                            encoderParameters.getPathOutput() + "orig_" + std::to_string(block));
-                        newPredictor->write(predictedBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
-                                            lf.start_s,
-                                            encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
-                        newPredictor->write(referenceBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
-                                            lf.start_s,
-                                            encoderParameters.getPathOutput() + "ref_" + std::to_string(block));
-                    }
-
-                    //EDUARDO END
                 }
             }
         }

@@ -1,6 +1,7 @@
 #include "Prediction.h"
 //EDUARDO BEGIN
 #include <math.h>
+#include <iostream>
 //EDUARDO END
 
 //idm bibliotecas pra escrita do arquivo CSV
@@ -84,6 +85,20 @@ void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origS
 
 void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &origSize) {
     ValueBlockPred ref = *this->pred_references.begin(); // left above
+    int numElements = origSize.getNSamples();
+    if (y == 0) ref.available = false;
+    if (x == 0) ref.available = false;
+    if(ref.available){
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = ref.block4D[i];
+    }else{
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = 0;
+    }
+}
+
+void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize) {
+    ValueBlockPred ref = *(this->pred_references.begin() + 2); // above right
     int numElements = origSize.getNSamples();
     if (y == 0) ref.available = false;
     if (x == 0) ref.available = false;
@@ -428,6 +443,39 @@ float Prediction::sseHorizontal(const float *orig_input, const float *prediction
     return sum;
 }
 
+/*
+float Prediction::sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+
+    // Horizontal
+    it_pos.x = 0;
+    it_pos.u = 0;
+    it_pos.y = 0;
+    it_pos.v = 0;
+
+    float sum = 0;
+    int pos = 0;
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+
+            // percorre vetor out na ordem horizontal angular
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
+                }
+            }
+        }
+    }
+
+    return sum;
+}
+ */
+
 float Prediction::sseVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     Point4D it_pos;
 
@@ -453,6 +501,36 @@ float Prediction::sseVertical(const float *orig_input, const float *prediction_i
     }
     return sum;
 }
+
+/*
+float Prediction::sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+
+    it_pos.x = 0;
+    it_pos.u = 0;
+    it_pos.y = 0;
+    it_pos.v = 0;
+
+    float sum = 0;
+    int pos = 0;
+
+    // percorre vetor out na ordem vertical espacial
+    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+
+            // percorre vetor out na ordem vertical angular
+            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+                for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
+                }
+            }
+        }
+    }
+    return sum;
+}
+ */
 
 void Prediction::angularPredictRefHorizontalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out ){
     Point4D it_pos_in;
@@ -544,7 +622,65 @@ float Prediction::sad(const float *orig_input, const float *prediction_input, co
     return sum;
 }*/
 
-void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
+
+void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out ){
+    Point4D it_pos_out;
+    Point4D it_pos_in;
+    it_pos_out.x = origSize.x - 1;
+    it_pos_out.y = 0;
+    it_pos_out.u = 0;
+    it_pos_out.v = 0;
+
+    int cont = 0, cont2 = origSize.y * origSize.u * origSize.v; //13*13*15 = 2535 
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+        // percorre vetor out na ordem horizontal angular
+        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                int pos_out =
+                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+                out[cont] = blockRef1[pos_out];
+                out[cont2] = blockRef2[pos_out];
+                cont++;
+                cont2++;
+            }
+        }
+    }
+}
+
+void Prediction::generateReferenceVectorVertical(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out ){
+    Point4D it_pos_out;
+    Point4D it_pos_in;
+    it_pos_out.x = 0;
+    it_pos_out.y = origSize.y - 1; //fixed
+    it_pos_out.u = 0;
+    it_pos_out.v = 0;
+
+    int cont = 0, cont2 = origSize.x * origSize.u * origSize.v; //15*13*13 = 2535
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+        // percorre vetor out na ordem horizontal angular
+        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                int pos_out =
+                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+                out[cont] = blockRef1[pos_out];
+                out[cont2] = blockRef2[pos_out];
+                cont++;
+                cont2++;
+            }
+        }
+    }
+}
+
+// 29/09 EDUARDO
+void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref){
     Point4D it_pos_in;
     Point4D it_pos_out;
 
@@ -559,6 +695,468 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
     it_pos_out.y = 0;
 
     // Horizontal modo 10 - H0
+    int num_modes = 1; //33
+    int d = 0;
+    int C = 0;
+    int ind = 0;
+    int W = 0;
+    float R0 = 0;
+    float R1 = 0;
+    float min_sse = 0;
+    float min_mode = 0;
+    int min_d = 0;
+
+    float refAbove4D[origSize.getNSamples()],
+            refLeft4D[origSize.getNSamples()],
+            refAboveRight4D[origSize.getNSamples()];
+
+    float refAboveGeneratedVector[(origSize.y * origSize.u * origSize.v)*2];
+
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize);
+
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        refAbove4D[i] = orig_input[i];
+    }
+
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        refAboveRight4D[i] = orig_input[i];
+    }
+
+    Point4D it_p_out;
+    Point4D it_p_in;
+    it_p_out.x = 0;
+    it_p_out.y = origSize.y - 1; //fixed
+    it_p_out.u = 0;
+    it_p_out.v = 0;
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_p_out.x = 0; it_p_out.x < origSize.x; it_p_out.x += 1) {
+        // percorre vetor out na ordem horizontal angular
+        for (it_p_out.v = 0; it_p_out.v < origSize.v; it_p_out.v += 1) {
+            for (it_p_out.u = 0; it_p_out.u < origSize.u; it_p_out.u += 1) {
+
+                int pos_out =
+                        (it_p_out.x) + (it_p_out.y * origSize.x) + (it_p_out.u * origSize.x * origSize.y)
+                        + (it_p_out.v * origSize.x * origSize.y * origSize.u);
+                std::cout << refAboveRight4D[pos_out] << " ";
+            }
+        }
+    }
+
+    std::cout << "above" << std::endl;
+
+    it_p_out.x = 0;
+    it_p_out.y = origSize.y - 1; //fixed
+    it_p_out.u = 0;
+    it_p_out.v = 0;
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_p_out.x = 0; it_p_out.x < origSize.x; it_p_out.x += 1) {
+        // percorre vetor out na ordem horizontal angular
+        for (it_p_out.v = 0; it_p_out.v < origSize.v; it_p_out.v += 1) {
+            for (it_p_out.u = 0; it_p_out.u < origSize.u; it_p_out.u += 1) {
+
+                int pos_out =
+                        (it_p_out.x) + (it_p_out.y * origSize.x) + (it_p_out.u * origSize.x * origSize.y)
+                        + (it_p_out.v * origSize.x * origSize.y * origSize.u);
+                std::cout << refAbove4D[pos_out] << " ";
+            }
+        }
+    }
+
+    this->generateReferenceVectorVertical(refAbove4D, refAboveRight4D, origSize, refAboveGeneratedVector);
+
+    std::cout << "generated" << std::endl;
+
+    for(int i = 0; i < (origSize.y * origSize.u * origSize.v)*2; i++){
+        std::cout << refAboveGeneratedVector[i] << " ";
+    }
+
+    /*
+    int refL = 0;
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        refL += refLeft4D[i];
+    }
+
+    int refA = 0;
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        refA += refAbove4D[i];
+    }
+
+    if(refA == 0 && refL == 0){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            out[i] = orig_input[i];
+        }
+    } else{ //se tem bloco de referência
+    */
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        refLeft4D[i] = orig_input[i];
+        //refAbove4D[i] = orig_input[i];
+    }
+    int refL = 0;
+    int refA = 10;
+
+    for(int mode = 0; mode < num_modes; mode++) { //num_modes
+        switch (mode)
+        {
+            case 0:
+            case 32:
+                d = 32;
+                break;
+            case 1:
+            case 31:
+                d = 26;
+                break;
+            case 2:
+            case 30:
+                d = 21;
+                break;
+            case 3:
+            case 29:
+                d = 17;
+                break;
+            case 4:
+            case 28:
+                d = 13;
+                break;
+            case 5:
+            case 27:
+                d = 9;
+                break;
+            case 6:
+            case 26:
+                d = 5;
+                break;
+            case 7:
+            case 25:
+                d = 2;
+                break;
+            case 8:
+            case 24:
+                d = 0;
+                break;
+            case 9:
+            case 23:
+                d = -2;
+                break;
+            case 10:
+            case 22:
+                d = -5;
+                break;
+            case 11:
+            case 21:
+                d = -9;
+                break;
+            case 12:
+            case 20:
+                d = -13;
+                break;
+            case 13:
+            case 19:
+                d = -17;
+                break;
+            case 14:
+            case 18:
+                d = -21;
+                break;
+            case 15:
+            case 17:
+                d = -26;
+                break;
+            case 16:
+                d = -32;
+                break;
+            default:
+                d = 0;
+        }
+
+        if(mode <= 15 && refL != 0) { //Horizontal
+
+            // Horizontal - fixed
+            it_pos_in.x = origSize.x - 1;
+            it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
+
+            // Vertical - variable
+            it_pos_in.v = 0;
+            it_pos_in.y = 0;
+
+            // percorre vetor out na ordem horizontal espacial
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+                for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+
+                    // percorre vetor out na ordem horizontal angular
+                    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) +
+                                          (it_pos_out.u * origSize.x * origSize.y)
+                                          + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                            //C = (it_pos_out.u * d) >> 5;
+                            C = (int)this->roundTowardsZero((int)(it_pos_out.u * d) / (float)pow(2, 5));
+                            W = (it_pos_out.u * d) & 31;
+                            ind = it_pos_out.v + C;
+
+                            if(ind < 0){
+                                ind = 0;
+                            }
+
+                            int pos = ind + 1;
+                            if (pos >= origSize.v) {
+                                pos = ind;
+                            }
+                            R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                           (ind * origSize.x * origSize.y * origSize.u)];
+                            R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                           ((pos) * origSize.x * origSize.y * origSize.u)];
+
+                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                        }
+                    }
+                }
+            }
+            int sse = this->sseHorizontal(orig_input, out, origSize);
+            if(mode == 0){
+                min_sse = sse;
+                min_mode = mode;
+                min_d = d;
+            } else if (sse < min_sse) {
+                min_sse = sse;
+                min_mode = mode;
+                min_d = d;
+            }
+
+        } else if(mode > 15 && refA != 0){ //Vertical
+
+            // Horizontal - variable
+            it_pos_in.x = 0;
+            it_pos_in.u = 0;
+
+            // Vertical - fixed
+            it_pos_in.y = (origSize.y - 1) * origSize.x;
+            it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
+
+            // percorre vetor out na ordem vertical espacial
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+                for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+
+                    // percorre vetor out na ordem vertical angular
+                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+                        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+
+                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                          + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                            //C = (it_pos_out.v * d) >> 5;
+                            C = (int)this->roundTowardsZero((int)(it_pos_out.v * d) / (float)pow(2, 5));
+                            W = (it_pos_out.v * d) & 31;
+                            ind = it_pos_out.u + C;
+
+                            if(ind < 0){
+                                ind = 0;
+                            }
+
+                            int pos = ind + 1;
+                            if (pos >= origSize.v){
+                                pos = ind;
+                            }
+                            R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
+                                            (it_pos_in.v)];
+                            R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                                            (it_pos_in.v)];
+
+                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                        }
+                    }
+                }
+            }
+            int sse = this->sseVertical(orig_input, out, origSize);
+            if(mode == 16 && refL == 0){ //primeiro e não passou pelo horizontal
+                min_sse = sse;
+                min_mode = mode;
+                min_d = d;
+            } else if (sse < min_sse) {
+                min_sse = sse;
+                min_mode = mode;
+                min_d = d;
+            }
+
+        }
+    }
+
+    if(block == 0){
+        std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
+    }
+
+    min_mode = 16; //fix vertical mode
+    min_d = 0; //fix d
+
+    if(min_mode <= 15 ){ //Horizontal
+
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            ref[i] = refLeft4D[i];
+        }
+
+        // Horizontal - fixed
+        it_pos_in.x = origSize.x - 1;
+        it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
+
+        // Vertical - variable
+        it_pos_in.v = 0;
+        it_pos_in.y = 0;
+
+        // percorre vetor out na ordem horizontal espacial
+        for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+
+                // percorre vetor out na ordem horizontal angular
+                for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                        int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                      + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+
+                            out[pos_out] = refLeft4D[pos_out];
+
+                        } else {
+
+                            C = (int) this->roundTowardsZero((int) (it_pos_out.u * min_d) / (float) pow(2, 5));
+                            W = (it_pos_out.u * min_d) & 31;
+                            ind = it_pos_out.v + C;
+
+                            if (ind < 0) {
+                                ind = 0;
+                            }
+
+                            if(ind > origSize.v-1){
+                                ind = origSize.v-1;
+                            }
+
+                            int pos = ind + 1;
+                            if (pos >= origSize.v-1) {
+                                pos = ind;
+                            }
+
+                            if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                || (ind == 1 && it_pos_out.u <= 1)
+                                || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+                               ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                || (pos == 1 && it_pos_out.u <= 1)
+                                || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+
+                                out[pos_out] = refLeft4D[pos_out];
+                            } else{
+
+                                R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                               (ind * origSize.x * origSize.y * origSize.u)];
+                                R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                               ((pos) * origSize.x * origSize.y * origSize.u)];
+
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else{ //Vertical
+
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            ref[i] = refAbove4D[i];
+        }
+
+        // Horizontal - variable
+        it_pos_in.x = 0;
+        it_pos_in.u = 0;
+
+        // Vertical - fixed
+        it_pos_in.y = (origSize.y - 1) * origSize.x;
+        it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
+
+        // percorre vetor out na ordem vertical espacial
+        for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+
+                // percorre vetor out na ordem vertical angular
+                for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+                    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+
+                        int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                      + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+
+                            out[pos_out] = refAbove4D[pos_out];
+
+                        } else {
+
+                            C = (int) this->roundTowardsZero((int) (it_pos_out.v * min_d) / (float) pow(2, 5));
+                            W = (it_pos_out.v * min_d) & 31;
+                            ind = it_pos_out.u + C;
+                            int pos = ind + 1;
+
+                            if (ind < 0) {
+                                ind = 0;
+                            }
+
+                            //if (pos >= origSize.v) {
+                            //    pos = ind;
+                            //}
+                            if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                || (ind == 1 && it_pos_out.u <= 1)
+                                || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+                               ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                || (pos == 1 && it_pos_out.u <= 1)
+                                || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+
+                                out[pos_out] = refLeft4D[pos_out];
+                            } else {
+
+                                R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
+                                                             (it_pos_out.v * origSize.x * origSize.u)];
+                                R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
+                                                             (it_pos_out.v * origSize.x * origSize.u)];
+
+                                /*
+                                R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
+                                                (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+                                R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                                                (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+                                */
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    //}
+}
+
+
+void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref){
+    Point4D it_pos_in;
+    Point4D it_pos_out;
+
+    it_pos_in.x = 0;
+    it_pos_in.u = 0;
+    it_pos_in.v = 0;
+    it_pos_in.y = 0;
+
+    it_pos_out.x = 0;
+    it_pos_out.u = 0;
+    it_pos_out.v = 0;
+    it_pos_out.y = 0;
+
     int num_modes = 33;
     int d = 0;
     int C = 0;
@@ -568,13 +1166,14 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
     float R1 = 0;
     float min_sse = 0;
     float min_mode = 0;
-    int mode = 0;
+    int min_d = 0;
 
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()];
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize);
+
 
     int refL = 0;
     for(int i = 0; i < origSize.getNSamples(); i++){
@@ -592,7 +1191,7 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
         }
     } else{ //se tem bloco de referência
 
-        for(mode = 0; mode < num_modes; mode++) {
+        for(int mode = 0; mode < num_modes; mode++) { //num_modes
             switch (mode)
             {
                 case 0:
@@ -714,10 +1313,12 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
                 int sse = this->sseHorizontal(orig_input, out, origSize);
                 if(mode == 0){
                     min_sse = sse;
-                    min_mode = mode + 1;
+                    min_mode = mode;
+                    min_d = d;
                 } else if (sse < min_sse) {
                     min_sse = sse;
-                    min_mode = mode + 1;
+                    min_mode = mode;
+                    min_d = d;
                 }
 
             } else if(mode > 15 && refA != 0){ //Vertical
@@ -769,18 +1370,25 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
 
 
                 int sse = this->sseVertical(orig_input, out, origSize);
-                if(mode == 0){
+                if(mode == 16 && refL == 0){ //primeiro e não passou pelo horizontal
                     min_sse = sse;
-                    min_mode = mode + 1;
+                    min_mode = mode;
+                    min_d = d;
                 } else if (sse < min_sse) {
                     min_sse = sse;
-                    min_mode = mode + 1;
+                    min_mode = mode;
+                    min_d = d;
                 }
-
             }
         }
 
-        if(min_mode - 1 <= 15 ){ //Horizontal
+        //std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
+
+        if(min_mode <= 15 ){ //Horizontal
+
+            for(int i = 0; i < origSize.getNSamples(); i++){
+                ref[i] = refLeft4D[i];
+            }
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
@@ -801,30 +1409,59 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            //C = (it_pos_out.u * d) >> 5;
-                            C = (int)this->roundTowardsZero((int)(it_pos_out.u * d) / (float)pow(2, 5));
-                            W = (it_pos_out.u * d) & 31;
-                            ind = it_pos_out.v + C;
+                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
 
-                            if(ind < 0){
-                                ind = 0;
+                                out[pos_out] = refLeft4D[pos_out];
+
+                            } else {
+
+                                C = (int) this->roundTowardsZero((int) (it_pos_out.u * min_d) / (float) pow(2, 5));
+                                W = (it_pos_out.u * min_d) & 31;
+                                ind = it_pos_out.v + C;
+
+                                if (ind < 0) {
+                                    ind = 0;
+                                }
+
+                                if(ind > origSize.v-1){
+                                    ind = origSize.v-1;
+                                }
+
+                                int pos = ind + 1;
+                                if (pos >= origSize.v-1) {
+                                    pos = ind;
+                                }
+
+                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                   || (ind == 1 && it_pos_out.u <= 1)
+                                   || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+                                        ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                         || (pos == 1 && it_pos_out.u <= 1)
+                                         || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+
+                                    out[pos_out] = refLeft4D[pos_out];
+
+                                } else{
+                                    R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                                   (ind * origSize.x * origSize.y * origSize.u)];
+                                    R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                                   ((pos) * origSize.x * origSize.y * origSize.u)];
+
+                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+
+                                }
                             }
-
-                            int pos = ind + 1;
-                            if (pos >= origSize.v){
-                                pos = ind;
-                            }
-                            R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                     (ind * origSize.x * origSize.y * origSize.u)];
-                            R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                     ((pos) * origSize.x * origSize.y * origSize.u)];
-
-                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
                         }
                     }
                 }
             }
         } else{ //Vertical
+
+            for(int i = 0; i < origSize.getNSamples(); i++){
+                ref[i] = refAbove4D[i];
+            }
 
             // Horizontal - variable
             it_pos_in.x = 0;
@@ -845,25 +1482,49 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            //C = (it_pos_out.v * d) >> 5;
-                            C = (int)this->roundTowardsZero((int)(it_pos_out.v * d) / (float)pow(2, 5));
-                            W = (it_pos_out.v * d) & 31;
-                            ind = it_pos_out.u + C;
-                            int pos = ind + 1;
+                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
 
-                            if(ind < 0){
-                                ind = 0;
+                                out[pos_out] = refAbove4D[pos_out];
+
+                            } else {
+
+                                C = (int) this->roundTowardsZero((int) (it_pos_out.v * min_d) / (float) pow(2, 5));
+                                W = (it_pos_out.v * min_d) & 31;
+                                ind = it_pos_out.u + C;
+
+                                if (ind < 0) {
+                                    ind = 0;
+                                }
+
+                                if(ind > origSize.u-1){
+                                    ind = origSize.u-1;
+                                }
+
+                                int pos = ind + 1;
+                                if (pos >= origSize.u-1) {
+                                    pos = ind;
+                                }
+
+                                if(((it_pos_out.v == 0 && (ind <= 3 || ind > origSize.u - 3))
+                                    || (it_pos_out.v == 1 && ind <= 1)
+                                    || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && ind == 0)) ||
+                                   ((it_pos_out.v == 0 && (pos <= 3 || pos > origSize.u - 3))
+                                    || (it_pos_out.v == 1 && pos <= 1)
+                                    || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && pos == 0))){
+
+                                    out[pos_out] = refAbove4D[pos_out];
+
+                                } else{
+                                    R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
+                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+                                    R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+
+                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                                }
                             }
-
-                            if (pos >= origSize.v){
-                                pos = ind;
-                            }
-                            R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
-                                     (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-                            R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
-                                     (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-
-                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
                         }
                     }
                 }
@@ -1082,6 +1743,109 @@ void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPG
 
 unsigned short Prediction::change_endianness_16b(unsigned short val) {
     return (val << 8u) | ((val >> 8u) & 0x00ff);
+}
+
+void Prediction::blockGenerator(const Point4D &origSize, int mode, int mPGMScale, int start_t, int start_s, const std::string fileName){
+    Point4D it_pos_out;
+    float block[origSize.getNSamples()];
+
+    it_pos_out.x = 0;
+    it_pos_out.u = 0;
+    it_pos_out.v = 0;
+    it_pos_out.y = 0;
+
+    float lumaValue = 0;
+
+    if(mode == 1){//Horizontal
+        // percorre vetor out na ordem horizontal espacial
+        for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+
+                // percorre vetor out na ordem horizontal angular
+                for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                        int pos_out =
+                                (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)) { //pixels pretos
+
+                            block[pos_out] = -448;
+
+                        }else{
+                            block[pos_out] = lumaValue;
+                        }
+                    }
+                    lumaValue += 20;
+                }
+                lumaValue = 0;
+            }
+        }
+    }else if(mode == 2){//Vertical
+        // percorre vetor out na ordem vertical espacial
+        for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+
+                // percorre vetor out na ordem vertical angular
+                for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+                    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+
+                        int pos_out =
+                                (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)) { //pixels pretos
+
+                            block[pos_out] = -448;
+
+                        }else{
+                            block[pos_out] = lumaValue;
+                        }
+
+                    }
+                    lumaValue += 20;
+                }
+                lumaValue = 0;
+            }
+        }
+    }
+
+    float pred[origSize.getNSamples()],
+            ref[origSize.getNSamples()];
+
+    this->angularPrediction(0, 0, block, origSize, pred, 0, ref);
+    //this->angularPredictionVector(0, 0, block, origSize, pred, 0, ref);
+
+    float *origUp[3], *origRGB[3], *predUp[3], *predRGB[3] ;
+    for(int i = 0; i <3; ++i) {
+        origUp[i] = new float[origSize.getNSamples()];
+        origRGB[i] = new float[origSize.getNSamples()];
+        predUp[i] = new float[origSize.getNSamples()];
+        predRGB[i] = new float[origSize.getNSamples()];
+    }
+    for(int i = 0; i <3; ++i){
+        if(i==0){
+            for (int j = 0; j < origSize.getNSamples(); ++j) {
+                origUp[i][j] = block[j];
+                predUp[i][j] = pred[j];
+            }
+        }else{
+            for (int j = 0; j < origSize.getNSamples(); ++j) {
+                origUp[i][j] = 0;
+                predUp[i][j] = 0;
+            }
+        }
+    }
+
+    this->YCbCR2RGB(origUp, origSize, origRGB, mPGMScale);
+    this->YCbCR2RGB(predUp, origSize, predRGB, mPGMScale);
+    this->write(origRGB, origSize, mPGMScale, start_t, start_s, fileName + "_gen_" + std::to_string(mode) + ".ppm");
+    this->write(predRGB, origSize, mPGMScale, start_t, start_s, fileName + "_pred_" + std::to_string(mode) + ".ppm");
 }
 
 void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
