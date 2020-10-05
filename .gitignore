@@ -1,6 +1,7 @@
 # Project specifics ignores
 
 output
+Scripts/__pycache__ 
 Datasets
 build*
 bin
