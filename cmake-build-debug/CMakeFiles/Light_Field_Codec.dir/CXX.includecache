@@ -19,6 +19,14 @@ math.h
 -
 iostream
 -
+iostream
+-
+fstream
+-
+stdio.h
+-
+stdlib.h
+-
 
 /home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.h
 Typedef.h

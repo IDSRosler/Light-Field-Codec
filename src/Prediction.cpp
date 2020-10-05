@@ -1167,6 +1167,7 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
     float min_sse = 0;
     float min_mode = 0;
     int min_d = 0;
+    int mode = 0;
 
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()];
@@ -1191,7 +1192,7 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
         }
     } else{ //se tem bloco de referência
 
-        for(int mode = 0; mode < num_modes; mode++) { //num_modes
+        for(mode = 0; mode < num_modes; mode++) { //num_modes
             switch (mode)
             {
                 case 0:
