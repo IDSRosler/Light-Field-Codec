@@ -20,10 +20,25 @@
 #include "Timer.h"
 #include "Transform.h"
 #include "Typedef.h"
+#include "TextReport.h"
+#include "EntropyEncoder.h"
+
+
 #include "utils.h"
 #include "TextReport.h"
 using namespace std;
 
+
+vector<string> Split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
 
 void display_stage(std::string message) { std::cout << message << std::endl; }
 
@@ -90,6 +105,8 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
+    EntropyEncoder encoder(&encoderParameters, 10000000);
+    /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
     EncBitstreamWriter encoder(&encoderParameters, 10'000'000);
     std::string sep = ",";
 
@@ -198,14 +215,13 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif
+                        //EDUARDO END
                         //EDUARDO BEGIN
                         newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, block, ref4D);
                         newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                         newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         
                         //EDUARDO END
-
-
 
 #if STATISTICS_TIME
                         t.toc();
@@ -246,6 +262,7 @@ int main(int argc, char **argv) {
                         std::transform(qf4D, qf4D + SIZE, temp_lre,
                                        [](auto value) { return static_cast<int>(value); });
 
+                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
                         auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
@@ -259,6 +276,8 @@ int main(int argc, char **argv) {
 #endif // TRANSF_QUANT
 
 #if TRANSF_QUANT
+
+#endif
 
 #if STATISTICS_TIME
                         ti.tic();
@@ -329,6 +348,7 @@ int main(int argc, char **argv) {
                             report.print();
                         }
                     }
+                    /*++hypercube;*/
                 }
             }
         }

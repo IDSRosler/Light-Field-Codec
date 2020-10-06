@@ -59,19 +59,33 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
+<<<<<<< HEAD
 CMAKE_COMMAND = /usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
 RM = /usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/bin/cmake -E rm -f
+=======
+CMAKE_COMMAND = /home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/bin/cmake
+
+# The command to remove a file.
+RM = /home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/bin/cmake -E rm -f
+>>>>>>> EntropyEncoder
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/eduardo/Documentos/ViTech/Light-Field-Codec
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug
+=======
+CMAKE_SOURCE_DIR = /home/igor/Documentos/Git/Light-Field-Codec
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = /home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug
+>>>>>>> EntropyEncoder
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -79,7 +93,11 @@ CMAKE_BINARY_DIR = /home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+<<<<<<< HEAD
 	/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+=======
+	/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+>>>>>>> EntropyEncoder
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -90,7 +108,11 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+<<<<<<< HEAD
 	/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+=======
+	/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+>>>>>>> EntropyEncoder
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -100,9 +122,15 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles /home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles 0
+=======
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles /home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/progress.marks
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles 0
+>>>>>>> EntropyEncoder
 .PHONY : all
 
 # The main clean target
@@ -142,6 +170,36 @@ Light_Field_Codec: cmake_check_build_system
 Light_Field_Codec/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/build
 .PHONY : Light_Field_Codec/fast
+<<<<<<< HEAD
+=======
+
+src/ArithmeticEncoder.o: src/ArithmeticEncoder.cpp.o
+
+.PHONY : src/ArithmeticEncoder.o
+
+# target to build an object file
+src/ArithmeticEncoder.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/ArithmeticEncoder.cpp.o
+.PHONY : src/ArithmeticEncoder.cpp.o
+
+src/ArithmeticEncoder.i: src/ArithmeticEncoder.cpp.i
+
+.PHONY : src/ArithmeticEncoder.i
+
+# target to preprocess a source file
+src/ArithmeticEncoder.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/ArithmeticEncoder.cpp.i
+.PHONY : src/ArithmeticEncoder.cpp.i
+
+src/ArithmeticEncoder.s: src/ArithmeticEncoder.cpp.s
+
+.PHONY : src/ArithmeticEncoder.s
+
+# target to generate assembly for a file
+src/ArithmeticEncoder.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/ArithmeticEncoder.cpp.s
+.PHONY : src/ArithmeticEncoder.cpp.s
+>>>>>>> EntropyEncoder
 
 src/CAVLC.o: src/CAVLC.cpp.o
 
@@ -278,6 +336,33 @@ src/EncBitstreamWriter.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncBitstreamWriter.cpp.s
 .PHONY : src/EncBitstreamWriter.cpp.s
 
+src/EncSymbol.o: src/EncSymbol.cpp.o
+
+.PHONY : src/EncSymbol.o
+
+# target to build an object file
+src/EncSymbol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.o
+.PHONY : src/EncSymbol.cpp.o
+
+src/EncSymbol.i: src/EncSymbol.cpp.i
+
+.PHONY : src/EncSymbol.i
+
+# target to preprocess a source file
+src/EncSymbol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.i
+.PHONY : src/EncSymbol.cpp.i
+
+src/EncSymbol.s: src/EncSymbol.cpp.s
+
+.PHONY : src/EncSymbol.s
+
+# target to generate assembly for a file
+src/EncSymbol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncSymbol.cpp.s
+.PHONY : src/EncSymbol.cpp.s
+
 src/EncoderParameters.o: src/EncoderParameters.cpp.o
 
 .PHONY : src/EncoderParameters.o
@@ -304,6 +389,33 @@ src/EncoderParameters.s: src/EncoderParameters.cpp.s
 src/EncoderParameters.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EncoderParameters.cpp.s
 .PHONY : src/EncoderParameters.cpp.s
+
+src/EntropyEncoder.o: src/EntropyEncoder.cpp.o
+
+.PHONY : src/EntropyEncoder.o
+
+# target to build an object file
+src/EntropyEncoder.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.o
+.PHONY : src/EntropyEncoder.cpp.o
+
+src/EntropyEncoder.i: src/EntropyEncoder.cpp.i
+
+.PHONY : src/EntropyEncoder.i
+
+# target to preprocess a source file
+src/EntropyEncoder.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.i
+.PHONY : src/EntropyEncoder.cpp.i
+
+src/EntropyEncoder.s: src/EntropyEncoder.cpp.s
+
+.PHONY : src/EntropyEncoder.s
+
+# target to generate assembly for a file
+src/EntropyEncoder.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/EntropyEncoder.cpp.s
+.PHONY : src/EntropyEncoder.cpp.s
 
 src/LRE.o: src/LRE.cpp.o
 
@@ -521,6 +633,33 @@ src/Transform.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Transform.cpp.s
 .PHONY : src/Transform.cpp.s
 
+src/Tree.o: src/Tree.cpp.o
+
+.PHONY : src/Tree.o
+
+# target to build an object file
+src/Tree.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o
+.PHONY : src/Tree.cpp.o
+
+src/Tree.i: src/Tree.cpp.i
+
+.PHONY : src/Tree.i
+
+# target to preprocess a source file
+src/Tree.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.i
+.PHONY : src/Tree.cpp.i
+
+src/Tree.s: src/Tree.cpp.s
+
+.PHONY : src/Tree.s
+
+# target to generate assembly for a file
+src/Tree.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.s
+.PHONY : src/Tree.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -557,6 +696,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Light_Field_Codec"
+<<<<<<< HEAD
+=======
+	@echo "... src/ArithmeticEncoder.o"
+	@echo "... src/ArithmeticEncoder.i"
+	@echo "... src/ArithmeticEncoder.s"
+>>>>>>> EntropyEncoder
 	@echo "... src/CAVLC.o"
 	@echo "... src/CAVLC.i"
 	@echo "... src/CAVLC.s"
@@ -572,9 +717,15 @@ help:
 	@echo "... src/EncBitstreamWriter.o"
 	@echo "... src/EncBitstreamWriter.i"
 	@echo "... src/EncBitstreamWriter.s"
+	@echo "... src/EncSymbol.o"
+	@echo "... src/EncSymbol.i"
+	@echo "... src/EncSymbol.s"
 	@echo "... src/EncoderParameters.o"
 	@echo "... src/EncoderParameters.i"
 	@echo "... src/EncoderParameters.s"
+	@echo "... src/EntropyEncoder.o"
+	@echo "... src/EntropyEncoder.i"
+	@echo "... src/EntropyEncoder.s"
 	@echo "... src/LRE.o"
 	@echo "... src/LRE.i"
 	@echo "... src/LRE.s"
@@ -599,6 +750,9 @@ help:
 	@echo "... src/Transform.o"
 	@echo "... src/Transform.i"
 	@echo "... src/Transform.s"
+	@echo "... src/Tree.o"
+	@echo "... src/Tree.i"
+	@echo "... src/Tree.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

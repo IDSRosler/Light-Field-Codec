@@ -11,6 +11,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.17.3/CMakeCCompiler.cmake"
   "CMakeFiles/3.17.3/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.17.3/CMakeSystem.cmake"
+<<<<<<< HEAD
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCInformation.cmake"
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCXXInformation.cmake"
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
@@ -33,6 +34,30 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/Platform/Linux.cmake"
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/Platform/UnixPaths.cmake"
   "/usr/lib/CLion-2020.1/clion-2020.1/bin/cmake/linux/share/cmake-3.17/Modules/ProcessorCount.cmake"
+=======
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCInformation.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCXXInformation.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeCommonLanguageInclude.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeExtraGeneratorDetermineCompilerMacrosAndIncludeDirs.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeFindCodeBlocks.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeGenericSystem.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeInitializeConfigs.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeLanguageInformation.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeSystemSpecificInformation.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/CMakeSystemSpecificInitialize.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Compiler/CMakeCommonCompilerMacros.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Compiler/GNU-C.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Compiler/GNU-CXX.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Compiler/GNU.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Internal/CMakeCheckCompilerFlag.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Platform/Linux-GNU-C.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Platform/Linux-GNU-CXX.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Platform/Linux-GNU.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Platform/Linux.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/Platform/UnixPaths.cmake"
+  "/home/igor/Downloads/clion-2020.1.2/bin/cmake/linux/share/cmake-3.17/Modules/ProcessorCount.cmake"
+>>>>>>> EntropyEncoder
   )
 
 # The corresponding makefile is:
