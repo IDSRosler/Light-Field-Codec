@@ -1,7 +1,6 @@
 # Project specifics ignores
 
 output
-Scripts/__pycache__ 
 Datasets
 build*
 bin
@@ -12,7 +11,9 @@ logs
 latex
 html
 PSNR/Statistics
+
 */*.env
+
 
 # Created by https://www.gitignore.io/api/c,c++,cmake,python,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c,c++,cmake,python,visualstudiocode
@@ -45,7 +46,9 @@ PSNR/Statistics
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so
+
 *.so.*
+
 *.dylib
 
 # Executables
@@ -63,7 +66,10 @@ PSNR/Statistics
 *.pdb
 
 # Kernel Module Compile Results
+
 *.mod*
+
+
 *.cmd
 .tmp_versions/
 modules.order
@@ -109,7 +115,9 @@ _deps
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
+
 __pycache__/
+
 *.py[cod]
 *$py.class
 
