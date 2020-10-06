@@ -1,3 +1,3 @@
-/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/LF_Codec.dir
-/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir

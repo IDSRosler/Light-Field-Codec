@@ -2,7 +2,7 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include <zconf.h>
+//#include <zconf.h>
 #include "Typedef.h"
 #include "Point4D.h"
 #include <cmath>

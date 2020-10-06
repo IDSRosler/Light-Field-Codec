@@ -7,7 +7,7 @@
 #define LFSample short
 
 #define TRANSF_QUANT true
-#define QUANTIZATION true
+#define QUANTIZATION false
 
 #define STATISTICS_LOCAL false
 #define STATISTICS_GLOBAL false

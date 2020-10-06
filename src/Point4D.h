@@ -2,7 +2,7 @@
 #ifndef POINT4D_H
 #define POINT4D_H
 
-#include <zconf.h>
+//#include <zconf.h>
 #include <iostream>
 #include <iomanip>
 
