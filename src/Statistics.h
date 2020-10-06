@@ -9,7 +9,6 @@
 #include <fstream>
 #include <cassert>
 #include <cfloat>
-#include <map>
 
 #include "Point4D.h"
 #include "LRE.h"
@@ -17,22 +16,14 @@
 
 class Statistics {
 public:
-    float epsilon = 1e-1;
 
-    Statistics() = default;
-
-    explicit Statistics(const std::string &file);
+    explicit Statistics(const std::string &file = "");
 
     virtual ~Statistics();
 
-    void write_headers(std::ofstream &output);
+    void write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::vector<LRE_struct> &lre_result, uint bits_per_4D_Block);
 
-    void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::vector<LRE_struct> &lre_result, std::size_t bits_per_4D_Block);
-
-    void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
-    void write(std::ostream &output, Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
-
-    
+    void write(Point4D &pos, Point4D &dimBlock, uint it_channel);
 
     double get_mean() const;
 
@@ -52,7 +43,7 @@ public:
 
     void compute(const std::vector<float> &input, const ushort *scan_order);
 
-    float compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block);
+    void compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block);
 
     static float min_vet(const std::vector<float> &input);
 
@@ -62,16 +53,14 @@ public:
 
     static float maxAbs_vet(const std::vector<float> &input);
 
-    // static std::map<float, int> calculate_pdf(const std::vector<float> &input, unsigned range);
-
 private:
-    std::string sep{","};
+    std::string sep{"\t"};
 
     std::ofstream file_out;
     unsigned long num_zeros{}, num_ones{};
     double v_mean{}, v_median{}, v_variance{}, v_std{};
     double v_entropy{}, v_energy{};
-    float dc, sse{0}, cov{0}, v_max, v_min, v_maxAbs, v_minAbs;
+    float dc, sse{0}, v_max, v_min, v_maxAbs, v_minAbs;
 
     double run_mean, run_var, run_std;
     int posSO_last_nzero, posSO_last_nzeroone;

@@ -1,10 +1,8 @@
 # Project specifics ignores
 
 output
-results
 Datasets
 build*
-cmake-build*
 bin
 .vscode
 .idea
@@ -13,7 +11,9 @@ logs
 latex
 html
 PSNR/Statistics
+
 */*.env
+
 
 # Created by https://www.gitignore.io/api/c,c++,cmake,python,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c,c++,cmake,python,visualstudiocode
@@ -46,7 +46,9 @@ PSNR/Statistics
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so
+
 *.so.*
+
 *.dylib
 
 # Executables
@@ -64,7 +66,10 @@ PSNR/Statistics
 *.pdb
 
 # Kernel Module Compile Results
+
 *.mod*
+
+
 *.cmd
 .tmp_versions/
 modules.order
@@ -110,7 +115,9 @@ _deps
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
+
 __pycache__/
+
 *.py[cod]
 *$py.class
 
@@ -221,6 +228,10 @@ dmypy.json
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
+
+##Italo
+scripts/
+*.csv
 .history
 
 # End of https://www.gitignore.io/api/c,c++,cmake,python,visualstudiocode

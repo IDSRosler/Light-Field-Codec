@@ -21,13 +21,9 @@ LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
     for (int i = 0; i < 3; i++) {
         this->rgb[i] = new LFSample[dim_lf.getNSamples()];
         this->yCbCr[i] = new float[dim_lf.getNSamples()];
-        this->yCbCr_original[i] = new float[dim_lf.getNSamples()];
     }
 
     this->read(path);
-
-    for (int i = 0; i < 3; i++)
-        std::copy(yCbCr[i], yCbCr[i] + dim_lf.getNSamples(), yCbCr_original[i]);
 }
 
 void LightField::read(const std::string &path) {
@@ -104,8 +100,6 @@ void LightField::read(const std::string &path) {
     }
 
     this->RGB2YCbCr();
-
-
 }
 
 void LightField::ReadPixelFromFile(int pixelPosition) {
@@ -183,10 +177,11 @@ void LightField::WritePixelToFile(int pixelPositionInCache) {
 }
 
 LightField::~LightField() {
+
     for (int i = 0; i < 3; ++i) {
         delete[] this->rgb[i];
+
         delete[] this->yCbCr[i];
-        delete[] this->yCbCr_original[i];
     }
 }
 
@@ -254,7 +249,6 @@ void LightField::RGB2YCbCr() {
     int cont = 0;
 
     int N = 10;
-
     double nd = (double) (1 << (N - 8));  // pow(2, (double)N - 8);
 
     double clipval = (double) (1 << N) - 1;

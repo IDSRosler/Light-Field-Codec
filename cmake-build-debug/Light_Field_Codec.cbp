@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Light_Field_Codec"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Light_Field_Codec">
+				<Option output="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Light_Field_Codec" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 Light_Field_Codec"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Light_Field_Codec/fast">
+				<Option output="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Light_Field_Codec" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 Light_Field_Codec/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/eduardo/Documentos/ViTech/Light-Field-Codec/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/CAVLC.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/CAVLC.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/DpcmDC.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/DpcmDC.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamBuffer.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamBuffer.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamVLC.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamVLC.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamWriter.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncBitstreamWriter.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncoderParameters.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/EncoderParameters.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/LRE.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/LRE.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/LightField.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/LightField.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Point4D.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Point4D.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Quantization.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Quantization.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Statistics.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Statistics.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Time.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Time.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Transform.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Transform.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Typedef.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/clip.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/main.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/eduardo/Documentos/ViTech/Light-Field-Codec/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
