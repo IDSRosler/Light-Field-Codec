@@ -34,7 +34,7 @@ using index_t = unsigned;
 #define TRACE_LRE false
 #endif
 #ifndef LFCODEC_USE_PREDICTION
-#define LFCODEC_USE_PREDICTION false
+#define LFCODEC_USE_PREDICTION true
 #endif
 #ifndef LFCODEC_ESTIMATE_SCAN_ORDER
 #define LFCODEC_ESTIMATE_SCAN_ORDER true

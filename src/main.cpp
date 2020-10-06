@@ -76,10 +76,8 @@ int main(int argc, char **argv) {
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-    //EDUARDO END
-    Transform transform(encoderParameters.dim_block);
-    Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
-                              encoderParameters.quant_weight_100);
+  
+
 #endif
     bool should_show_block = false;
     Transform transform(encoderParameters);
@@ -204,7 +202,7 @@ int main(int argc, char **argv) {
                         newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, block, ref4D);
                         newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                         newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
-                        transform.dct_4d(res4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        
                         //EDUARDO END
 
 
@@ -238,7 +236,7 @@ int main(int argc, char **argv) {
                         t.tic();
 #endif
 
-                        auto[descriptor, rd_cost] = transform.forward(pf4D, qf4D, dimBlock);
+                        auto[descriptor, rd_cost] = transform.forward(res4D, qf4D, dimBlock);
 
 
 #if STATISTICS_TIME
@@ -277,7 +275,7 @@ int main(int argc, char **argv) {
 #endif
 
 
-                        transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
+                        
                         //EDUARDO BEGIN
                         newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         //EDUARDO END

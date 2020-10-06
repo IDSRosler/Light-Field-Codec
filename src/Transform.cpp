@@ -1,11 +1,8 @@
 
 #include "Transform.h"
-#include "EncBitstreamWriter.h"
-#include "LRE.h"
+
 #include "Quantization.h"
-#include "ScanOrder.h"
-#include "utils.h"
-#include "cstdlib"
+
 #if LFCODEC_FAST_DCT
 #include "FastImplementations/FastDctFFT.h"
 #endif
@@ -15,7 +12,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <limits>
 #include <numeric>
 
@@ -30,13 +26,14 @@ Transform::Transform(Point4D &shape) {
     m_temp_tf_block = std::unique_ptr<float[]>(new float[flat_size]);
     m_temp_lre_block = std::unique_ptr<int[]>(new int[flat_size]);
     lre = std::make_unique<LRE>(shape);
+    m_encoding_type='Z';
 
     for (const auto &N : QUADTREE_NODES_COUNT) {
         for (const auto &tree : generate_full_binary_trees(N)) {
             tree_repr_vector.push_back(tree->repr());
         }
     }
-
+    
 }
 
 Transform::Transform(EncoderParameters &params) : Transform(params.dim_block) {
@@ -302,7 +299,7 @@ void Transform::md_inverse(const TransformType type,
 
     int offset = calc_offset(offset_, block_stride);
     float *pout = output + offset;
-    const float *pin = input + offset;
+    const float *pin;
 
 #if LFCODEC_USE_QUANTIZATION
     float block[flat_size];
@@ -381,12 +378,11 @@ void Transform::calculate_rd_cost(const float *block, const std::string &descrip
 
     std::string min_descriptor;
     // flat_size changes during runtime, but here we need the full block size
-    size_t size = block_shape.v * block_stride.v;
+    size_t size = block_shape.getNSamples();
     int *lre_block = m_temp_lre_block.get();
     float *t_block = m_temp_tf_block.get();
     float *r_block = m_temp_r_block.get();
     // std::fill(lre_block, lre_block + size, 0);
-    assert(size == flat_size);
     double sse = std::inner_product(block,
                                     block + size,
                                     r_block,
@@ -395,30 +391,19 @@ void Transform::calculate_rd_cost(const float *block, const std::string &descrip
                                     [](auto blk, auto rec) { auto error = blk - rec; return error * error; });
 
     std::transform(t_block, t_block + size, lre_block, std::truncf);
-    std::size_t lre_size, czi_size, encoding_size;
-    char encoding_type;
+    std::size_t  czi_size;
+    char encoding_type = 'Z';
     auto mse = sse / size;
-    auto lre_result = lre->encodeLRE(lre_block, size);
     auto czi_result = lre->encodeCZI(lre_block, 0, size);
 
     if (fake_encoder != nullptr) {
-        lre_size = fake_encoder->write4DBlock(lre_block, size, lre_result);
         czi_size = fake_encoder->write4DBlock(lre_block, size, czi_result);
         fake_encoder->reset();
     } else {
-        lre_size = lre_result.size();
         czi_size = czi_result.size();
     }
 
-    if (lre_size < czi_size) {
-        encoding_size = lre_size;
-        encoding_type = 'L';
-    } else {
-        encoding_size = czi_size;
-        encoding_type = 'Z';
-    }
-
-    double rd_cost = mse + codec_parameters.lambda * encoding_size;
+    double rd_cost = mse + codec_parameters.lambda * czi_size;
 #if false
     std::cout << "[log] Pos(x=" << position.x << ","
                            "y=" << position.y << ","
@@ -466,7 +451,6 @@ void Transform::forward_fast(
                 TIMER_TIC(m_timer_split);
                 auto temp_stack = split_coordinate(type, offset, shape);
                 TIMER_TOC(m_timer_split);
-                auto stack_size = stack.size();
                 if (temp_stack != nullptr) {
                     TIMER_TIC(m_timer_stack_copy);
                     std::copy(std::cbegin(*temp_stack),
@@ -571,6 +555,8 @@ void Transform::forward_fast(
             flat_size = flat_size_bkp;
         }
             break;
+        default:
+            return;
     }
 }
 
