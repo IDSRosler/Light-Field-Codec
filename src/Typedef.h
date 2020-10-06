@@ -47,11 +47,11 @@ using index_t = unsigned;
 #ifndef LFCODEC_TRACE_TRANSFORM
 #define LFCODEC_TRACE_TRANSFORM false
 #endif
-#define ENTROPY_ENCODER true
 
 #define HEXADECA_TREE_PARTITION 2 // 0: Original | 1: Order 8 | 2: Order 4
 
 
 #ifndef LFCODEC_USE_QUANTIZATION
 #define LFCODEC_USE_QUANTIZATION true
+#endif
 #endif

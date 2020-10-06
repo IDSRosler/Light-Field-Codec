@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <memory>
 
 #include "DpcmDC.h"
 #include "EncBitstreamWriter.h"
@@ -107,7 +108,6 @@ int main(int argc, char **argv) {
 
     EntropyEncoder encoder(&encoderParameters, 10000000);
     /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
-    EncBitstreamWriter encoder(&encoderParameters, 10'000'000);
     std::string sep = ",";
 
     const Point4D dimLF = encoderParameters.dim_LF;
@@ -265,8 +265,7 @@ int main(int argc, char **argv) {
                         encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
-                        auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
-
+                        /*auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);*/
 
 
                         std::copy(temp_lre, temp_lre + SIZE, qi4D);
@@ -299,7 +298,6 @@ int main(int argc, char **argv) {
                         newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         //EDUARDO END
 
-#endif
 
 #if STATISTICS_TIME
                         rebuild.tic();

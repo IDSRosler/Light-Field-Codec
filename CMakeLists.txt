@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(LF_Codec)
 
-  "$<$<CONFIG:RELEASE>:-O3>"
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(
   "-Wall" "-Wpedantic" "-Wextra" "-fexceptions"
@@ -103,12 +102,10 @@ set(SOURCES
     src/deprecated/OldTransform.cpp
     src/utils.cpp
     src/ScanOrder.cpp
-    src/EntropyEncoder.cpp 
-    src/EntropyEncoder.h
+    src/EntropyEncoder.cpp
     src/EncSymbol.cpp
-    src/EncSymbol.h 
-    src/ArithmeticEncoder.cpp 
-    src/ArithmeticEncoder.h
+    src/ArithmeticEncoder.cpp
+    src/Tree.cpp
 )
 
 
