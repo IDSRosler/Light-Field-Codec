@@ -16,6 +16,8 @@ class LightField {
 
     inline unsigned short change_endianness_16b(unsigned short val);
 
+
+
 public:
     explicit LightField(Point4D &dim_lf, const std::string &path, bool isLytro);
 
@@ -23,6 +25,7 @@ public:
 
     LFSample *rgb[3];
     float *yCbCr[3];
+    float *yCbCr_original[3];
 
     Point4D offset;
 

@@ -2,46 +2,180 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-//#include <zconf.h>
-#include "Typedef.h"
 #include "Point4D.h"
-#include <cmath>
+#include "Typedef.h"
+#include "EncoderParameters.h"
+#include "EncBitstreamWriter.h"
+#include "Statistics.h"
+#include <map>
+#include <fstream>
+#include <deque>
+#include <memory>
+#include <stack>
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <iostream>
+#include <functional>
+#include <numeric>
+#include "Timer.h"
+
+
 
 class Transform {
-private:
-    float *coeff_dct1D[4]{};
-    Point4D dim_block;
-
-    float *input_4D_t;
-
-    static float *generate_dct_coeff(int N);
-
-    static void dct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size);
-
-    static void idct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size);
-
-
 public:
-    explicit Transform(const Point4D &dimBlock);
 
-    void foward(const float *input, float *output);
+    enum TransformType {
+        NO_TRANSFORM = 0, /* Empty value */
+        DCT_II = 1,       /* Discrete Cosine Transform Type II */
+        DST_I = 2,        /* Discrete Sine Transform Type II */
+        DST_VII = 3,      /* Discrete Sine Transform Type VII */
+        HYBRID,           /* Applies different transforms across the dimensions */
+        MULTI,            /* Pick transform with smallest distortion rate */
+    };
 
-    void inverse(const float *input, float *output);
+    enum {
+        NO_AXIS = 0,
+        AXIS_X = 1,
+        AXIS_Y = 2,
+        AXIS_U = 4,
+        AXIS_V = 8
+    };
 
-    void dct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
+    inline static const std::string P_CHOICES = "sa";
+    inline static std::vector<TransformType> T_CHOICES;
+    inline static std::vector<int> QUADTREE_NODES_COUNT;
 
-    void idct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
+    EncoderParameters codec_parameters;
+    bool disable_segmentation = false;
 
-    ~Transform();
+    Timer m_timer_substr;
+    Timer m_timer_md_forward_fast;
+    Timer m_timer_md_inverse_fast;
+    Timer m_timer_split;
+    Timer m_timer_unique_ptr_alloc;
+    Timer m_timer_stack_copy;
+    Timer m_timer_rd_cost;
+    Timer m_timer_cache_copy_overhead;
+    char m_encoding_type;
+    std::uint64_t m_forward_count_n2 = 0;
+    std::uint64_t m_inverse_count_n2 = 0;
+    std::uint64_t m_forward_count_nlogn = 0;
+    std::uint64_t m_inverse_count_nlogn = 0;
 
-    void delete_coeff_dct();
+    static void flush_cache();
 
-    void alocate_coeff_dct(const Point4D &dimBlock);
+    static TransformType get_type(const std::string &transform);
 
-    void foward(const short *input, float *output);
+    explicit Transform(Point4D &shape);
 
-    void inverse(const float *input, short *output);
+    explicit Transform(EncoderParameters &params);
+
+    void set_position(int channel, const Point4D &current_pos);
+
+    std::pair<std::string, double> forward(const float *block, float *result, const Point4D &shape);
+
+    void forward(const std::string &descriptor, const float *block, float *result, const Point4D &shape);
+
+    void inverse(const std::string &descriptor, const float *block, float *result, const Point4D &shape);
+
+    inline void md_forward(TransformType type, const float *input, float *output, const Point4D &shape);
+
+    inline void md_inverse(TransformType type, const float *input, float *output, const Point4D &shape);
+
+    void md_forward(TransformType type,
+                    const float *input,
+                    float *output,
+                    const Point4D &_offset,
+                    const Point4D &shape);
+
+    void md_inverse(TransformType type,
+                    const float *input,
+                    float *output,
+                    const Point4D &_offset,
+                    const Point4D &shape);
+
+private:
+    Point4D block_shape;
+    Point4D block_stride;
+    Point4D position;
+
+    int channel = 0;
+    size_t flat_size = 0;
+
+    double m_min_rd_cost = std::numeric_limits<double>::infinity();
+    std::string m_min_descriptor;
+    std::unique_ptr<float[]> m_partial_block = nullptr;
+    std::unique_ptr<float[]> m_temp_r_block = nullptr;
+    std::unique_ptr<float[]> m_temp_tf_block = nullptr;
+    std::unique_ptr<int[]> m_temp_lre_block = nullptr;
+
+    std::unique_ptr<EncBitstreamWriter> fake_encoder = nullptr;
+    std::unique_ptr<LRE> lre = nullptr;
+
+    TransformType enforce_transform;
+    std::vector<std::string> tree_repr_vector;
+
+    inline static std::map<size_t, float *> cache_dct_ii;
+    inline static std::map<size_t, float *> cache_dst_i;
+    inline static std::map<size_t, float *> cache_dst_vii;
+
+
+    static float *sd_dct_ii(size_t size);
+
+    static float *sd_dst_i(size_t size);
+
+    static float *sd_dst_vii(size_t size);
+
+
+    static float *get_coefficients(TransformType type, std::size_t size);
+
+    static void sd_forward(TransformType type,
+                           const float *in,
+                           float *out,
+                           std::size_t offset,
+                           std::size_t size);
+
+    static void sd_inverse(TransformType type,
+                           const float *in,
+                           float *out,
+                           std::size_t offset,
+                           std::size_t size);
+
+    void md_forward_single_axis(int ax, TransformType type, const float *input, float *output, const Point4D &shape);
+
+    void md_inverse_single_axis(int ax, TransformType type, const float *input, float *output, const Point4D &shape);
+
+
+    void forward_fast(
+            const std::string &tree_repr,
+            std::size_t index,
+            const float *block,
+            float *result,
+            std::deque<std::pair<Point4D, Point4D>> stack);
+
+    void forward_deep_search(const std::string& tree_repr, const float *block, float *result, const Point4D& shape, const Point4D& stride);
+
+    void calculate_rd_cost(const float *block, const std::string& descriptor);
+
 };
 
 
-#endif //TRANSFORM_H
+inline void Transform::md_forward(TransformType type,
+                           const float *input,
+                           float *output,
+                           const Point4D &shape)
+{
+    md_forward(type, input, output, {0, 0, 0, 0}, shape);
+}
+
+inline void Transform::md_inverse(TransformType type,
+                           const float *input,
+                           float *output,
+                           const Point4D &shape)
+{
+    md_inverse(type, input, output, {0, 0, 0, 0}, shape);
+}
+
+#endif // TRANSFORM_H

@@ -4,19 +4,53 @@
 
 #define USE_YCbCr 1 // 0: no, 1: mule, 2: other
 
+using index_t = unsigned;
+
 #define LFSample short
 
+#ifndef TRANSF_QUANT
 #define TRANSF_QUANT true
-#define QUANTIZATION false
+#endif
 
-#define STATISTICS_LOCAL false
-#define STATISTICS_GLOBAL false
-#define STATISTICS_TIME false
-
-#define TRACE_TRANSF false
-#define TRACE_QUANT false
-#define TRACE_LRE false
-
+#ifndef DPCM_DC
 #define DPCM_DC false
+#endif
+#ifndef STATISTICS_LOCAL
+#define STATISTICS_LOCAL false
+#endif
+#ifndef STATISTICS_GLOBAL
+#define STATISTICS_GLOBAL false
+#endif
+#ifndef STATISTICS_TIME
+#define STATISTICS_TIME true
+#endif
+#ifndef TRACE_TRANSF
+#define TRACE_TRANSF false
+#endif
+#ifndef TRACE_QUANT
+#define TRACE_QUANT false
+#endif
+#ifndef TRACE_LRE
+#define TRACE_LRE false
+#endif
+#ifndef LFCODEC_USE_PREDICTION
+#define LFCODEC_USE_PREDICTION false
+#endif
+#ifndef LFCODEC_ESTIMATE_SCAN_ORDER
+#define LFCODEC_ESTIMATE_SCAN_ORDER true
+#endif
 
-#endif //TYPEDEF_H
+#ifndef LFCODEC_FORCE_DCT_NON_LUMA
+#define LFCODEC_FORCE_DCT_NON_LUMA true
+#endif
+
+#ifndef LFCODEC_TRACE_TRANSFORM
+#define LFCODEC_TRACE_TRANSFORM false
+#endif
+
+#ifndef LFCODEC_USE_QUANTIZATION
+#define LFCODEC_USE_QUANTIZATION true
+#endif
+
+
+#endif // TYPEDEF_H
