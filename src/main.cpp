@@ -7,7 +7,7 @@
 #include "Statistics.h"
 #include "LRE.h"
 #include "DpcmDC.h"
-#include "EncBitstreamWriter.h"
+/*#include "EncBitstreamWriter.h"*/
 #include "Typedef.h"
 #include "Time.h"
 #include "Prediction.h"
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
             pi4D[encoderParameters.dim_block.getNSamples()];
 
     int temp_lre[encoderParameters.dim_block.getNSamples()];
-    uint bits_per_4D_Block = 0;
+    /*uint bits_per_4D_Block = 0;*/
 
     //Prediction predictor;
     Transform transform(encoderParameters.dim_block);
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 #endif
 
     EntropyEncoder encoder(&encoderParameters, 10000000);
-    //EncBitstreamWriter encoder(&encoderParameters, 10000000);
+    /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
 
 #if STATISTICS_LOCAL
     //    Statistics statistics_tf(encoderParameters.getPathOutput() + "localStatistics_transform.csv");
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     total_time.tic();
 #endif
 
-    int hypercube = 0;
+   /* int hypercube = 0;*/
 
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -239,10 +239,9 @@ int main(int argc, char **argv) {
                             exit(1);
                         }*/
 #endif
-                        auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
+                        /*auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
-                        //bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);
-
+                        bits_per_4D_Block = encoderLRE.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);*/
 #if TRACE_QUANT
                         file_traceQuant <<
                                         it_channel << sep <<
@@ -344,8 +343,9 @@ int main(int argc, char **argv) {
                         dpcmDc[it_channel].update((int) qf4D[0], true);
 #endif
                         encoder.write_completedBytes();
+                        /*encoderLRE.write_completedBytes();*/
                     }
-                    ++hypercube;
+                    /*++hypercube;*/
                 }
             }
         }
@@ -353,7 +353,8 @@ int main(int argc, char **argv) {
 
     //lf.write(encoderParameters.getPathOutput());
     encoder.finish_and_write();
-    //encoder.~EncBitstreamWriter();
+    /*encoderLRE.finish_and_write();
+    encoderLRE.~EncBitstreamWriter();*/
 
 #if STATISTICS_TIME
     total_time.toc();
@@ -362,6 +363,9 @@ int main(int argc, char **argv) {
     cout << "\n#########################################################" << endl;
     cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
     cout << "#########################################################" << endl;
+/*    cout << "\n#########################################################" << endl;
+    cout << "Total bytes LRE:\t" << encoderLRE.getTotalBytes() << endl;
+    cout << "#########################################################" << endl;*/
 
 #if STATISTICS_GLOBAL
     // TODO: statistics (global)

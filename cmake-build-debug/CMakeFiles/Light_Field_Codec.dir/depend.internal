@@ -95,11 +95,8 @@ CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o
  /home/igor/Documentos/Git/Light-Field-Codec/src/Typedef.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o
  /home/igor/Documentos/Git/Light-Field-Codec/src/ArithmeticEncoder.h
- /home/igor/Documentos/Git/Light-Field-Codec/src/CAVLC.h
  /home/igor/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
  /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
- /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
- /home/igor/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
  /home/igor/Documentos/Git/Light-Field-Codec/src/EncSymbol.h
  /home/igor/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
  /home/igor/Documentos/Git/Light-Field-Codec/src/EntropyEncoder.h

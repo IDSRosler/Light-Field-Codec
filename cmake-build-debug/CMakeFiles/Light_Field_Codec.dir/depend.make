@@ -94,11 +94,8 @@ CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Tree.h
 CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Typedef.h
 
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/ArithmeticEncoder.h
-CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/CAVLC.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/DpcmDC.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamBuffer.h
-CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamVLC.h
-CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncBitstreamWriter.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncSymbol.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EntropyEncoder.h

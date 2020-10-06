@@ -14,11 +14,11 @@ struct ElementsFrequency {
     vector<int> sign;
 
     void setFrequency(){
-        this->sig.push_back(50);
-        this->sig.push_back(50);
+        this->sig.push_back(80);
+        this->sig.push_back(20);
 
-        this->gr_one.push_back(50);
-        this->gr_one.push_back(50);
+        this->gr_one.push_back(80);
+        this->gr_one.push_back(20);
 
         this->gr_two.push_back(50);
         this->gr_two.push_back(50);
