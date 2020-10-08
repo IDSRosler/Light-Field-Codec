@@ -34,14 +34,14 @@ public:
 
     bool calculate_metrics = true;
     bool display_stages = true;
+    bool lossless = false;
+    bool uniform_quantization = false;
 
     std::vector<std::string> use_transforms;
     std::string transforms_in_use;
     std::size_t quadtree_max_inner_nodes = 1;
     std::size_t transform_min_angular_size = 4;
     std::size_t transform_min_spatial_size = 4;
-
-
 
     bool isLytro() const;
 

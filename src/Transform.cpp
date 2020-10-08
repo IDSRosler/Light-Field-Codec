@@ -271,17 +271,21 @@ void Transform::md_forward(const TransformType type,
             std::copy(output, output + flat_size, partial_values);
     }
 
-#if LFCODEC_USE_QUANTIZATION
-    if (codec_parameters.initialized && LFCODEC_USE_QUANTIZATION) {
-        auto volume_stride = make_stride(block_shape);
-        Quantization q(block_shape, codec_parameters);
-        float *volume = q.get_volume(Quantization::HAIYAN);
-        FOREACH_4D_IDX(i, shape, block_stride) {
-            auto volume_offset = calc_offset(x, y, u, v, volume_stride);
-            pout[i] = std::trunc(pout[i] / volume[volume_offset]);
+
+    if (codec_parameters.initialized && !codec_parameters.lossless) {
+        if (codec_parameters.uniform_quantization) {
+            FOREACH_4D_IDX(i, shape, block_stride)
+                pout[i] = std::trunc(pout[i] / codec_parameters.qp);
+        } else {
+            auto volume_stride = make_stride(block_shape);
+            Quantization q(block_shape, codec_parameters);
+            float *volume = q.get_volume(Quantization::HAIYAN);
+            FOREACH_4D_IDX(i, shape, block_stride) {
+                auto volume_offset = calc_offset(x, y, u, v, volume_stride);
+                pout[i] = std::trunc(pout[i] / volume[volume_offset]);
+            }
         }
     }
-#endif
 }
 
 void Transform::md_inverse(const TransformType type,
@@ -304,20 +308,25 @@ void Transform::md_inverse(const TransformType type,
     float *pout = output + offset;
     const float *pin = input + offset;
 
-#if LFCODEC_USE_QUANTIZATION
     float block[flat_size];
     pin = block + offset;
-    if (codec_parameters.initialized && LFCODEC_USE_QUANTIZATION) {
-        auto volume_stride = make_stride(block_shape);
-        Quantization q(block_shape, codec_parameters);
-        float *volume = q.get_volume(Quantization::HAIYAN);
 
-        FOREACH_4D_IDX(i, shape, block_stride) {
-            auto volume_offset = calc_offset(x, y, u, v, volume_stride);
-            block[i + offset] = input[i + offset] * volume[volume_offset];
+    if (codec_parameters.initialized && !codec_parameters.lossless) {
+        if (codec_parameters.uniform_quantization) {
+            FOREACH_4D_IDX(i, shape, block_stride)
+                block[i + offset] = input[i + offset] * codec_parameters.qp;
+        } else {
+            auto volume_stride = make_stride(block_shape);
+            Quantization q(block_shape, codec_parameters);
+            float *volume = q.get_volume(Quantization::HAIYAN);
+
+            FOREACH_4D_IDX(i, shape, block_stride) {
+                auto volume_offset = calc_offset(x, y, u, v, volume_stride);
+                block[i + offset] = input[i + offset] * volume[volume_offset];
+            }
         }
     }
-#endif
+
 
     for (int i = 0; i < 4; i++) {
         md_inverse_single_axis(ax_order[i], type, pin, pout, adjusted_shape);

@@ -70,10 +70,14 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             it--;
         } else if (flag == "-transform-min-angular-size") {
             transform_min_angular_size = strtol(argv[++it], nullptr, 10);
-        }else if (flag == "-transform-min-spatial-size") {
+        } else if (flag == "-transform-min-spatial-size") {
             transform_min_spatial_size = strtol(argv[++it], nullptr, 10);
-        }else if (flag == "-quadtree-max-inner-nodes") {
+        } else if (flag == "-quadtree-max-inner-nodes") {
             quadtree_max_inner_nodes = strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-lossless") {
+            lossless = true;
+        } else if (flag == "-uniform-quantization") {
+            uniform_quantization = true;
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
