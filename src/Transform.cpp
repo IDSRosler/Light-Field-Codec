@@ -309,9 +309,9 @@ void Transform::md_inverse(const TransformType type,
     const float *pin = input + offset;
 
     float block[flat_size];
-    pin = block + offset;
 
     if (codec_parameters.initialized && !codec_parameters.lossless) {
+        pin = block + offset;
         if (codec_parameters.uniform_quantization) {
             FOREACH_4D_IDX(i, shape, block_stride)
                 block[i + offset] = input[i + offset] * codec_parameters.qp;
