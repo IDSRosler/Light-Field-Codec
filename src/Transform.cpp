@@ -1,24 +1,16 @@
 
+#include <string>
 #include "Transform.h"
-
 #include "Quantization.h"
-
-#if LFCODEC_FAST_DCT
-#include "FastImplementations/FastDctFFT.h"
-#endif
-
 #include <algorithm>
-#include <stdexcept>
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <limits>
 #include <numeric>
 
-// #include <execution>
+
 Transform::Transform(Point4D &shape) {
     this->block_shape = shape;
-    this->enforce_transform = TransformType::NO_TRANSFORM;
     block_stride = make_stride(shape);
     flat_size = block_stride.v * shape.v;
     m_partial_block = std::unique_ptr<float[]>(new float[flat_size]);
@@ -26,14 +18,6 @@ Transform::Transform(Point4D &shape) {
     m_temp_tf_block = std::unique_ptr<float[]>(new float[flat_size]);
     m_temp_lre_block = std::unique_ptr<int[]>(new int[flat_size]);
     lre = std::make_unique<LRE>(shape);
-    m_encoding_type='Z';
-
-    for (const auto &N : QUADTREE_NODES_COUNT) {
-        for (const auto &tree : generate_full_binary_trees(N)) {
-            tree_repr_vector.push_back(tree->repr());
-        }
-    }
-    
 }
 
 Transform::Transform(EncoderParameters &params) : Transform(params.dim_block) {
@@ -77,7 +61,6 @@ float *Transform::get_coefficients(Transform::TransformType type,
 }
 
 
-
 void Transform::sd_forward(Transform::TransformType type, const float *in,
                            float *out, const size_t stride, const size_t size) {
     auto naive_approach = [&]() {
@@ -92,11 +75,8 @@ void Transform::sd_forward(Transform::TransformType type, const float *in,
         }
     };
 
-#if LFCODEC_FAST_DCT
-
-#else
     naive_approach();
-#endif
+
 }
 
 void Transform::sd_inverse(Transform::TransformType type, const float *in,
@@ -112,11 +92,9 @@ void Transform::sd_inverse(Transform::TransformType type, const float *in,
                 *pout += *pin * *pcoeff;
         }
     };
-#if LFCODEC_FAST_DCT
 
-#else
     naive_approach();
-#endif
+
 }
 
 float *Transform::sd_dst_vii(size_t size) {
@@ -188,11 +166,6 @@ void Transform::md_forward_single_axis(const int ax,
                                    j * block_stride[axis[1]] +
                                    i * block_stride[axis[0]];
                 sd_forward(type, input + index, output + index, ax_stride, ax_shape);
-                m_forward_count_n2 += ax_shape * ax_shape;
-                auto log_ax_shape = std::log2l(ax_shape);
-                assert(log_ax_shape < ax_shape);
-                assert(ax_shape > 0);
-                m_forward_count_nlogn += static_cast<std::uint64_t>(ax_shape * log_ax_shape);
             });
         });
     });
@@ -229,12 +202,6 @@ void Transform::md_inverse_single_axis(const int ax,
                                    j * block_stride[axis[1]] +
                                    i * block_stride[axis[0]];
                 sd_inverse(type, input + index, output + index, ax_stride, ax_shape);
-                m_inverse_count_n2 += ax_shape * ax_shape;
-                auto log_ax_shape = std::log2l(ax_shape);
-                assert(log_ax_shape < ax_shape);
-                assert(ax_shape > 0);
-                m_inverse_count_nlogn += ax_shape * log_ax_shape;
-
             });
         });
     });
@@ -268,17 +235,21 @@ void Transform::md_forward(const TransformType type,
             std::copy(output, output + flat_size, partial_values);
     }
 
-#if LFCODEC_USE_QUANTIZATION
-    if (codec_parameters.initialized && LFCODEC_USE_QUANTIZATION) {
-        auto volume_stride = make_stride(block_shape);
-        Quantization q(block_shape, codec_parameters);
-        float *volume = q.get_volume(Quantization::HAIYAN);
-        FOREACH_4D_IDX(i, shape, block_stride) {
-            auto volume_offset = calc_offset(x, y, u, v, volume_stride);
-            pout[i] = std::trunc(pout[i] / volume[volume_offset]);
+
+    if (codec_parameters.initialized && !codec_parameters.lossless) {
+        if (codec_parameters.uniform_quantization) {
+            FOREACH_4D_IDX(i, shape, block_stride)
+                pout[i] = std::trunc(pout[i] / codec_parameters.qp);
+        } else {
+            auto volume_stride = make_stride(block_shape);
+            Quantization q(block_shape, codec_parameters);
+            float *volume = q.get_volume(Quantization::HAIYAN);
+            FOREACH_4D_IDX(i, shape, block_stride) {
+                auto volume_offset = calc_offset(x, y, u, v, volume_stride);
+                pout[i] = std::trunc(pout[i] / volume[volume_offset]);
+            }
         }
     }
-#endif
 }
 
 void Transform::md_inverse(const TransformType type,
@@ -301,20 +272,25 @@ void Transform::md_inverse(const TransformType type,
     float *pout = output + offset;
     const float *pin;
 
-#if LFCODEC_USE_QUANTIZATION
     float block[flat_size];
-    pin = block + offset;
-    if (codec_parameters.initialized && LFCODEC_USE_QUANTIZATION) {
-        auto volume_stride = make_stride(block_shape);
-        Quantization q(block_shape, codec_parameters);
-        float *volume = q.get_volume(Quantization::HAIYAN);
 
-        FOREACH_4D_IDX(i, shape, block_stride) {
-            auto volume_offset = calc_offset(x, y, u, v, volume_stride);
-            block[i + offset] = input[i + offset] * volume[volume_offset];
+    if (codec_parameters.initialized && !codec_parameters.lossless) {
+        pin = block + offset;
+        if (codec_parameters.uniform_quantization) {
+            FOREACH_4D_IDX(i, shape, block_stride)
+                block[i + offset] = input[i + offset] * codec_parameters.qp;
+        } else {
+            auto volume_stride = make_stride(block_shape);
+            Quantization q(block_shape, codec_parameters);
+            float *volume = q.get_volume(Quantization::HAIYAN);
+
+            FOREACH_4D_IDX(i, shape, block_stride) {
+                auto volume_offset = calc_offset(x, y, u, v, volume_stride);
+                block[i + offset] = input[i + offset] * volume[volume_offset];
+            }
         }
     }
-#endif
+
 
     for (int i = 0; i < 4; i++) {
         md_inverse_single_axis(ax_order[i], type, pin, pout, adjusted_shape);
@@ -327,6 +303,7 @@ void Transform::md_inverse(const TransformType type,
 }
 
 void Transform::flush_cache() {}
+
 
 Transform::TransformType Transform::get_type(const std::string &transform) {
     if (transform == "DST" || transform == "DST_I")
@@ -349,218 +326,6 @@ void Transform::set_position(int _channel, const Point4D &current_pos) {
     this->position = current_pos;
 }
 
-std::pair<std::string, double> Transform::forward(const float *block, float *result, const Point4D &_shape) {
-    float *tf_block = m_temp_tf_block.get();
-    m_min_rd_cost = std::numeric_limits<double>::infinity();
-    for (const auto &tree_repr : tree_repr_vector) {
-
-        std::deque<std::pair<Point4D, Point4D>> stack;
-        stack.push_front(std::make_pair(_shape, Point4D(0, 0, 0, 0)));
-        forward_fast(tree_repr, 0, block, tf_block, stack);
-//#if true
-//        std::cout << "[log] Pos(x=" << position.x << ","
-//                               "y=" << position.y << ","
-//                               "u=" << position.u << ","
-//                               "v=" << position.v << ","
-//                               "ch=" << channel << ") "
-//                        "Descriptor(tree=" << tree_repr <<", "
-//                                   "desc=" << m_min_descriptor << m_encoding_type << ", "
-//                                   "rd_cost=" << m_min_rd_cost << ")\n";
-//        std::cout.flush();
-//#endif
-    }
-
-    forward(m_min_descriptor, block, result, _shape);
-    return std::make_pair(m_min_descriptor, m_min_rd_cost);
-}
-/***/
-void Transform::calculate_rd_cost(const float *block, const std::string &descriptor) {
-
-    std::string min_descriptor;
-    // flat_size changes during runtime, but here we need the full block size
-    size_t size = block_shape.getNSamples();
-    int *lre_block = m_temp_lre_block.get();
-    float *t_block = m_temp_tf_block.get();
-    float *r_block = m_temp_r_block.get();
-    // std::fill(lre_block, lre_block + size, 0);
-    double sse = std::inner_product(block,
-                                    block + size,
-                                    r_block,
-                                    0.0,
-                                    [](auto acc, auto val) { return acc + val; },
-                                    [](auto blk, auto rec) { auto error = blk - rec; return error * error; });
-
-    std::transform(t_block, t_block + size, lre_block, std::truncf);
-    std::size_t  czi_size;
-    char encoding_type = 'Z';
-    auto mse = sse / size;
-    auto czi_result = lre->encodeCZI(lre_block, 0, size);
-
-    if (fake_encoder != nullptr) {
-        czi_size = fake_encoder->write4DBlock(lre_block, size, czi_result);
-        fake_encoder->reset();
-    } else {
-        czi_size = czi_result.size();
-    }
-
-    double rd_cost = mse + codec_parameters.lambda * czi_size;
-#if false
-    std::cout << "[log] Pos(x=" << position.x << ","
-                           "y=" << position.y << ","
-                           "u=" << position.u << ","
-                           "v=" << position.v << ","
-                           "ch=" << channel << ") "
-                        "Descriptor(text=" << descriptor << encoding_type << ", "
-                                    "mse=" << mse << ", "
-                                    "lre_size=" << lre_size << ", "
-                                    "czi_size=" << czi_size << ", "
-                                    "rd_cost=" << rd_cost << ")\n";
-    std::cout.flush();
-#endif
-    if (rd_cost < m_min_rd_cost) {
-        m_min_rd_cost = rd_cost;
-        m_min_descriptor = descriptor;
-        m_encoding_type = encoding_type;
-    }
-}
-
-void Transform::forward_fast(
-        const std::string &descriptor,
-        std::size_t index,
-        const float *block,
-        float *result,
-        std::deque<std::pair<Point4D, Point4D>> stack) {
-    TIMER_TIC(m_timer_substr);
-    std::string prefix(descriptor.substr(0, index > 0 ? index : 0));
-    std::string suffix(descriptor.substr(index + 1, descriptor.size() - 1));
-    TIMER_TOC(m_timer_substr);
-
-    const auto symbol = descriptor[index];
-    auto[shape, offset] = stack.front();
-    shape.updateNSamples();
-    stack.pop_front();
-
-    Quantization q(shape, codec_parameters);
-    const float *q_volume = q.get_volume(Quantization::HAIYAN);
-
-    switch (symbol) {
-        case 'P': {
-            for (const auto type : P_CHOICES) {
-                std::stringstream ss;
-                ss << prefix << type << suffix;
-                TIMER_TIC(m_timer_split);
-                auto temp_stack = split_coordinate(type, offset, shape);
-                TIMER_TOC(m_timer_split);
-                if (temp_stack != nullptr) {
-                    TIMER_TIC(m_timer_stack_copy);
-                    std::copy(std::cbegin(*temp_stack),
-                              std::cend(*temp_stack),
-                              std::front_inserter(stack));
-
-                    TIMER_TOC(m_timer_stack_copy);
-                    forward_fast(ss.str(), index + 1, block, result, stack);
-                    // assert(stack.size() == stack_size);
-                }
-            }
-        }
-            break;
-        case 'T': {
-            std::size_t size = shape.getNSamples();
-
-            auto block_offset = calc_offset(offset, block_stride);
-            std::unique_ptr<float[]> cache_block;
-            std::unique_ptr<float[]> cache_transformed;
-            std::unique_ptr<float[]> cache_result;
-            auto block_stride_bkp = block_stride;
-            auto flat_size_bkp = flat_size;
-
-            const float *block_in;
-            float *block_transf;
-            float *block_out;
-
-            bool use_cache = (block_offset > 0) && codec_parameters.experimental;
-
-            if (use_cache) {
-                TIMER_TIC(m_timer_unique_ptr_alloc);
-                cache_block = std::unique_ptr<float[]>(new float[size]);
-                cache_transformed = std::unique_ptr<float[]>(new float[size]);
-                cache_result = std::unique_ptr<float[]>(new float[size]);
-                TIMER_TOC(m_timer_unique_ptr_alloc);
-
-                float *block_in_writable = cache_block.get();
-                block_transf = cache_transformed.get();
-
-                TIMER_TIC(m_timer_cache_copy_overhead);
-                FOREACH_4D_IDX(i, shape, block_stride)*block_in_writable++ = block[i + block_offset];
-                TIMER_TOC(m_timer_cache_copy_overhead);
-
-                block_in = cache_block.get();
-                block_out = cache_result.get();
-                block_stride = make_stride(shape);
-                flat_size = size;
-            } else {
-                block_in = block;
-                block_transf = m_temp_tf_block.get();
-                block_out = m_temp_r_block.get();
-                if (size > flat_size) {
-                    flat_size_bkp = flat_size;
-                    flat_size = size;
-                }
-            }
-
-            for (const auto type : T_CHOICES) {
-                std::stringstream ss;
-
-                auto transform_type = static_cast<TransformType>(type);
-                ss << prefix << type << suffix;
-
-                TIMER_TIC(m_timer_md_forward_fast);
-                md_forward(transform_type, block_in, block_transf, shape);
-                TIMER_TOC(m_timer_md_forward_fast);
-
-                auto *ptr_block_transf = block_transf;
-                for_each_4d(q_volume, shape, make_stride(shape), [&](auto q){
-                    *ptr_block_transf = std::truncf(*ptr_block_transf / q) * q;
-                });
-
-                TIMER_TIC(m_timer_md_inverse_fast);
-                md_inverse(transform_type, block_transf, block_out, shape);
-                TIMER_TOC(m_timer_md_inverse_fast);
-
-                if (use_cache) {
-                    float *result = m_temp_r_block.get();
-                    float *pout = block_out;
-                    TIMER_TIC(m_timer_cache_copy_overhead);
-                    FOREACH_4D_IDX(i, shape, block_stride_bkp)
-                        result[i + block_offset] = *pout++;
-                    TIMER_TOC(m_timer_cache_copy_overhead);
-                }
-
-                if (index < descriptor.size() - 1) {
-                    forward_fast(ss.str(), index + 1, block, result, stack);
-                } else {
-                    /* Here we have a full block transformed. */
-                    auto old_stride = block_stride;
-                    auto old_size = flat_size;
-                    block_stride = block_stride_bkp;
-                    flat_size = flat_size_bkp;
-                    TIMER_TIC(m_timer_rd_cost);
-                    calculate_rd_cost(block, ss.str());
-                    TIMER_TOC(m_timer_rd_cost);
-                    block_stride = old_stride;
-                    flat_size = old_size;
-                }
-            }
-            block_stride = block_stride_bkp;
-            flat_size = flat_size_bkp;
-        }
-            break;
-        default:
-            return;
-    }
-}
-
-
 void Transform::forward(const std::string &descriptor, const float *block, float *result, const Point4D &_shape) {
     for (const auto &desc: parse_descriptor(descriptor, _shape, true)) {
         const auto &[offset, shape, type] = desc;
@@ -575,7 +340,107 @@ void Transform::inverse(const std::string &descriptor, const float *block, float
     }
 }
 
+auto Transform::find_min_rd_cost(const float *block,
+                                 float *transformed_block,
+                                 const Point4D &shape,
+                                 const Point4D &offset) {
+    auto rec_block = m_temp_r_block.get();
+    auto lre_block = m_temp_lre_block.get();
+    const std::size_t size = shape.getNSamples();
+    quadtree::node_type node = quadtree::make_node();
+    double min_cost = std::numeric_limits<double>::infinity();
+    auto linear_offset = calc_offset(offset, block_stride);
+
+    for (auto &transform : Transform::T_CHOICES) {
+        auto lre_block_ptr = lre_block;
+        md_forward(transform, block, transformed_block, offset, shape);
+        md_inverse(transform, transformed_block, rec_block, offset, shape);
+        double sse = 0;
+        FOREACH_4D_IDX(i, shape, block_stride) {
+            double error = block[i+linear_offset] - rec_block[i+linear_offset];
+            sse += error * error;
+            *lre_block_ptr++ = static_cast<int>(std::round(transformed_block[i]));
+        }
+
+        std::size_t encoding_size;
+        auto czi_result = lre->encodeCZI(lre_block, 0, size);
+        double mse = sse / size;
+        if (fake_encoder != nullptr && !codec_parameters.fast) {
+            encoding_size = fake_encoder->write4DBlock(lre_block, size, czi_result);
+            fake_encoder->reset();
+        } else {
+            encoding_size = czi_result.size();
+        }
+
+        double rd_cost = mse + codec_parameters.lambda * encoding_size / static_cast<double>(size);
+        if (rd_cost < min_cost) {
+            min_cost = rd_cost;
+            node->transform = transform;
+        }
+    }
+    return std::make_tuple(min_cost, node);
+}
 
 
+auto Transform::min_partition_tree(const float *block,
+                                   float *transformed_block,
+                                   const Point4D &from_shape,
+                                   const Point4D &from_offset,
+                                   size_t partition_level) {
+    auto[min_cost, node] = find_min_rd_cost(block, transformed_block, from_shape, from_offset);
 
+    if (partition_level == 0)
+        return std::make_tuple(min_cost, node);
+
+    double spatial_cost = std::numeric_limits<double>::infinity();
+    quadtree::node_type spatial_tree = quadtree::make_node();
+    spatial_tree->partition = 's';
+
+    double angular_cost = std::numeric_limits<double>::infinity();
+    quadtree::node_type angular_tree = quadtree::make_node();
+    angular_tree->partition = 'a';
+
+    auto min_spatial = codec_parameters.transform_min_spatial_size;
+    auto min_angular = codec_parameters.transform_min_angular_size;
+
+    if (from_shape.x > min_spatial && from_shape.y > min_spatial) {
+        spatial_cost = 0;
+        for (size_t c = 0; c < 4U; c++) {
+            const auto &[shape, offset] = partition_at(from_shape, from_offset, c, 's');
+            const auto &[cost, node] = min_partition_tree(block, transformed_block, shape, offset,partition_level - 1);
+            spatial_cost += cost;
+            spatial_tree->set_child(c, node);
+        }
+        spatial_cost /= 4;
+    }
+
+    if (from_shape.u > min_angular && from_shape.v > min_angular) {
+        angular_cost = 0;
+        for (size_t c = 0; c < 4U; c++) {
+            const auto &[shape, offset] = partition_at(from_shape, from_offset, c, 'a');
+            const auto &[cost, node] = min_partition_tree(block, transformed_block, shape, offset,
+                                                          partition_level - 1);
+            angular_cost += cost;
+            angular_tree->set_child(c, node);
+        }
+        angular_cost /= 4;
+    }
+    if (spatial_cost < min_cost) {
+        min_cost = spatial_cost;
+        node = spatial_tree;
+    }
+    if (angular_cost < min_cost) {
+        min_cost = angular_cost;
+        node = angular_tree;
+    }
+    return std::make_tuple(min_cost, node);
+}
+
+
+std::pair<std::string, double> Transform::forward(const float *block, float *result, const Point4D &_shape) {
+    auto[cost, node] = min_partition_tree(block, result, _shape, Point4D(0, 0, 0, 0), PARTITION_TREE_DEPTH);
+    std::string descriptor = node->repr();
+    forward(descriptor, block, result, _shape);
+    return std::make_pair(descriptor, cost);
+}
 // EOF

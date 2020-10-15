@@ -7,7 +7,7 @@ Point4D::Point4D(Point4D::value_type x, Point4D::value_type y, Point4D::value_ty
   this->updateNSamples();
 }
 
-Point4D::value_type Point4D::getNSamples() const { return this->nSamples; }
+Point4D::value_type Point4D::getNSamples() const { return x * y * u * v; }
 
 void Point4D::updateNSamples()
 {

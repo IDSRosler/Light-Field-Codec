@@ -4,7 +4,11 @@
 #include "Typedef.h"
 #include "Point4D.h"
 
+
 #include <vector>
+#include <string>
+#include <sstream>
+
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <iomanip>
@@ -45,29 +49,58 @@ struct PartitionDescriptor
     }
 };
 
-struct tree_node
+struct quadtree
 {
-    std::shared_ptr<tree_node> up_left;
-    std::shared_ptr<tree_node> up_right;
-    std::shared_ptr<tree_node> down_left;
-    std::shared_ptr<tree_node> down_right;
+    using node_type = std::shared_ptr<quadtree>;
+    node_type up_left;
+    node_type up_right;
+    node_type down_left;
+    node_type down_right;
+    int transform;
+    char partition;
 
-    std::string repr()
+    static node_type make_node() {
+        return std::make_shared<quadtree>();
+    }
+
+    std::string repr() const
     {
         std::stringstream ss;
         if (up_left == nullptr && up_right == nullptr && down_left == nullptr && down_right == nullptr)
         {
-            ss << "T";
+            ss << transform;
         }
         else
         {
-            ss << "P";
+            ss << partition;
             ss << up_left->repr();
             ss << up_right->repr();
             ss << down_left->repr();
             ss << down_right->repr();
         }
-        return ss.str();
+        std::string str = ss.str();
+        return str;
+    }
+
+
+
+    void set_child(std::size_t child, const node_type& ptr)
+    {
+        switch (child) {
+            case 0:
+                up_left = ptr;
+                break;
+            case 1:
+                up_right = ptr;
+                break;
+            case 2:
+                down_left = ptr;
+                break;
+            case 3:
+                down_right = ptr;
+                break;
+
+        }
     }
 };
 
@@ -108,7 +141,7 @@ void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape
 std::vector<index_t> generate_scan_order(const Point4D &shape, Point4D &stride);
 std::vector<index_t> generate_z_order_curve(const Point4D &shape, Point4D &stride);
 std::vector<PartitionDescriptor> parse_descriptor(std::string_view descriptor, const Point4D &_shape, bool unsafe = false);
-std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t total_nodes);
+// std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t total_nodes);
 std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index);
 std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(char type, const Point4D& _offset, const Point4D& _shape, bool unsafe = false);
 bool is_valid_descriptor(const std::string& descriptor);
@@ -365,4 +398,8 @@ double measure_sortness(std::vector<T> array)
     return a / (std::pow(b, 2) * std::pow(c, 2));
 }
 
+std::tuple<Point4D, Point4D> partition_at(const Point4D &from_shape,
+                  const Point4D &from_offset,
+                  size_t at_position,
+                  char partition_type);
 #endif // __UTILS_H__
