@@ -8,9 +8,7 @@ using index_t = unsigned;
 
 #define LFSample short
 
-#ifndef TRANSF_QUANT
-#define TRANSF_QUANT true
-#endif
+
 
 #ifndef DPCM_DC
 #define DPCM_DC false
@@ -50,8 +48,15 @@ using index_t = unsigned;
 
 #define HEXADECA_TREE_PARTITION 2 // 0: Original | 1: Order 8 | 2: Order 4
 
-
 #ifndef LFCODEC_USE_QUANTIZATION
 #define LFCODEC_USE_QUANTIZATION true
 #endif
-#endif
+
+
+
+#define LFCODEC_EXPORT_MICROIMAGES_TRANSFORM false
+
+
+
+
+#endif // TYPEDEF_H

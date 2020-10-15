@@ -15,19 +15,20 @@
 #include "Typedef.h"
 #include "TextReport.h"
 #include "EntropyEncoder.h"
+#include "Prediction.h"
 
 
 #include "utils.h"
 #include "TextReport.h"
+
 using namespace std;
 
 
-vector<string> Split(const string& s, char delimiter) {
+vector<string> Split(const string &s, char delimiter) {
     vector<string> tokens;
     string token;
     istringstream tokenStream(s);
-    while (getline(tokenStream, token, delimiter))
-    {
+    while (getline(tokenStream, token, delimiter)) {
         tokens.push_back(token);
     }
     return tokens;
@@ -75,18 +76,16 @@ int main(int argc, char **argv) {
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
-#if LFCODEC_USE_PREDICTION
+
     Prediction predictor;
     //EDUARDO BEGIN
-    Prediction newPredictor[3]{{(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
-                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
-                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)}};
+    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)}};
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-  
 
-#endif
     bool should_show_block = false;
     Transform transform(encoderParameters);
 
@@ -104,8 +103,6 @@ int main(int argc, char **argv) {
 
     const Point4D dimLF = encoderParameters.dim_LF;
     Point4D it_pos, dimBlock, stride_lf, stride_block;
-
-    Point4D blk_stride = make_stride(encoderParameters.dim_block);
 
     std::vector<index_t> seq_order(SIZE);
     std::iota(seq_order.begin(), seq_order.end(), 0);
@@ -131,7 +128,6 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Start encoding]");
 
-    std::map<char, int> transform_usage;
 
 #if STATISTICS_TIME
     total_time.tic();
@@ -139,12 +135,15 @@ int main(int argc, char **argv) {
     int block;
 
     report.header({
-        "Position",
-        "Ch",
-        "Descriptor",
-        "RD-Cost",
-        "SSE",
-    });
+                          "Position",
+                          "Ch",
+                          "Descriptor",
+                          "RD-Cost",
+                          "SSE",
+                  });
+
+    std::string transform_descriptor;
+    double rd_cost;
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -186,56 +185,39 @@ int main(int argc, char **argv) {
 
 #if STATISTICS_TIME
                         getBlock.toc();
-#endif
+#endif // STATISTICS_TIME
 
-#if TRANSF_QUANT
 
 #if STATISTICS_TIME
                         t.tic();
-#endif
+#endif // STATISTICS_TIME
                         //EDUARDO END
                         //EDUARDO BEGIN
-                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, block, ref4D);
+                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D,
+                                                                   encoderParameters.dim_block, pf4D, block, ref4D);
                         newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                         newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
-                        
+
                         //EDUARDO END
 
 #if STATISTICS_TIME
                         t.toc();
-#endif
-
-#if TRACE_TRANSF
-                        file_traceTransf <<
-                                         it_channel << sep <<
-
-                                         it_pos.x << sep <<
-                                         it_pos.y << sep <<
-                                         it_pos.u << sep <<
-                                         it_pos.v << sep <<
-
-                                         dimBlock.x << sep <<
-                                         dimBlock.y << sep <<
-                                         dimBlock.u << sep <<
-                                         dimBlock.v << sep;
-
-                        for (auto it : tf4D) {
-                            file_traceTransf << it << sep;
+#endif // STATISTICS_TIME
+                        if (encoderParameters.enable_transforms) {
+                            transform.set_position(it_channel, it_pos);
+                            auto[_desc, _rd_cost] = transform.forward(res4D, qf4D, dimBlock);
+                            transform_descriptor = _desc;
+                            rd_cost = _rd_cost;
+                        } else {
+                            std::copy(res4D, res4D + SIZE, qf4D);
                         }
-#endif
-
-#if TRANSF_QUANT
-                        transform.set_position(it_channel, it_pos);
 #if STATISTICS_TIME
                         t.tic();
-#endif
-
-                        auto[descriptor, rd_cost] = transform.forward(res4D, qf4D, dimBlock);
-
+#endif // STATISTICS_TIME
 
 #if STATISTICS_TIME
                         t.toc();
-#endif
+#endif // STATISTICS_TIME
 
                         std::transform(qf4D, qf4D + SIZE, temp_lre,
                                        [](auto value) { return static_cast<int>(std::round(value)); });
@@ -248,30 +230,23 @@ int main(int argc, char **argv) {
 
                         std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
-#else // TRANSF_QUANT
-                        std::copy(pf4D, pf4D + SIZE, qf4D);
-#endif // TRANSF_QUANT
-
-#if TRANSF_QUANT
-
-#endif
 
 #if STATISTICS_TIME
                         ti.tic();
 #endif
-
-                        transform.inverse(descriptor, qi4D, ti4D, dimBlock);
+                        if (encoderParameters.enable_transforms) {
+                            transform.inverse(transform_descriptor, qi4D, ti4D, dimBlock);
+                        } else {
+                            std::copy(qi4D, qi4D + SIZE, ti4D);
+                        }
 
 #if STATISTICS_TIME
                         ti.toc();
-#endif
-#else // TRANSF_QUANT
-                        std::copy(qi4D, qi4D + SIZE, ti4D);
-
-#endif
+#endif // STATISTICS_TIME
 
 
-                        
+
+
                         //EDUARDO BEGIN
                         newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         //EDUARDO END
@@ -279,43 +254,46 @@ int main(int argc, char **argv) {
 
 #if STATISTICS_TIME
                         rebuild.tic();
-#endif
+#endif // STATISTICS_TIME
                         //EDUARDO BEGIN
-                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);//ppm reconstruído
+                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
+                                   it_channel);//ppm reconstruído
                         //EDUARDO END
 
 #if STATISTICS_TIME
                         rebuild.toc();
-#endif
+#endif // STATISTICS_TIME
 
                         //EDUARDO BEGIN
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         //EDUARDO END
                         encoder.write_completedBytes();
 
-                        if (should_show_block) {
-                            show_block(it_channel, qf4D, dimBlock,
-                                       make_stride(Point4D(15, 15, 13, 13)), "ref");
-                        }
-                        // save_microimage(encoderParameters.getPathOutput(),
-                        //                 it_pos,
-                        //                 it_channel,
-                        //                 qf4D,
-                        //                 dimBlock,
-                        //                 make_stride(Point4D(15, 15, 13, 13)),
-                        //                 descriptor);
+
+#if LFCODEC_EXPORT_MICROIMAGES_TRANSFORM
+                         save_microimage(encoderParameters.getPathOutput(),
+                                         it_pos,
+                                         it_channel,
+                                         qf4D,
+                                         dimBlock,
+                                         make_stride(Point4D(15, 15, 13, 13)),
+                                         transform_descriptor);
+#endif
                         if (encoderParameters.show_progress_bar)
                             progress_bar(current_step / total_steps, 50);
 
                         current_step++;
                         auto sse = std::inner_product(orig4D, orig4D + SIZE, pi4D, 0.0,
                                                       [](auto acc, auto val) { return acc + val; },
-                                                      [](auto blk, auto rec) { auto error = blk - rec; return error * error; });
+                                                      [](auto blk, auto rec) {
+                                                          auto error = blk - rec;
+                                                          return error * error;
+                                                      });
 
                         if (encoderParameters.verbose) {
                             report.set_key("Position", it_pos);
                             report.set_key("Ch", ch_names[it_channel]);
-                            report.set_key("Descriptor", descriptor + transform.m_encoding_type);
+                            report.set_key("Descriptor", transform_descriptor + transform.m_encoding_type);
                             report.set_key("SSE", sse);
                             report.set_key("RD-Cost", rd_cost);
                             report.print();

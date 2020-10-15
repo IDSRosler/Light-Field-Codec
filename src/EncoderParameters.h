@@ -38,6 +38,8 @@ public:
     bool lossless = false;
     bool uniform_quantization = false;
 
+    bool enable_transforms = true;
+
     std::vector<std::string> use_transforms;
     std::string transforms_in_use;
     std::size_t quadtree_max_inner_nodes = 1;

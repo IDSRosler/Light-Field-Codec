@@ -77,7 +77,8 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             lossless = true;
         } else if (flag == "-uniform-quantization") {
             uniform_quantization = true;
-      //  } else if (flag == "") {
+        } else if (flag == "-disable-transforms") {
+            enable_transforms = false;
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
