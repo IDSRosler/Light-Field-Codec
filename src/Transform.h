@@ -43,26 +43,13 @@ public:
         AXIS_V = 8
     };
 
-    inline static const std::string P_CHOICES = "sa";
     inline static std::vector<TransformType> T_CHOICES;
     inline static std::vector<int> QUADTREE_NODES_COUNT;
+    inline static std::size_t PARTITION_TREE_DEPTH = 2;
 
     EncoderParameters codec_parameters;
-    bool disable_segmentation = false;
 
-    Timer m_timer_substr;
-    Timer m_timer_md_forward_fast;
-    Timer m_timer_md_inverse_fast;
-    Timer m_timer_split;
-    Timer m_timer_unique_ptr_alloc;
-    Timer m_timer_stack_copy;
-    Timer m_timer_rd_cost;
-    Timer m_timer_cache_copy_overhead;
-    char m_encoding_type;
-    std::uint64_t m_forward_count_n2 = 0;
-    std::uint64_t m_inverse_count_n2 = 0;
-    std::uint64_t m_forward_count_nlogn = 0;
-    std::uint64_t m_inverse_count_nlogn = 0;
+    char m_encoding_type = 'Z';
 
     static void flush_cache();
 
@@ -104,8 +91,6 @@ private:
     int channel = 0;
     size_t flat_size = 0;
 
-    double m_min_rd_cost = std::numeric_limits<double>::infinity();
-    std::string m_min_descriptor;
     std::unique_ptr<float[]> m_partial_block = nullptr;
     std::unique_ptr<float[]> m_temp_r_block = nullptr;
     std::unique_ptr<float[]> m_temp_tf_block = nullptr;
@@ -113,9 +98,6 @@ private:
 
     std::unique_ptr<EncBitstreamWriter> fake_encoder = nullptr;
     std::unique_ptr<LRE> lre = nullptr;
-
-    TransformType enforce_transform;
-    std::vector<std::string> tree_repr_vector;
 
     inline static std::map<size_t, float *> cache_dct_ii;
     inline static std::map<size_t, float *> cache_dst_i;
@@ -148,16 +130,16 @@ private:
     void md_inverse_single_axis(int ax, TransformType type, const float *input, float *output, const Point4D &shape);
 
 
-    void forward_fast(
-            const std::string &tree_repr,
-            std::size_t index,
-            const float *block,
-            float *result,
-            std::deque<std::pair<Point4D, Point4D>> stack);
+    auto find_min_rd_cost(const float *block,
+                                     float *transformed_block,
+                                     const Point4D &shape,
+                                     const Point4D &offset);
 
-    void forward_deep_search(const std::string& tree_repr, const float *block, float *result, const Point4D& shape, const Point4D& stride);
-
-    void calculate_rd_cost(const float *block, const std::string& descriptor);
+    auto min_partition_tree(const float *block,
+                                       float *transformed_block,
+                                       const Point4D &from_shape,
+                                       const Point4D &from_offset,
+                                       size_t partition_level);
 
 };
 
@@ -177,5 +159,10 @@ inline void Transform::md_inverse(TransformType type,
 {
     md_inverse(type, input, output, {0, 0, 0, 0}, shape);
 }
+
+
+
+
+
 
 #endif // TRANSFORM_H

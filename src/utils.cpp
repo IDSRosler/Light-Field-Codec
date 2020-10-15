@@ -342,76 +342,76 @@ std::vector<PartitionDescriptor> parse_descriptor(std::string_view descriptor, c
     return parsed_descriptors;
 }
 
-
-std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t total_nodes) {
-    std::vector<std::shared_ptr<tree_node>> tree;
-    if (total_nodes == 1) {
-        tree.push_back(std::make_shared<tree_node>());
-    } else if ((total_nodes - 1) % 4 == 0) {
-        for (std::size_t x1 = 1; x1 < total_nodes - 1; x1 += 4)
-            for (std::size_t x2 = 1; x2 < total_nodes - x1 - 1; x2 += 4)
-                for (std::size_t x3 = 1; x3 < total_nodes - x2 - x1 - 1; x3 += 4) {
-                    auto ul_nodes = generate_full_binary_trees(x1); // up left
-                    auto ur_nodes = generate_full_binary_trees(x2); // up right
-                    auto dl_nodes = generate_full_binary_trees(x3); // down left
-                    auto dr_nodes = generate_full_binary_trees(total_nodes - x3 - x2 - x1 - 1); // down right
-                    for (const auto &ul : ul_nodes)
-                        for (const auto &ur : ur_nodes)
-                            for (const auto &dl : dl_nodes)
-                                for (const auto &dr:  dr_nodes) {
-                                    auto root = std::make_shared<tree_node>();
-                                    root->up_left = ul;
-                                    root->up_right = ur;
-                                    root->down_left = dl;
-                                    root->down_right = dr;
-                                    tree.push_back(root);
-                                }
-                }
-    }
-    return tree;
-}
-
-std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index) {
-    std::vector<std::string> converted;
-    std::vector<std::string> prev;
-    std::string T_CHOICES;
-    std::transform(std::cbegin(Transform::T_CHOICES),
-                   std::cend(Transform::T_CHOICES),
-                   std::back_inserter(T_CHOICES),
-                   [](auto choice) {
-                       return '0' + static_cast<unsigned char>(choice);
-                   });
-
-    if (index == tree_repr.size()) {
-        converted.push_back(tree_repr);
-    } else {
-        std::string prefix(tree_repr.substr(0, index > 0 ? index : 0));
-        std::string suffix(tree_repr.substr(index + 1, tree_repr.size() - 1));
-        std::string choices;
-
-        switch (tree_repr[index]) {
-            case 'P':
-                choices = Transform::P_CHOICES;
-                break;
-            case 'T':
-                choices = T_CHOICES;
-                break;
-            default:
-                choices = "";
-                prev = convert_fbt_to_descriptor(tree_repr, index + 1);
-                std::copy(std::begin(prev), std::end(prev), std::back_inserter(converted));
-        }
-
-        for (const auto &c : choices) {
-            std::stringstream ss;
-            ss << prefix << c << suffix;
-            prev = convert_fbt_to_descriptor(ss.str(), index + 1);
-            std::copy(std::begin(prev), std::end(prev), std::back_inserter(converted));
-        }
-    }
-    return converted;
-}
-
+//
+//std::vector<std::shared_ptr<tree_node>> generate_full_binary_trees(std::size_t total_nodes) {
+//    std::vector<std::shared_ptr<tree_node>> tree;
+//    if (total_nodes == 1) {
+//        tree.push_back(std::make_shared<tree_node>());
+//    } else if ((total_nodes - 1) % 4 == 0) {
+//        for (std::size_t x1 = 1; x1 < total_nodes - 1; x1 += 4)
+//            for (std::size_t x2 = 1; x2 < total_nodes - x1 - 1; x2 += 4)
+//                for (std::size_t x3 = 1; x3 < total_nodes - x2 - x1 - 1; x3 += 4) {
+//                    auto ul_nodes = generate_full_binary_trees(x1); // up left
+//                    auto ur_nodes = generate_full_binary_trees(x2); // up right
+//                    auto dl_nodes = generate_full_binary_trees(x3); // down left
+//                    auto dr_nodes = generate_full_binary_trees(total_nodes - x3 - x2 - x1 - 1); // down right
+//                    for (const auto &ul : ul_nodes)
+//                        for (const auto &ur : ur_nodes)
+//                            for (const auto &dl : dl_nodes)
+//                                for (const auto &dr:  dr_nodes) {
+//                                    auto root = std::make_shared<tree_node>();
+//                                    root->up_left = ul;
+//                                    root->up_right = ur;
+//                                    root->down_left = dl;
+//                                    root->down_right = dr;
+//                                    tree.push_back(root);
+//                                }
+//                }
+//    }
+//    return tree;
+//}
+//
+//std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index) {
+//    std::vector<std::string> converted;
+//    std::vector<std::string> prev;
+//    std::string T_CHOICES;
+//    std::transform(std::cbegin(Transform::T_CHOICES),
+//                   std::cend(Transform::T_CHOICES),
+//                   std::back_inserter(T_CHOICES),
+//                   [](auto choice) {
+//                       return '0' + static_cast<unsigned char>(choice);
+//                   });
+//
+//    if (index == tree_repr.size()) {
+//        converted.push_back(tree_repr);
+//    } else {
+//        std::string prefix(tree_repr.substr(0, index > 0 ? index : 0));
+//        std::string suffix(tree_repr.substr(index + 1, tree_repr.size() - 1));
+//        std::string choices;
+//
+//        switch (tree_repr[index]) {
+//            case 'P':
+//                choices = Transform::P_CHOICES;
+//                break;
+//            case 'T':
+//                choices = T_CHOICES;
+//                break;
+//            default:
+//                choices = "";
+//                prev = convert_fbt_to_descriptor(tree_repr, index + 1);
+//                std::copy(std::begin(prev), std::end(prev), std::back_inserter(converted));
+//        }
+//
+//        for (const auto &c : choices) {
+//            std::stringstream ss;
+//            ss << prefix << c << suffix;
+//            prev = convert_fbt_to_descriptor(ss.str(), index + 1);
+//            std::copy(std::begin(prev), std::end(prev), std::back_inserter(converted));
+//        }
+//    }
+//    return converted;
+//}
+//
 
 
 //def verify_descriptor(desc):
@@ -455,4 +455,59 @@ bool is_valid_descriptor(const std::string &descriptor) {
         }
     }
     return count == 0;
+}
+
+
+
+std::tuple<Point4D, Point4D> partition_at(const Point4D &from_shape,
+                                          const Point4D &from_offset,
+                                          size_t at_position,
+                                          char partition_type)
+{
+    Point4D shape = from_shape;
+    Point4D offset = from_offset;
+    size_t s, t; // Axis for partition
+
+    switch (partition_type)
+    {
+        case 'S':
+        case 's':
+            s = 0;
+            t = 1;
+            break;
+        case 'A':
+        case 'a':
+            s = 2;
+            t = 3;
+            break;
+        default:
+            throw std::invalid_argument("partition_type expects either 's' or 'a'. ");
+    }
+
+    switch (at_position)
+    {
+        case 0:
+            shape[s] = (shape[s] + 1) >> 1U;
+            shape[t] = (shape[t] + 1) >> 1U;
+            break;
+        case 1:
+            shape[s] = shape[s] >> 1U;
+            shape[t] = (shape[t] + 1) >> 1U;
+            offset[s] += (from_shape[s] + 1) >> 1U;
+            break;
+        case 2:
+            shape[s] = (shape[s] + 1) >> 1U;
+            shape[t] = shape[t] >> 1U;
+            offset[t] += (from_shape[t] + 1) >> 1U;
+            break;
+        case 3:
+            shape[s] = shape[s] >> 1U;
+            shape[t] = shape[t] >> 1U;
+            offset[s] += (from_shape[s] + 1) >> 1U;
+            offset[t] += (from_shape[t] + 1) >> 1U;
+            break;
+        default:
+            throw std::invalid_argument("at_position expects values between 0 and 3, inclusive. ");
+    }
+    return std::make_tuple(shape, offset);
 }

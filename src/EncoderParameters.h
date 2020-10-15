@@ -31,6 +31,7 @@ public:
     bool show_progress_bar = false;
     bool verbose = false;
     bool experimental = false;
+    bool fast = true;
 
     bool calculate_metrics = true;
     bool display_stages = true;

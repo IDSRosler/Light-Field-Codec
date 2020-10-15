@@ -64,20 +64,20 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
         } else if (flag == "-experimental"){
             this->experimental = true;
         } else if (flag == "-use-transforms") {
-            while(argv[++it][0] != '-') {
+            while(argv[++it][0] != '-')
                 use_transforms.emplace_back(argv[it]);
-            }
             it--;
         } else if (flag == "-transform-min-angular-size") {
             transform_min_angular_size = strtol(argv[++it], nullptr, 10);
         } else if (flag == "-transform-min-spatial-size") {
             transform_min_spatial_size = strtol(argv[++it], nullptr, 10);
-        } else if (flag == "-quadtree-max-inner-nodes") {
-            quadtree_max_inner_nodes = strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-partition-tree-max-depth") {
+            Transform::PARTITION_TREE_DEPTH = strtol(argv[++it], nullptr, 10);
         } else if (flag == "-lossless") {
             lossless = true;
         } else if (flag == "-uniform-quantization") {
             uniform_quantization = true;
+      //  } else if (flag == "") {
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
