@@ -1,26 +1,16 @@
 #include <iostream>
 #include <map>
-#include <stdexcept>
 #include <string>
-#include <deque>
 #include <algorithm>
 #include <numeric>
 #include <functional>
 
-#include "DpcmDC.h"
 #include "EncBitstreamWriter.h"
-#include "EncoderParameters.h"
-#include "LRE.h"
 #include "LightField.h"
 #include "LightFieldMetrics.h"
-#include "Prediction.h"
 #include "Quantization.h"
-#include "ScanOrder.h"
-#include "Statistics.h"
 #include "Timer.h"
 #include "Transform.h"
-#include "Typedef.h"
-#include "utils.h"
 #include "TextReport.h"
 using namespace std;
 
@@ -91,8 +81,6 @@ int main(int argc, char **argv) {
 
     std::vector<index_t> seq_order(SIZE);
     std::iota(seq_order.begin(), seq_order.end(), 0);
-    // for (std::size_t i = 0; i < SIZE; i++)
-    //   seq_order[i] = i;
 
 #if STATISTICS_TIME
     total_time.tic();
@@ -122,17 +110,10 @@ int main(int argc, char **argv) {
     report.header({
         "Position",
         "Ch",
-        "TimerSubstr",
-        "TimerFastFwd",
-        "TimerFastInv",
-        "TimerSplit",
-        "TimerUniquePtr",
-        "TimerStackCopy",
-        "TimerRDCost",
-        "TimerCacheCopy",
-        "Descriptor"
+        "Descriptor",
+        "RD-Cost",
+        "SSE",
     });
-
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -173,11 +154,6 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         getBlock.toc();
 #endif
-                        if ((it_pos.x / 15) == 41) {
-                            // Dummy variable for breakpoint and debugging
-                            volatile int xxx = 0;
-                            // return 0;
-                        }
 
 #if LFCODEC_USE_PREDICTION
                         predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
@@ -202,7 +178,7 @@ int main(int argc, char **argv) {
 #endif
 
                         std::transform(qf4D, qf4D + SIZE, temp_lre,
-                                       [](auto value) { return static_cast<int>(value); });
+                                       [](auto value) { return static_cast<int>(std::round(value)); });
 
 
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
@@ -267,19 +243,16 @@ int main(int argc, char **argv) {
                             progress_bar(current_step / total_steps, 50);
 
                         current_step++;
+                        auto sse = std::inner_product(orig4D, orig4D + SIZE, pi4D, 0.0,
+                                                      [](auto acc, auto val) { return acc + val; },
+                                                      [](auto blk, auto rec) { auto error = blk - rec; return error * error; });
 
                         if (encoderParameters.verbose) {
                             report.set_key("Position", it_pos);
-                            report.set_key("TimerSubstr", transform.m_timer_substr.getTotalTime() / transform.m_timer_substr.get_nCalls());
-                            report.set_key("TimerFastFwd", transform.m_timer_md_forward_fast.getTotalTime() / transform.m_timer_md_forward_fast.get_nCalls());
-                            report.set_key("TimerFastInv", transform.m_timer_md_inverse_fast.getTotalTime() / transform.m_timer_md_inverse_fast.get_nCalls());
-                            report.set_key("TimerSplit", transform.m_timer_split.getTotalTime() / transform.m_timer_split.get_nCalls());
-                            report.set_key("TimerUniquePtr", transform.m_timer_unique_ptr_alloc.getTotalTime() / transform.m_timer_unique_ptr_alloc.get_nCalls());
-                            report.set_key("TimerStackCopy", transform.m_timer_stack_copy.getTotalTime() / transform.m_timer_stack_copy.get_nCalls());
-                            report.set_key("TimerRDCost", transform.m_timer_rd_cost.getTotalTime() / transform.m_timer_rd_cost.get_nCalls());
-                            report.set_key("TimerCacheCopy", transform.m_timer_cache_copy_overhead.getTotalTime() / transform.m_timer_cache_copy_overhead.get_nCalls());
                             report.set_key("Ch", ch_names[it_channel]);
                             report.set_key("Descriptor", descriptor + transform.m_encoding_type);
+                            report.set_key("SSE", sse);
+                            report.set_key("RD-Cost", rd_cost);
                             report.print();
                         }
                     }
