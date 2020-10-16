@@ -270,7 +270,7 @@ void Transform::md_inverse(const TransformType type,
 
     int offset = calc_offset(offset_, block_stride);
     float *pout = output + offset;
-    const float *pin;
+    const float *pin = input + offset;
 
     float block[flat_size];
 
