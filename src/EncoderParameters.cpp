@@ -81,6 +81,8 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             enable_transforms = false;
         } else if (flag == "-export-blocks") {
             export_blocks = true;
+        } else if (flag == "-disable-prediction") {
+            enable_prediction = false;
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;

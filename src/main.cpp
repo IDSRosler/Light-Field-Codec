@@ -186,12 +186,14 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif // STATISTICS_TIME
-                        //EDUARDO END
-                        //EDUARDO BEGIN
-                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D,
-                                                                   encoderParameters.dim_block, pf4D, block, ref4D);
-                        newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
-                        newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+                        if (encoderParameters.enable_prediction) {
+                            newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D,
+                                                                       encoderParameters.dim_block, pf4D, block, ref4D);
+                            newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+                        } else {
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        }
 
                         //EDUARDO END
 
@@ -242,9 +244,9 @@ int main(int argc, char **argv) {
 
 
 
-                        //EDUARDO BEGIN
-                        newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
-                        //EDUARDO END
+                        if (encoderParameters.enable_prediction) {
+                            newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
+                        }
 
 
 #if STATISTICS_TIME
@@ -258,10 +260,10 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         rebuild.toc();
 #endif // STATISTICS_TIME
+                        if (encoderParameters.enable_prediction) {
+                            newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
+                        }
 
-                        //EDUARDO BEGIN
-                        newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
-                        //EDUARDO END
                         encoder.write_completedBytes();
 
 
