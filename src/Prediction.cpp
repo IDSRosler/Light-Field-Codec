@@ -57,29 +57,33 @@ Prediction::Prediction(uint resol_x) : resol_x(resol_x) {
     this->init_references();
 }
 
-void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origSize) {
+void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *(this->pred_references.end() - 1); // left
     int numElements = origSize.getNSamples();
     if (x == 0) ref.available = false;
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
+        available = true;
     }else{
         for (int i = 0; i < numElements ; ++i)
             out[i] = 0;
+        available = false;
     }
 }
 
-void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize) {
+void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *(this->pred_references.begin() + 1); // above
     int numElements = origSize.getNSamples();
     if (y == 0) ref.available = false;
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
+        available = true;
     }else{
         for (int i = 0; i < numElements ; ++i)
             out[i] = 0;
+        available = false;
     }
 }
 
@@ -97,7 +101,7 @@ void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize) {
+void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *(this->pred_references.begin() + 2); // above right
     int numElements = origSize.getNSamples();
     if (y == 0) ref.available = false;
@@ -105,9 +109,11 @@ void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &orig
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
+        available = true;
     }else{
         for (int i = 0; i < numElements ; ++i)
             out[i] = 0;
+        available = false;
     }
 }
 
@@ -623,7 +629,7 @@ float Prediction::sad(const float *orig_input, const float *prediction_input, co
 }*/
 
 
-void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out ){
+void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
     Point4D it_pos_out;
     Point4D it_pos_in;
     it_pos_out.x = origSize.x - 1;
@@ -631,27 +637,35 @@ void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, const
     it_pos_out.u = 0;
     it_pos_out.v = 0;
 
-    int cont = 0, cont2 = origSize.y * origSize.u * origSize.v; //13*13*15 = 2535 
+    int cont = 0, cont2 = origSize.y * origSize.u * origSize.v; //13*13*15 = 2535
+    int pos_ref, pos_out;
+    availableRef2 = false;
 
-    // percorre vetor out na ordem horizontal espacial
     for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-        // percorre vetor out na ordem horizontal angular
+
         for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
             for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-                int pos_out =
+                pos_ref =
                         (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                         + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                out[cont] = blockRef1[pos_out];
-                out[cont2] = blockRef2[pos_out];
-                cont++;
-                cont2++;
+                pos_out = (it_pos_out.y) + (it_pos_out.u * origSize.y)
+                               + (it_pos_out.v * origSize.y * origSize.u);
+                out[pos_out] = blockRef1[pos_ref];
+                if(availableRef2){
+                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                }else{
+                    pos_ref = (it_pos_out.x) + ((origSize.y - 1) * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                }
+
             }
         }
     }
 }
 
-void Prediction::generateReferenceVectorVertical(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out ){
+void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
     Point4D it_pos_out;
     Point4D it_pos_in;
     it_pos_out.x = 0;
@@ -660,20 +674,27 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, const f
     it_pos_out.v = 0;
 
     int cont = 0, cont2 = origSize.x * origSize.u * origSize.v; //15*13*13 = 2535
+    int pos_ref, pos_out;
 
-    // percorre vetor out na ordem horizontal espacial
     for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
-        // percorre vetor out na ordem horizontal angular
+
         for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
             for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-                int pos_out =
+                pos_ref =
                         (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                         + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                out[cont] = blockRef1[pos_out];
-                out[cont2] = blockRef2[pos_out];
-                cont++;
-                cont2++;
+                pos_out = (it_pos_out.x) + (it_pos_out.u * origSize.x)
+                               + (it_pos_out.v * origSize.x * origSize.u);
+
+                out[pos_out] = blockRef1[pos_ref];
+                if(availableRef2){
+                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                }else{
+                    pos_ref = (origSize.x - 1) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                }
             }
         }
     }
@@ -694,11 +715,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     it_pos_out.v = 0;
     it_pos_out.y = 0;
 
-    // Horizontal modo 10 - H0
-    int num_modes = 1; //33
+    int num_modes = 33; //33
     int d = 0;
     int C = 0;
     int ind = 0;
+    int pos = 0;
     int W = 0;
     float R0 = 0;
     float R1 = 0;
@@ -710,169 +731,227 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             refLeft4D[origSize.getNSamples()],
             refAboveRight4D[origSize.getNSamples()];
 
-    float refAboveGeneratedVector[(origSize.y * origSize.u * origSize.v)*2];
+    float refAboveGeneratedVector[(origSize.x * origSize.u * origSize.v)*2];
+    float refLeftGeneratedVector[(origSize.y * origSize.u * origSize.v)*2];
 
-    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize);
-    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize);
-    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize);
+    bool availableL, availableA, availableAR;
 
-    for(int i = 0; i < origSize.getNSamples(); i++){
-        refAbove4D[i] = orig_input[i];
-    }
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
 
-    for(int i = 0; i < origSize.getNSamples(); i++){
-        refAboveRight4D[i] = orig_input[i];
-    }
-
-    Point4D it_p_out;
-    Point4D it_p_in;
-    it_p_out.x = 0;
-    it_p_out.y = origSize.y - 1; //fixed
-    it_p_out.u = 0;
-    it_p_out.v = 0;
-
-    // percorre vetor out na ordem horizontal espacial
-    for (it_p_out.x = 0; it_p_out.x < origSize.x; it_p_out.x += 1) {
-        // percorre vetor out na ordem horizontal angular
-        for (it_p_out.v = 0; it_p_out.v < origSize.v; it_p_out.v += 1) {
-            for (it_p_out.u = 0; it_p_out.u < origSize.u; it_p_out.u += 1) {
-
-                int pos_out =
-                        (it_p_out.x) + (it_p_out.y * origSize.x) + (it_p_out.u * origSize.x * origSize.y)
-                        + (it_p_out.v * origSize.x * origSize.y * origSize.u);
-                std::cout << refAboveRight4D[pos_out] << " ";
-            }
-        }
-    }
-
-    std::cout << "above" << std::endl;
-
-    it_p_out.x = 0;
-    it_p_out.y = origSize.y - 1; //fixed
-    it_p_out.u = 0;
-    it_p_out.v = 0;
-
-    // percorre vetor out na ordem horizontal espacial
-    for (it_p_out.x = 0; it_p_out.x < origSize.x; it_p_out.x += 1) {
-        // percorre vetor out na ordem horizontal angular
-        for (it_p_out.v = 0; it_p_out.v < origSize.v; it_p_out.v += 1) {
-            for (it_p_out.u = 0; it_p_out.u < origSize.u; it_p_out.u += 1) {
-
-                int pos_out =
-                        (it_p_out.x) + (it_p_out.y * origSize.x) + (it_p_out.u * origSize.x * origSize.y)
-                        + (it_p_out.v * origSize.x * origSize.y * origSize.u);
-                std::cout << refAbove4D[pos_out] << " ";
-            }
-        }
-    }
-
-    this->generateReferenceVectorVertical(refAbove4D, refAboveRight4D, origSize, refAboveGeneratedVector);
-
-    std::cout << "generated" << std::endl;
-
-    for(int i = 0; i < (origSize.y * origSize.u * origSize.v)*2; i++){
-        std::cout << refAboveGeneratedVector[i] << " ";
-    }
-
-    /*
-    int refL = 0;
-    for(int i = 0; i < origSize.getNSamples(); i++){
-        refL += refLeft4D[i];
-    }
-
-    int refA = 0;
-    for(int i = 0; i < origSize.getNSamples(); i++){
-        refA += refAbove4D[i];
-    }
-
-    if(refA == 0 && refL == 0){
+    if(not availableL && not availableA){ //sem referência
         for(int i = 0; i < origSize.getNSamples(); i++){
             out[i] = orig_input[i];
         }
-    } else{ //se tem bloco de referência
-    */
-    for(int i = 0; i < origSize.getNSamples(); i++){
-        refLeft4D[i] = orig_input[i];
-        //refAbove4D[i] = orig_input[i];
-    }
-    int refL = 0;
-    int refA = 10;
-
-    for(int mode = 0; mode < num_modes; mode++) { //num_modes
-        switch (mode)
-        {
-            case 0:
-            case 32:
-                d = 32;
-                break;
-            case 1:
-            case 31:
-                d = 26;
-                break;
-            case 2:
-            case 30:
-                d = 21;
-                break;
-            case 3:
-            case 29:
-                d = 17;
-                break;
-            case 4:
-            case 28:
-                d = 13;
-                break;
-            case 5:
-            case 27:
-                d = 9;
-                break;
-            case 6:
-            case 26:
-                d = 5;
-                break;
-            case 7:
-            case 25:
-                d = 2;
-                break;
-            case 8:
-            case 24:
-                d = 0;
-                break;
-            case 9:
-            case 23:
-                d = -2;
-                break;
-            case 10:
-            case 22:
-                d = -5;
-                break;
-            case 11:
-            case 21:
-                d = -9;
-                break;
-            case 12:
-            case 20:
-                d = -13;
-                break;
-            case 13:
-            case 19:
-                d = -17;
-                break;
-            case 14:
-            case 18:
-                d = -21;
-                break;
-            case 15:
-            case 17:
-                d = -26;
-                break;
-            case 16:
-                d = -32;
-                break;
-            default:
-                d = 0;
+    }else{ //com referência
+        if(availableA){
+            this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
+        }
+        if(availableL){
+            this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, refLeftGeneratedVector);
         }
 
-        if(mode <= 15 && refL != 0) { //Horizontal
+        for(int mode = 0; mode < num_modes; mode++) { //num_modes
+            switch (mode)
+            {
+                case 0:
+                case 32:
+                    d = 32;
+                    break;
+                case 1:
+                case 31:
+                    d = 26;
+                    break;
+                case 2:
+                case 30:
+                    d = 21;
+                    break;
+                case 3:
+                case 29:
+                    d = 17;
+                    break;
+                case 4:
+                case 28:
+                    d = 13;
+                    break;
+                case 5:
+                case 27:
+                    d = 9;
+                    break;
+                case 6:
+                case 26:
+                    d = 5;
+                    break;
+                case 7:
+                case 25:
+                    d = 2;
+                    break;
+                case 8:
+                case 24:
+                    d = 0;
+                    break;
+                case 9:
+                case 23:
+                    d = -2;
+                    break;
+                case 10:
+                case 22:
+                    d = -5;
+                    break;
+                case 11:
+                case 21:
+                    d = -9;
+                    break;
+                case 12:
+                case 20:
+                    d = -13;
+                    break;
+                case 13:
+                case 19:
+                    d = -17;
+                    break;
+                case 14:
+                case 18:
+                    d = -21;
+                    break;
+                case 15:
+                case 17:
+                    d = -26;
+                    break;
+                case 16:
+                    d = -32;
+                    break;
+                default:
+                    d = 0;
+            }
+
+            if(mode <= 15 && availableL) { //Horizontal
+
+                // Horizontal - fixed
+                it_pos_in.x = origSize.x - 1;
+                it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
+
+                // Vertical - variable
+                it_pos_in.v = 0;
+                it_pos_in.y = 0;
+
+                // percorre vetor out na ordem horizontal espacial
+                for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+                    for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+
+                        // percorre vetor out na ordem horizontal angular
+                        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                                int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) +
+                                              (it_pos_out.u * origSize.x * origSize.y)
+                                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                                //C = (it_pos_out.u * d) >> 5;
+                                C = (int)this->roundTowardsZero((int)(it_pos_out.u * d) / (float)pow(2, 5));
+                                W = (it_pos_out.u * d) & 31;
+                                ind = it_pos_out.v + C;
+                                pos = ind + 1;
+
+                                if(ind < 0){
+                                    ind = 0;
+                                }
+
+                                if (pos >= origSize.v) {
+                                    pos = ind;
+                                }
+                                R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                               (ind * origSize.x * origSize.y * origSize.u)];
+                                R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                               ((pos) * origSize.x * origSize.y * origSize.u)];
+
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                            }
+                        }
+                    }
+                }
+                int sse = this->sseHorizontal(orig_input, out, origSize);
+                if(mode == 0){
+                    min_sse = sse;
+                    min_mode = mode;
+                    min_d = d;
+                } else if (sse < min_sse) {
+                    min_sse = sse;
+                    min_mode = mode;
+                    min_d = d;
+                }
+
+            } else if(mode > 15 && availableA){ //Vertical
+
+                // Horizontal - variable
+                it_pos_in.x = 0;
+                it_pos_in.u = 0;
+
+                // Vertical - fixed
+                it_pos_in.y = (origSize.y - 1) * origSize.x;
+                it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
+
+                // percorre vetor out na ordem vertical espacial
+                for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+                    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+
+                        // percorre vetor out na ordem vertical angular
+                        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+                            for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+
+                                int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                                //C = (it_pos_out.v * d) >> 5;
+                                C = (int)this->roundTowardsZero((int)(it_pos_out.v * d) / (float)pow(2, 5));
+                                W = (it_pos_out.v * d) & 31;
+                                ind = it_pos_out.u + C;
+                                pos = ind + 1;
+
+                                if(ind < 0){
+                                    ind = 0;
+                                }
+
+                                if (pos >= origSize.v){
+                                    pos = ind;
+                                }
+                                R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
+                                                (it_pos_in.v)];
+                                R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                                                (it_pos_in.v)];
+
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                            }
+                        }
+                    }
+                }
+                int sse = this->sseVertical(orig_input, out, origSize);
+                if(mode == 16 && not availableL){ //primeiro e não passou pelo horizontal
+                    min_sse = sse;
+                    min_mode = mode;
+                    min_d = d;
+                } else if (sse < min_sse) {
+                    min_sse = sse;
+                    min_mode = mode;
+                    min_d = d;
+                }
+
+            }
+        }
+
+        if(block == 0){
+            std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
+        }
+
+        //min_mode = 15; //fix mode
+        //min_d = 0; //fix d
+
+        if(min_mode <= 15 ){ //Horizontal
+
+            for(int i = 0; i < origSize.getNSamples(); i++){
+                ref[i] = refLeft4D[i];
+            }
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
@@ -890,45 +969,61 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                     for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
                         for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) +
-                                          (it_pos_out.u * origSize.x * origSize.y)
+                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            //C = (it_pos_out.u * d) >> 5;
-                            C = (int)this->roundTowardsZero((int)(it_pos_out.u * d) / (float)pow(2, 5));
-                            W = (it_pos_out.u * d) & 31;
-                            ind = it_pos_out.v + C;
+                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
 
-                            if(ind < 0){
-                                ind = 0;
+                                out[pos_out] = refLeft4D[pos_out];
+
+                            } else {
+
+                                C = (int) this->roundTowardsZero((int) (it_pos_out.u * min_d) / (float) pow(2, 5));
+                                W = (it_pos_out.u * min_d) & 31;
+                                ind = it_pos_out.v + C;
+
+                                if (ind < 0) {
+                                    ind = 0;
+                                }
+                                pos = ind + 1;
+
+
+                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                    || (ind == 1 && it_pos_out.u <= 1)
+                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                    || (pos == 1 && it_pos_out.u <= 1)
+                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+
+                                    out[pos_out] = refLeft4D[pos_out];
+                                } else{
+
+                                    R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
+                                                                (ind * origSize.y * origSize.u)];
+                                    R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
+                                                                (pos * origSize.y * origSize.u)];
+
+                                    /*
+                                    R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                                   (ind * origSize.x * origSize.y * origSize.u)];
+                                    R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                                   ((pos) * origSize.x * origSize.y * origSize.u)];
+                                    */
+
+                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                                }
                             }
-
-                            int pos = ind + 1;
-                            if (pos >= origSize.v) {
-                                pos = ind;
-                            }
-                            R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
-                                           (ind * origSize.x * origSize.y * origSize.u)];
-                            R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
-                                           ((pos) * origSize.x * origSize.y * origSize.u)];
-
-                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
                         }
                     }
                 }
             }
-            int sse = this->sseHorizontal(orig_input, out, origSize);
-            if(mode == 0){
-                min_sse = sse;
-                min_mode = mode;
-                min_d = d;
-            } else if (sse < min_sse) {
-                min_sse = sse;
-                min_mode = mode;
-                min_d = d;
-            }
+        } else{ //Vertical
 
-        } else if(mode > 15 && refA != 0){ //Vertical
+            for(int i = 0; i < origSize.getNSamples(); i++){
+                ref[i] = refAbove4D[i];
+            }
 
             // Horizontal - variable
             it_pos_in.x = 0;
@@ -949,189 +1044,56 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            //C = (it_pos_out.v * d) >> 5;
-                            C = (int)this->roundTowardsZero((int)(it_pos_out.v * d) / (float)pow(2, 5));
-                            W = (it_pos_out.v * d) & 31;
-                            ind = it_pos_out.u + C;
+                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
+                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
 
-                            if(ind < 0){
-                                ind = 0;
-                            }
+                                out[pos_out] = refAbove4D[pos_out];
 
-                            int pos = ind + 1;
-                            if (pos >= origSize.v){
-                                pos = ind;
-                            }
-                            R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
-                                            (it_pos_in.v)];
-                            R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
-                                            (it_pos_in.v)];
-
-                            out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                        }
-                    }
-                }
-            }
-            int sse = this->sseVertical(orig_input, out, origSize);
-            if(mode == 16 && refL == 0){ //primeiro e não passou pelo horizontal
-                min_sse = sse;
-                min_mode = mode;
-                min_d = d;
-            } else if (sse < min_sse) {
-                min_sse = sse;
-                min_mode = mode;
-                min_d = d;
-            }
-
-        }
-    }
-
-    if(block == 0){
-        std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
-    }
-
-    min_mode = 16; //fix vertical mode
-    min_d = 0; //fix d
-
-    if(min_mode <= 15 ){ //Horizontal
-
-        for(int i = 0; i < origSize.getNSamples(); i++){
-            ref[i] = refLeft4D[i];
-        }
-
-        // Horizontal - fixed
-        it_pos_in.x = origSize.x - 1;
-        it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
-
-        // Vertical - variable
-        it_pos_in.v = 0;
-        it_pos_in.y = 0;
-
-        // percorre vetor out na ordem horizontal espacial
-        for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
-
-                // percorre vetor out na ordem horizontal angular
-                for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-
-                        int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                                      + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-
-                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
-
-                            out[pos_out] = refLeft4D[pos_out];
-
-                        } else {
-
-                            C = (int) this->roundTowardsZero((int) (it_pos_out.u * min_d) / (float) pow(2, 5));
-                            W = (it_pos_out.u * min_d) & 31;
-                            ind = it_pos_out.v + C;
-
-                            if (ind < 0) {
-                                ind = 0;
-                            }
-
-                            if(ind > origSize.v-1){
-                                ind = origSize.v-1;
-                            }
-
-                            int pos = ind + 1;
-                            if (pos >= origSize.v-1) {
-                                pos = ind;
-                            }
-
-                            if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                || (ind == 1 && it_pos_out.u <= 1)
-                                || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                               ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                || (pos == 1 && it_pos_out.u <= 1)
-                                || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                out[pos_out] = refLeft4D[pos_out];
-                            } else{
-
-                                R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                               (ind * origSize.x * origSize.y * origSize.u)];
-                                R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                               ((pos) * origSize.x * origSize.y * origSize.u)];
-
-                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } else{ //Vertical
-
-        for(int i = 0; i < origSize.getNSamples(); i++){
-            ref[i] = refAbove4D[i];
-        }
-
-        // Horizontal - variable
-        it_pos_in.x = 0;
-        it_pos_in.u = 0;
-
-        // Vertical - fixed
-        it_pos_in.y = (origSize.y - 1) * origSize.x;
-        it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
-
-        // percorre vetor out na ordem vertical espacial
-        for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
-            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-
-                // percorre vetor out na ordem vertical angular
-                for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-                    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-
-                        int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                                      + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-
-                        if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                           || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                           || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
-
-                            out[pos_out] = refAbove4D[pos_out];
-
-                        } else {
-
-                            C = (int) this->roundTowardsZero((int) (it_pos_out.v * min_d) / (float) pow(2, 5));
-                            W = (it_pos_out.v * min_d) & 31;
-                            ind = it_pos_out.u + C;
-                            int pos = ind + 1;
-
-                            if (ind < 0) {
-                                ind = 0;
-                            }
-
-                            //if (pos >= origSize.v) {
-                            //    pos = ind;
-                            //}
-                            if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                || (ind == 1 && it_pos_out.u <= 1)
-                                || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                               ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                || (pos == 1 && it_pos_out.u <= 1)
-                                || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                out[pos_out] = refLeft4D[pos_out];
                             } else {
 
-                                R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
-                                                             (it_pos_out.v * origSize.x * origSize.u)];
-                                R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
-                                                             (it_pos_out.v * origSize.x * origSize.u)];
+                                C = (int) this->roundTowardsZero((int) (it_pos_out.v * min_d) / (float) pow(2, 5));
+                                W = (it_pos_out.v * min_d) & 31;
+                                ind = it_pos_out.u + C;
 
-                                /*
-                                R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
-                                                (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-                                R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
-                                                (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-                                */
-                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                                if (ind < 0) {
+                                    ind = 0;
+                                }
+                                pos = ind + 1;
+
+                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                    || (ind == 1 && it_pos_out.u <= 1)
+                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+                                    || (pos == 1 && it_pos_out.u <= 1)
+                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+
+                                    out[pos_out] = refAbove4D[pos_out];
+                                } else {
+                                    /*
+                                    if(ind > origSize.u){
+                                        int aux = origSize.u - ind;
+                                            int contU = 1;
+                                        if(aux > origSize.u){
+                                            aux = origSize.u - ind;
+
+                                        }
+                                    }
+                                     */
+
+                                    R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
+                                                                 (it_pos_out.v * origSize.x * origSize.u)];
+                                    R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
+                                                                 (it_pos_out.v * origSize.x * origSize.u)];
+
+                                    /*
+                                    R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
+                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+                                    R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+                                    */
+                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
+                                }
                             }
                         }
                     }
@@ -1139,7 +1101,6 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             }
         }
     }
-    //}
 }
 
 
@@ -1172,8 +1133,10 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()];
 
-    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize);
-    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize);
+    bool availableL, availableA, availableAR;
+
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
 
 
     int refL = 0;
@@ -1699,6 +1662,63 @@ void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, 
     }
 }
 
+void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {
+
+    int cont = 0;
+    int mFirstPixelPosition = 0;
+
+    int N = 10;
+    float pixel[3];
+    double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
+                  -0.187330000000000, 1.855630000000000, 1.574800000000000,
+                  -0.468130000000000, 0};
+
+
+    double nd = (double) (1 << (N - 8));
+
+    unsigned short clipval = (unsigned short) (1 << N) - 1;  // pow(2, N) - 1;
+
+    double sval1 = 16 * nd;
+    double sval2 = 219 * nd;
+    double sval3 = 128 * nd;
+    double sval4 = 224 * nd;
+
+
+    for (int index_t = 0; index_t < origSize.v; index_t++) { //vertical angular
+        for (int index_s = 0; index_s < origSize.u; index_s++) { //horizontal angular
+            mFirstPixelPosition = cont * origSize.x*2;
+            cont++;
+
+            for (int pixelCount = 0; pixelCount < origSize.x*2; pixelCount++) {
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+                    yCbCr[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                }
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    pixel[icomp] = yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval);
+                }
+            }
+        }
+    }
+}
+
 void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
     FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
     if (mViewFilePointer == nullptr) {
@@ -1724,6 +1744,33 @@ void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int 
             }
         }
     }
+}
+
+void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
+    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
+    if (mViewFilePointer == nullptr) {
+        printf("unable to open %s view file for writing\n", fileName.c_str());
+        //assert(false);
+    }
+
+    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+
+    fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", origSize.x * origSize.u, origSize.y * origSize.v, mPGMScale);
+
+    Point4D it_pos;
+
+        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+            for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+                                  + (it_pos.v * origSize.x * origSize.u);
+
+                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                }
+            }
+        }
+
 }
 
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
@@ -1818,16 +1865,18 @@ void Prediction::blockGenerator(const Point4D &origSize, int mode, int mPGMScale
 
     float pred[origSize.getNSamples()],
             ref[origSize.getNSamples()];
+    float blockVector[(origSize.x * origSize.u * origSize.v)*2];
+    //this->angularPrediction(0, 0, block, origSize, pred, 0, ref);
+    //this->angularPredictionVector(0, 0, block, origSize, pred, 0, ref, blockVector);
 
-    this->angularPrediction(0, 0, block, origSize, pred, 0, ref);
-    //this->angularPredictionVector(0, 0, block, origSize, pred, 0, ref);
-
-    float *origUp[3], *origRGB[3], *predUp[3], *predRGB[3] ;
+    float *origUp[3], *origRGB[3], *predUp[3], *predRGB[3], *blockVectorUp[3], *blockVectorRGB[3];
     for(int i = 0; i <3; ++i) {
         origUp[i] = new float[origSize.getNSamples()];
         origRGB[i] = new float[origSize.getNSamples()];
         predUp[i] = new float[origSize.getNSamples()];
         predRGB[i] = new float[origSize.getNSamples()];
+        blockVectorUp[i] = new float[(origSize.x * origSize.u * origSize.v)*2];
+        blockVectorRGB[i] = new float[(origSize.x * origSize.u * origSize.v)*2];
     }
     for(int i = 0; i <3; ++i){
         if(i==0){
@@ -1843,8 +1892,28 @@ void Prediction::blockGenerator(const Point4D &origSize, int mode, int mPGMScale
         }
     }
 
+    for(int i = 0; i <3; ++i){
+        if(i==0){
+            for (int j = 0; j < (origSize.x * origSize.u * origSize.v)*2; ++j) {
+                blockVectorUp[i][j] = blockVector[j];
+            }
+        }else{
+            for (int j = 0; j < (origSize.x * origSize.u * origSize.v)*2; ++j) {
+                blockVectorUp[i][j] = 0;
+            }
+        }
+    }
+
     this->YCbCR2RGB(origUp, origSize, origRGB, mPGMScale);
     this->YCbCR2RGB(predUp, origSize, predRGB, mPGMScale);
+
+    this->YCbCR2RGBVector(blockVectorUp, origSize, blockVectorRGB, mPGMScale);
+
+
+    //std::cout << "ind: " << ind << " pos: " << pos << std::endl;
+
+    this->writeVector(blockVectorRGB, origSize, mPGMScale, start_t, start_s, fileName + "_genvector_" + std::to_string(mode) + ".ppm");
+
     this->write(origRGB, origSize, mPGMScale, start_t, start_s, fileName + "_gen_" + std::to_string(mode) + ".ppm");
     this->write(predRGB, origSize, mPGMScale, start_t, start_s, fileName + "_pred_" + std::to_string(mode) + ".ppm");
 }

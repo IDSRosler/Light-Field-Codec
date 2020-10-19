@@ -8,6 +8,9 @@
 #include "utils.h"
 
 class EncoderParameters {
+    //EDUARDO BEGIN
+    std::string prediction{};
+    //EDUARDO END
 
   std::string path_input{"input/"}, path_output{"output/"};
 
@@ -58,7 +61,12 @@ public:
 
   const std::string &getPathOutput() const;
 
-  void report();
+    //EDUARDO BEGIN
+    const std::string &getPrediction() const;
+    //EDUARDO END
+
+    void report();
+
 };
 
 
