@@ -79,6 +79,8 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             uniform_quantization = true;
         } else if (flag == "-disable-transforms") {
             enable_transforms = false;
+        } else if (flag == "-export-blocks") {
+            export_blocks = true;
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;

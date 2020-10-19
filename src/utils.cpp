@@ -54,18 +54,42 @@ void show_block(int channel, float *block, const Point4D &shape,
 }
 
 void save_microimage(std::string path, Point4D pos, int channel, float *block, const Point4D &shape,
-                     const Point4D &stride, std::string suffix) {
+                     const Point4D &stride, std::string suffix, unsigned flags) {
     auto size = cv::Size(shape.x * shape.u, shape.y * shape.v);
     cv::Mat mat = cv::Mat::zeros(size, CV_32F);
 
     FOREACH_4D_IDX(index, shape, stride) {
-                        auto mat_x = x * shape.u + u;
-                        auto mat_y = y * shape.v + v;
-                        // mat.at<float>(mat_y, mat_x) = 255 * (block[index] + 512.0F) / 1024.0F;
-                        auto abs_value = std::abs(block[index]);
-                        auto bitsize = std::ceil(std::log2(abs_value));
-                        mat.at<float>(mat_y, mat_x) = (bitsize / 20.0) * 255;
-                    }
+        auto mat_x = x * shape.u + u;
+        auto mat_y = y * shape.v + v;
+        switch (flags) {
+            case 0: // Do nothing
+            {
+                mat.at<float>(mat_y, mat_x) = 255 * (block[index] / 1024.0F);
+            } break;
+            case 1: // Add DC
+            {
+                mat.at<float>(mat_y, mat_x) = 255 * (block[index] + 512.0F) / 1024.0F;
+            } break;
+            case 2: // ABS
+            {
+                auto abs_value = std::abs(block[index]);
+                mat.at<float>(mat_y, mat_x) = (abs_value / 1024.0F) * 255;
+            } break;
+            case 3: // Bit Length
+            {
+                auto abs_value = std::abs(block[index]);
+                auto bitsize = std::ceil(std::log2(abs_value));
+                mat.at<float>(mat_y, mat_x) = (bitsize / 20.0) * 255;
+            } break;
+        }
+        if (flags == 0) { // Raw value
+
+
+        } else {
+
+        }
+
+    }
 
     std::stringstream ss;
 

@@ -39,6 +39,7 @@ public:
     bool uniform_quantization = false;
 
     bool enable_transforms = true;
+    bool export_blocks = false;
 
     std::vector<std::string> use_transforms;
     std::string transforms_in_use;
