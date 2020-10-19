@@ -35,6 +35,8 @@ void EncoderParameters::parse_cli(int argc, char **argv) {
             this->path_input = argv[++it];
         } else if (flag == "-output") {
             this->path_output = argv[++it];
+        } else if (flag == "-prediction") {
+            this->prediction = argv[++it];
         } else if (flag == "-qp") {
             this->qp = strtof(argv[++it], nullptr);
         } else {
@@ -59,10 +61,19 @@ const std::string &EncoderParameters::getPathOutput() const {
     return this->path_output;
 }
 
+//EDUARDO BEGIN
+const std::string &EncoderParameters::getPrediction() const {
+    return this->prediction;
+}
+//EDUARDO END
+
 void EncoderParameters::report() {
     std::cout << "################ Encoder Parameters ################" << std::endl;
     std::cout << "Input path: " << this->path_input << std::endl;
     std::cout << "Output path: " << this->path_output << std::endl;
+    //EDUARDO BEGIN
+    std::cout << "Prediction: " << this->prediction << std::endl;
+    //EDUARDO END
     std::cout << std::endl;
     std::cout << "LF Dim: " << this->dim_LF << std::endl;
     std::cout << "Block Dim: " << this->dim_block << std::endl;

@@ -12,6 +12,9 @@ class EncoderParameters {
     float qp{1.0};
     std::string path_input{"input/"},
             path_output{"output/"};
+    //EDUARDO BEGIN
+    std::string prediction{};
+    //EDUARDO END
 
 public:
     Point4D dim_LF{0, 0, 0, 0},
@@ -30,6 +33,10 @@ public:
     const std::string &getPathInput() const;
 
     const std::string &getPathOutput() const;
+
+    //EDUARDO BEGIN
+    const std::string &getPrediction() const;
+    //EDUARDO END
 
     void report();
 
