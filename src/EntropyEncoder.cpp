@@ -3,13 +3,17 @@
 EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) : EncSymbol(bufferSize){
     this->parameters = parameters;
     this->open_file(this->parameters->getPathOutput() + "LightField.bin");
+
+    //last update
+    this->freqFile.open(this->parameters->getPathOutput() + "frequency.csv");
+    this->freqFile << "LFBPU, Freq_sig_0, Freq_sig_1, Freq_grOne_0, Freq_grOne_1, Freq_grTwo_0, Freq_grTwo_1, Freq_sign_0, Freq_sign_1" << endl;
 }
 
 EntropyEncoder::~EntropyEncoder() {
 }
 
 void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
-    int last;
+    int last = -1;
     vector<int> run;
     vector<SyntacticElements> lfbpu_elements; // light field base processing unit
 
@@ -19,18 +23,21 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
     this->tree.ComputeLast(last);   // compute last (block level)
     this->encodeLast(last);
 
-    this->tree.ComputeRun(run, last);  // compute run (block level)
-    this->encodeRun(run);
-    //run.clear();
+    if (last > 0){
+        this->tree.ComputeRun(run, last);  // compute run (block level)
+        this->encodeRun(run);
+        run.clear();
 
-    this->write_completedBytes();
+        this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
 
-    this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
-    run.clear();
+        // last update
+        this->ComputeFrequency(lfbpu_elements);
 
-    this->EncodeSyntacticElements(lfbpu_elements);
+        this->EncodeSyntacticElements(lfbpu_elements);
 
-    lfbpu_elements.clear();
+        lfbpu_elements.clear();
+    }
+
     this->tree.DeleteTree(&this->root); // delete tree
 }
 
@@ -78,16 +85,19 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
 
 void EntropyEncoder::write_completedBytes() {
     if (this->byte_pos == 0) return;
-    this->writeSyntaxElement(0, this->bits_to_go);
     this->outputFile.write((char *) this->buffer, this->byte_pos);
     this->totalBytes += this->byte_pos;
     this->byte_pos = 0;
 }
 
 void EntropyEncoder::finish_and_write() {
-    this->writeSyntaxElement(0, this->bits_to_go);
+    if(this->bits_to_go < 8)
+        this->writeSyntaxElement(0, this->bits_to_go);
     this->write_completedBytes();
     if (this->outputFile.is_open()) this->outputFile.close();
+
+    //last update
+    if (this->freqFile.is_open()) this->freqFile.close();
 }
 
 uint EntropyEncoder::getTotalBytes() const {
@@ -97,4 +107,75 @@ uint EntropyEncoder::getTotalBytes() const {
 void EntropyEncoder::open_file(const string &filename) {
     this->outputFile.open(filename, std::ios::binary);
     assert(this->outputFile.is_open());
+}
+
+void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
+    int size = 0,
+        q0 = 0,
+        sig0 = 0,
+        sig1 = 0,
+        one0 = 0,
+        one1 = 0,
+        two0 = 0,
+        two1 = 0,
+        sign0 = 0,
+        sign1 = 0;
+
+    for (int i = 0; i < lfbpu.size(); ++i) {
+
+        size = lfbpu[i].sig.size();
+        if (size > 0){
+            for (int j = 0; j < size; ++j) {    //freq sig
+                if (lfbpu[i].sig[j] == 0)
+                    ++q0;
+            }
+            sig0 = round((float(q0)/size)*100);
+            sig1 = 100 - sig0;
+            q0 = 0;
+        }
+
+        size = lfbpu[i].gr_one.size();
+        if (size > 0) {
+            for (int j = 0; j < size; ++j) {    //freq one
+                if (lfbpu[i].gr_one[j] == 0)
+                    ++q0;
+            }
+            one0 = round((float(q0)/ size) * 100);
+            one1 = 100 - one0;
+            q0 = 0;
+        }
+
+        size = lfbpu[i].gr_two.size();
+        if (size > 0) {
+            for (int j = 0; j < size; ++j) {    //freq tow
+                if (lfbpu[i].gr_two[j] == 0)
+                    ++q0;
+            }
+            two0 = round((float(q0)/ size) * 100);
+            two1 = 100 - two0;
+            q0 = 0;
+        }
+
+        size = lfbpu[i].sign.size();
+        if (size > 0) {
+            for (int j = 0; j < size; ++j) {    //freq sign
+                if (lfbpu[i].sign[j] == 0)
+                    ++q0;
+            }
+            sign0 = round((float(q0)/ size) * 100);
+            sign1 = 100 - sign0;
+            q0 = 0;
+        }
+
+        this->freqFile << i << "," <<
+                           sig0 << "," <<
+                           sig1 << "," <<
+                           one0 << "," <<
+                           one1 << "," <<
+                           two0 << "," <<
+                           two1 << "," <<
+                           sign0 << "," <<
+                           sign1 << "," << endl;
+
+    }
 }

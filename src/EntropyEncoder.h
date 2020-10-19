@@ -14,17 +14,17 @@ struct ElementsFrequency {
     vector<int> sign;
 
     void setFrequency(){
-        this->sig.push_back(80);
-        this->sig.push_back(20);
+        this->sig.push_back(95); //95
+        this->sig.push_back(5); //5
 
-        this->gr_one.push_back(80);
-        this->gr_one.push_back(20);
+        this->gr_one.push_back(45); //45
+        this->gr_one.push_back(55); //55
 
-        this->gr_two.push_back(50);
-        this->gr_two.push_back(50);
+        this->gr_two.push_back(25); //25
+        this->gr_two.push_back(75); //75
 
-        this->sign.push_back(50);
-        this->sign.push_back(50);
+        this->sign.push_back(50); //50
+        this->sign.push_back(50); //50
     }
 };
 
@@ -42,12 +42,16 @@ private:
     void open_file(const string &filename);
     void EncodeSyntacticElements(vector<SyntacticElements> lfbpu);
 
+    void ComputeFrequency(vector<SyntacticElements> lfbpu);
+
     Tree tree;
     Node *root = nullptr;
 
     uint totalBytes{0};
 
     std::ofstream outputFile;
+
+    std::ofstream freqFile;
 
     EncoderParameters *parameters;
 

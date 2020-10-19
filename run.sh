@@ -7,18 +7,18 @@ if [ "$BINARY" == "" ]; then
 fi
 if [ "$DATASET_DIR" == "" ]; then
   echo "Variable DATASET_DIR not found. Using default value."
-  DATASET_DIR="../LFCodecResources/Datasets"
+  DATASET_DIR="/home/igor/Documentos/Git/Full_datasets"
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results"
+  RESULT_DIR="./results/Arithmetic"
 fi
 
-QP=1
-QX=1
-QY=1
-QU=1
-QV=1
+QP=10
+QX=10
+QY=10
+QU=10
+QV=10
 LAMBDA=1
 DATASET=Bikes
 TRANSFORM=DCT_II
@@ -57,7 +57,7 @@ function simulation() {
 LOG_OUTPUT=yes
 
 TRANSFORM=(DCT_II)
-NODES=4
+NODES=0
 FLAGS="-lytro -verbose -experimental"
 simulation
 #

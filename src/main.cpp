@@ -97,8 +97,12 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
+#if ENTROPY_TYPE
     EntropyEncoder encoder(&encoderParameters, 10000000);
-    /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
+#else
+    EncBitstreamWriter encoder(&encoderParameters, 10000000);
+#endif
+
     std::string sep = ",";
 
     const Point4D dimLF = encoderParameters.dim_LF;
@@ -222,11 +226,13 @@ int main(int argc, char **argv) {
                         std::transform(qf4D, qf4D + SIZE, temp_lre,
                                        [](auto value) { return static_cast<int>(std::round(value)); });
 
-                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
-
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
-                        /*auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);*/
 
+#if ENTROPY_TYPE
+                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
+#else
+                        auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
+#endif
 
                         std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
@@ -267,6 +273,7 @@ int main(int argc, char **argv) {
                         //EDUARDO BEGIN
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         //EDUARDO END
+
                         encoder.write_completedBytes();
 
 

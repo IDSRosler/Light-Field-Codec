@@ -44,6 +44,7 @@ private:
     void Bit_plus_follow(int bit);
     void Output_bit(int bit);
     void Done_output_bits(void);
+    void writeCode2Buffer();
 
     /*//OUTPUT FILE
     ofstream file;*/
@@ -57,6 +58,9 @@ private:
     Byte *byte_buf;
     uint *bits_to_go;                                             // Number of bits still in buffer
     uint *byte_pos;
+
+    Byte local_buffer;
+    uint local_bits_to_go;
 
     //PROBABILISTIC MODELS
     int number_of_models;
