@@ -359,7 +359,7 @@ auto Transform::find_min_rd_cost(const float *block,
         FOREACH_4D_IDX(i, shape, block_stride) {
             double error = block[i+linear_offset] - rec_block[i+linear_offset];
             sse += error * error;
-            *lre_block_ptr++ = static_cast<int>(std::round(transformed_block[i]));
+            *lre_block_ptr++ = static_cast<int>(std::round(transformed_block[i + linear_offset]));
         }
 
         std::size_t encoding_size;
