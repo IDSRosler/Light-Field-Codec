@@ -246,6 +246,8 @@ int main(int argc, char **argv) {
 
                         if (encoderParameters.enable_prediction) {
                             newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
+                        } else {
+                            std::copy(ti4D, ti4D + SIZE, pi4D);
                         }
 
 
