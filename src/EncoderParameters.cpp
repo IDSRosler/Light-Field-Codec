@@ -43,6 +43,8 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->path_input = argv[++it];
         } else if (flag == "-output") {
             this->path_output = argv[++it];
+        } else if (flag == "-prediction") {
+            this->prediction = argv[++it];
         } else if (flag == "-qp") {
             this->qp = strtof(argv[++it], nullptr);
         } else if (flag == "-lee-c") {
@@ -110,6 +112,12 @@ float EncoderParameters::getQp() const { return this->qp; }
 const std::string &EncoderParameters::getPathInput() const { return this->path_input; }
 
 const std::string &EncoderParameters::getPathOutput() const { return this->path_output; }
+
+//EDUARDO BEGIN
+const std::string &EncoderParameters::getPrediction() const {
+    return this->prediction;
+}
+//EDUARDO END
 
 
 
