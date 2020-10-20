@@ -135,7 +135,7 @@ template <typename T>
 double measure_sortness(std::vector<T> array);
 inline void extend_borders(float *block, const Point4D &shape, const Point4D &stride);
 void show_block(int channel, float *block, const Point4D &shape, const Point4D &stride, const char *window);
-void save_microimage(std::string path, Point4D pos, int channel, float *block, const Point4D &shape, const Point4D &stride, std::string suffix);
+void save_microimage(std::string path, Point4D pos, int channel, float *block, const Point4D &shape, const Point4D &stride, std::string suffix, unsigned flags = 0);
 void progress_bar(double progress, int bar_length);
 void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride);
 std::vector<index_t> generate_scan_order(const Point4D &shape, Point4D &stride);

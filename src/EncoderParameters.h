@@ -8,6 +8,9 @@
 #include "utils.h"
 
 class EncoderParameters {
+    //EDUARDO BEGIN
+    std::string prediction{};
+    //EDUARDO END
 
   std::string path_input{"input/"}, path_output{"output/"};
 
@@ -39,6 +42,7 @@ public:
     bool uniform_quantization = false;
 
     bool enable_transforms = true;
+    bool export_blocks = false;
 
     std::vector<std::string> use_transforms;
     std::string transforms_in_use;
@@ -58,7 +62,12 @@ public:
 
   const std::string &getPathOutput() const;
 
-  void report();
+    //EDUARDO BEGIN
+    const std::string &getPrediction() const;
+    //EDUARDO END
+
+    void report();
+
 };
 
 

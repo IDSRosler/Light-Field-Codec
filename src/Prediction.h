@@ -57,13 +57,13 @@ public:
 
     void update(float *curr, bool available, uint blockSize);
 
-    void get_referenceL(uint x, uint y, float *out, const Point4D &origSize);
+    void get_referenceL(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void get_referenceA(uint x, uint y, float *out, const Point4D &origSize);
+    void get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
     void get_referenceLA(uint x, uint y, float *out, const Point4D &origSize);
 
-    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize);
+    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
     void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
@@ -83,9 +83,9 @@ public:
 
     void angularPredictRefVerticalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
-    void generateReferenceVectorHorizontal(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out );
+    void generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 
-    void generateReferenceVectorVertical(const float *blockRef1, const float *blockRef2, const Point4D &origSize, float *out );
+    void generateReferenceVectorVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 
     void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref);
 
@@ -99,7 +99,11 @@ public:
 
     void YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale);
 
+    void YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale);
+
     void write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName);
+
+    void writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName);
 
     void WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer);
 

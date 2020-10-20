@@ -6,20 +6,18 @@
 #include <functional>
 #include <memory>
 
+#include "Typedef.h"
+#include "utils.h"
 #include "EncBitstreamWriter.h"
 #include "LightField.h"
 #include "LightFieldMetrics.h"
 #include "Quantization.h"
 #include "Timer.h"
 #include "Transform.h"
-#include "Typedef.h"
 #include "TextReport.h"
 #include "EntropyEncoder.h"
 #include "Prediction.h"
 
-
-#include "utils.h"
-#include "TextReport.h"
 
 using namespace std;
 
@@ -34,7 +32,7 @@ vector<string> Split(const string &s, char delimiter) {
     return tokens;
 }
 
-void display_stage(std::string message) { std::cout << message << std::endl; }
+void display_stage(const std::string& message) { std::cout << message << std::endl; }
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
@@ -85,8 +83,6 @@ int main(int argc, char **argv) {
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-
-    bool should_show_block = false;
     Transform transform(encoderParameters);
 
     // TODO: Entropy entropy(...)
@@ -136,7 +132,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
     total_time.tic();
 #endif
-    int block;
+    int block = 0;
 
     report.header({
                           "Position",
@@ -305,6 +301,20 @@ int main(int argc, char **argv) {
                             report.set_key("RD-Cost", rd_cost);
                             report.print();
                         }
+
+                        if (encoderParameters.export_blocks) {
+                            const auto &path = encoderParameters.getPathOutput();
+                            const auto stride = make_stride(Point4D(15,15,13,13));
+                            save_microimage(path, it_pos, it_channel, orig4D, dimBlock, stride, "_1_orig4D", 1);
+                            save_microimage(path, it_pos, it_channel, res4D, dimBlock, stride, "_2_res4D", 1);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D", 1);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D_energy", 2);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D_bitlength", 3);
+                            save_microimage(path, it_pos, it_channel, ti4D, dimBlock, stride, "_4_ti4D", 1);
+                            save_microimage(path, it_pos, it_channel, pf4D, dimBlock, stride, "_5_pf4D", 1);
+                            save_microimage(path, it_pos, it_channel, pi4D, dimBlock, stride, "_6_pi4D", 1);
+
+                        }
                     }
                     /*++hypercube;*/
                 }
@@ -325,8 +335,8 @@ int main(int argc, char **argv) {
                 }
 
         for (int ch = 0; ch < 3; ch++) {
-            ssim[ch] = ssim_sum[ch] / (dimLF.v * dimLF.u);
-            psnr[ch] = psnr_sum[ch] / (dimLF.v * dimLF.u);
+            ssim[ch] = ssim_sum[ch] / static_cast<double>(dimLF.v * dimLF.u);
+            psnr[ch] = psnr_sum[ch] / static_cast<double>(dimLF.v * dimLF.u);
         }
 
         mean_ssim = (6 * ssim[0] + ssim[1] + ssim[2]) / 8;
@@ -345,11 +355,10 @@ int main(int argc, char **argv) {
     total_time.toc();
 #endif
     auto size_bytes = encoder.getTotalBytes();
-    auto total_bpp = (float) (size_bytes * 1.25) / (float) dimLF.getNSamples();
+    auto total_bpp = static_cast<double>(size_bytes)/static_cast<double>(dimLF.getNSamples());
 
     display_report(std::cout, "Total Bytes", size_bytes);
-    display_report(std::cout, "Human readable size",
-                   to_human_readable(size_bytes));
+    display_report(std::cout, "Human readable size", to_human_readable(size_bytes));
     display_report(std::cout, "Bpp", total_bpp);
     if (encoderParameters.calculate_metrics) {
         display_report(std::cout, "PSNR-Y", psnr[0]);
