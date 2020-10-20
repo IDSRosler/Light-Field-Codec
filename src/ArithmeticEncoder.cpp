@@ -78,6 +78,7 @@ void ArithmeticEncoder :: Bit_plus_follow(int bit) {
 void ArithmeticEncoder :: Output_bit(int bit) {
     this->local_buffer >>= 1;               // Shift a bit to right
     if (bit) this->local_buffer |= 0x80;    // Put bit in top of buffer
+    --this->local_bits_to_go;
     if (this->local_bits_to_go == 0){
         this->local_bits_to_go = 8;
         this->writeCode2Buffer();
@@ -92,7 +93,7 @@ void ArithmeticEncoder :: Done_output_bits() {
 }
 
 void ArithmeticEncoder::writeCode2Buffer() {
-    unsigned int mask = 1 << 7;
+    Byte mask = 1 << 7;
     int i;
 
     for (i = 0; i < 8; i++){

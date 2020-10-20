@@ -11,16 +11,16 @@ if [ "$DATASET_DIR" == "" ]; then
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/Arithmetic"
+  RESULT_DIR="./results/LRE"
 fi
 
-QP=10
-QX=10
-QY=10
-QU=10
-QV=10
+QP=1
+QX=1
+QY=1
+QU=1
+QV=1
 LAMBDA=1
-DATASET=Bikes
+DATASET=Greek
 TRANSFORM=DCT_II
 LOG_OUTPUT=no
 FLAGS="-lytro -experimental"
@@ -45,7 +45,7 @@ function simulation() {
   $BINARY \
     -input "${DATASET_DIR}/${DATASET}/" \
     -output "${RESULT_DIR}/${SIMULATION_ID}/" \
-    -lfx 625 -lfy 434 -lfu 13 -lfv 13 \
+    -lfx 625 -lfy 434 -lfu 9 -lfv 9 \
     -blx 15 -bly 15 -blu 13 -blv 13 \
     -qx ${QX} -qy ${QY} -qu ${QU} -qv ${QV} -qp ${QP} \
     -lambda "${LAMBDA}" \

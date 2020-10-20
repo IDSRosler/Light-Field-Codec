@@ -17,11 +17,11 @@ struct ElementsFrequency {
         this->sig.push_back(95); //95
         this->sig.push_back(5); //5
 
-        this->gr_one.push_back(45); //45
-        this->gr_one.push_back(55); //55
+        this->gr_one.push_back(40); //45
+        this->gr_one.push_back(60); //55
 
-        this->gr_two.push_back(25); //25
-        this->gr_two.push_back(75); //75
+        this->gr_two.push_back(20); //25
+        this->gr_two.push_back(80); //75
 
         this->sign.push_back(50); //50
         this->sign.push_back(50); //50
