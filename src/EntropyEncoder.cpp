@@ -30,9 +30,6 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
 
         this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
 
-        // last update
-        this->ComputeFrequency(lfbpu_elements);
-
         this->EncodeSyntacticElements(lfbpu_elements);
 
         lfbpu_elements.clear();
@@ -48,7 +45,11 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
     int sign_model = this->arith_encoder.Add_model();
 
     ElementsFrequency elem_freq;
-    elem_freq.setFrequency();
+
+    // last update
+    this->ComputeFrequency(lfbpu, elem_freq);
+
+    //elem_freq.setFrequency(50,50,50,50,50,50,50,50);
 
     this->arith_encoder.Start_model(2, elem_freq.sig, sig_model);
     this->arith_encoder.Start_model(2, elem_freq.gr_one, gr_one_model);
@@ -109,17 +110,14 @@ void EntropyEncoder::open_file(const string &filename) {
     assert(this->outputFile.is_open());
 }
 
-void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
-    int size = 0,
-        q0 = 0,
-        sig0 = 0,
-        sig1 = 0,
-        one0 = 0,
-        one1 = 0,
-        two0 = 0,
-        two1 = 0,
-        sign0 = 0,
-        sign1 = 0;
+void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsFrequency& elem_freq) {
+    int size, q0 = 0,
+        cont_sig = 0, cont_one = 0,
+        cont_two = 0,cont_sign = 0,
+        sig0 = 0, sum_sig0 = 0,
+        one0 = 0, sum_one0 = 0,
+        two0 = 0, sum_two0 = 0,
+        sign0 = 0, sum_sing0 = 0;
 
     for (int i = 0; i < lfbpu.size(); ++i) {
 
@@ -130,7 +128,8 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
                     ++q0;
             }
             sig0 = round((float(q0)/size)*100);
-            sig1 = 100 - sig0;
+            sum_sig0 += sig0;
+            ++cont_sig;
             q0 = 0;
         }
 
@@ -141,7 +140,8 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
                     ++q0;
             }
             one0 = round((float(q0)/ size) * 100);
-            one1 = 100 - one0;
+            sum_one0 += one0;
+            ++cont_one;
             q0 = 0;
         }
 
@@ -152,7 +152,8 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
                     ++q0;
             }
             two0 = round((float(q0)/ size) * 100);
-            two1 = 100 - two0;
+            sum_two0 += two0;
+            ++cont_two;
             q0 = 0;
         }
 
@@ -162,20 +163,44 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu) {
                 if (lfbpu[i].sign[j] == 0)
                     ++q0;
             }
-            sign0 = round((float(q0)/ size) * 100);
-            sign1 = 100 - sign0;
+            sign0 = short(round((float(q0)/ size) * 100));
+            sum_sing0 += sign0;
+            ++cont_sign;
             q0 = 0;
         }
 
         this->freqFile << i << "," <<
                            sig0 << "," <<
-                           sig1 << "," <<
+                           100 - sig0 << "," <<
                            one0 << "," <<
-                           one1 << "," <<
+                           100 - one0 << "," <<
                            two0 << "," <<
-                           two1 << "," <<
+                           100 - two0 << "," <<
                            sign0 << "," <<
-                           sign1 << "," << endl;
+                           100 - sign0 << "," << endl;
 
     }
+
+    int sig_mean_0 = round(float(sum_sig0)/cont_sig);
+    int sig_mean_1 = 100 - sig_mean_0;
+    int one_mean_0 = round(float(sum_one0)/cont_one);
+    int one_mean_1 = 100 - one_mean_0;
+    int two_mean_0 = round(float(sum_two0)/cont_two);
+    int two_mean_1 = 100 - two_mean_0;
+    int sign_mean_0 = round(float(sum_sing0)/cont_sign);
+    int sign_mean_1 = 100 - sign_mean_0;
+
+    elem_freq.setFrequency(sig_mean_0, sig_mean_1, one_mean_0, one_mean_1, two_mean_0, two_mean_1, sign_mean_0, sign_mean_1);
+
+    this->freqFile << endl;
+    this->freqFile << "Mean_of_Frequency_per_Hypercube, " <<
+        sig_mean_0 << "," <<
+        sig_mean_1 << "," <<
+        one_mean_0 << "," <<
+        one_mean_1 << "," <<
+        two_mean_0 << "," <<
+        two_mean_1 << "," <<
+        sign_mean_0 << "," <<
+        sign_mean_1 << endl;
+    this->freqFile << endl;
 }

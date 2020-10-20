@@ -176,47 +176,51 @@ void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, i
     elem.reset();
     for (int i = last; i >= 0; --i) {
         this->LFBPUToVector(v_coefficients, i);
-        for (j = v_coefficients.size() - 1; j >= 0; --j) { // compute last (coefficient level)
-            if (v_coefficients[j] != 0) {
-                break;
+        if (!v_coefficients.empty()){
+            for (j = v_coefficients.size() - 1; j >= 0; --j) { // compute last (coefficient level)
+                if (v_coefficients[j] != 0) {
+                    break;
+                }
             }
-        }
-        elem.last = j;
-        for (int k = elem.last; k >= 0; --k) { // compute sig (coefficient level)
-            if (v_coefficients[k] == 0){
-                elem.sig.push_back(0);
-            }else {
-                elem.sig.push_back(1);
-                if (abs(v_coefficients[k]) > 1){ // > 1
-                    elem.gr_one.push_back(1);
-                    if (abs(v_coefficients[k]) > 2){ // > 2
-                        elem.gr_two.push_back(1);
-                        elem.rem.push_back(abs(v_coefficients[k]) - 3); //rem
-                    } else { // = 2
-                        elem.gr_two.push_back(0);
+            elem.last = j;
+            for (int k = elem.last; k >= 0; --k) { // compute sig (coefficient level)
+                if (v_coefficients[k] == 0){
+                    elem.sig.push_back(0);
+                }else {
+                    elem.sig.push_back(1);
+                    if (abs(v_coefficients[k]) > 1){ // > 1
+                        elem.gr_one.push_back(1);
+                        if (abs(v_coefficients[k]) > 2){ // > 2
+                            elem.gr_two.push_back(1);
+                            elem.rem.push_back(abs(v_coefficients[k]) - 3); //rem
+                        } else { // = 2
+                            elem.gr_two.push_back(0);
+                        }
+                    }else { // = 1
+                        elem.gr_one.push_back(0);
                     }
-                }else { // = 1
-                    elem.gr_one.push_back(0);
-                }
-                if (v_coefficients[k] < 0) { // signal
-                    elem.sign.push_back(1);
-                } else {
-                    elem.sign.push_back(0);
+                    if (v_coefficients[k] < 0) { // signal
+                        elem.sign.push_back(1);
+                    } else {
+                        elem.sign.push_back(0);
+                    }
                 }
             }
+            v_coefficients.clear();
+            lfbpu_elements.push_back(elem);
+            elem.reset();
         }
-        v_coefficients.clear();
-        lfbpu_elements.push_back(elem);
-        elem.reset();
     }
 }
 
 void Tree::LFBPUToVector(vector<int> &v_coefficients, int index) {
-    for (int v = order4_SubPartitionsBuffer[index]->start.v ; v < order4_SubPartitionsBuffer[index]->end.v ; ++v) {
-        for (int u = order4_SubPartitionsBuffer[index]->start.u ; u < order4_SubPartitionsBuffer[index]->end.u ; ++u) {
-            for (int y = order4_SubPartitionsBuffer[index]->start.y ; y < order4_SubPartitionsBuffer[index]->end.y ; ++y) {
-                for (int x = order4_SubPartitionsBuffer[index]->start.x ; x < order4_SubPartitionsBuffer[index]->end.x ; ++x) {
-                    v_coefficients.push_back(this->hypercube->data[x][y][u][v]);
+    if(order4_SubPartitionsBuffer[index]->att->significant_value != 0) {
+        for (int v = order4_SubPartitionsBuffer[index]->start.v ; v < order4_SubPartitionsBuffer[index]->end.v ; ++v) {
+            for (int u = order4_SubPartitionsBuffer[index]->start.u ; u < order4_SubPartitionsBuffer[index]->end.u ; ++u) {
+                for (int y = order4_SubPartitionsBuffer[index]->start.y ; y < order4_SubPartitionsBuffer[index]->end.y ; ++y) {
+                    for (int x = order4_SubPartitionsBuffer[index]->start.x ; x < order4_SubPartitionsBuffer[index]->end.x ; ++x) {
+                        v_coefficients.push_back(this->hypercube->data[x][y][u][v]);
+                    }
                 }
             }
         }

@@ -59,7 +59,7 @@ private:
     uint *bits_to_go;                                             // Number of bits still in buffer
     uint *byte_pos;
 
-    Byte local_buffer;
+    unsigned int local_buffer;
     uint local_bits_to_go;
 
     //PROBABILISTIC MODELS

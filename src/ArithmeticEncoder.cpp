@@ -88,12 +88,11 @@ void ArithmeticEncoder :: Output_bit(int bit) {
 // WRITE THE LAST BITS
 void ArithmeticEncoder :: Done_output_bits() {
     this->local_buffer = this->local_buffer >> this->local_bits_to_go;
-    this->local_bits_to_go = 8;
     this->writeCode2Buffer();
 }
 
 void ArithmeticEncoder::writeCode2Buffer() {
-    Byte mask = 1 << 7;
+    unsigned int mask = 1 << 7;
     int i;
 
     for (i = 0; i < 8; i++){

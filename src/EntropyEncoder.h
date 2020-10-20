@@ -13,18 +13,18 @@ struct ElementsFrequency {
     vector<int> gr_two;
     vector<int> sign;
 
-    void setFrequency(){
-        this->sig.push_back(95); //95
-        this->sig.push_back(5); //5
+    void setFrequency(int sig0, int sig1, int gr_one0, int gr_one1, int gr_two0, int gr_two1, int sign0, int sign1){
+        this->sig.push_back(sig0); //95
+        this->sig.push_back(sig1); //5
 
-        this->gr_one.push_back(40); //45
-        this->gr_one.push_back(60); //55
+        this->gr_one.push_back(gr_one0); //45
+        this->gr_one.push_back(gr_one1); //55
 
-        this->gr_two.push_back(20); //25
-        this->gr_two.push_back(80); //75
+        this->gr_two.push_back(gr_two0); //25
+        this->gr_two.push_back(gr_two1); //75
 
-        this->sign.push_back(50); //50
-        this->sign.push_back(50); //50
+        this->sign.push_back(sign0); //50
+        this->sign.push_back(sign1); //50
     }
 };
 
@@ -42,7 +42,7 @@ private:
     void open_file(const string &filename);
     void EncodeSyntacticElements(vector<SyntacticElements> lfbpu);
 
-    void ComputeFrequency(vector<SyntacticElements> lfbpu);
+    void ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsFrequency& freq);
 
     Tree tree;
     Node *root = nullptr;
