@@ -13,6 +13,7 @@
 #include <cmath>
 #include <iomanip>
 #include <fstream>
+#include <memory>
 
 
 

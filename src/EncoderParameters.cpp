@@ -113,11 +113,9 @@ const std::string &EncoderParameters::getPathInput() const { return this->path_i
 
 const std::string &EncoderParameters::getPathOutput() const { return this->path_output; }
 
-//EDUARDO BEGIN
 const std::string &EncoderParameters::getPrediction() const {
-    return this->prediction;
+    if(this->prediction == "") return "angular"; else return this->prediction;
 }
-//EDUARDO END
 
 
 
@@ -127,6 +125,7 @@ void EncoderParameters::report() {
     display_report(std::cout, "Output path", this->path_output);
     display_report(std::cout, "LF Dim", this->dim_LF);
     display_report(std::cout, "Block Dim", this->dim_block);
+    display_report(std::cout, "Prediction", this->prediction);
     display_report(std::cout, "Transform", transforms_in_use);
     display_report(std::cout, "Transform Min angular size", transform_min_angular_size);
     display_report(std::cout, "Transform Min spatial size", transform_min_spatial_size);

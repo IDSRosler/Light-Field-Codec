@@ -19,12 +19,13 @@ QX=1
 QY=1
 QU=1
 QV=1
+PREDICTION="none"
 LAMBDA=1
 DATASET=Bikes
 TRANSFORM=DCT_II
 PREDICTION_MODE=angular
 LOG_OUTPUT=no
-FLAGS="-lytro -experimental"
+FLAGS="-lytro -experimental -lossless"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -46,6 +47,7 @@ function simulation() {
   $BINARY \
     -input "${DATASET_DIR}/${DATASET}/" \
     -output "${RESULT_DIR}/${SIMULATION_ID}/" \
+    -prediction "${PREDICTION}" \
     -lfx 625 -lfy 434 -lfu 13 -lfv 13 \
     -blx 15 -bly 15 -blu 13 -blv 13 \
     -qx ${QX} -qy ${QY} -qu ${QU} -qv ${QV} -qp ${QP} \

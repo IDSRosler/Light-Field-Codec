@@ -8,15 +8,13 @@
 #include "utils.h"
 
 class EncoderParameters {
-    //EDUARDO BEGIN
-    std::string prediction{};
-    //EDUARDO END
 
   std::string path_input{"input/"}, path_output{"output/"};
 
   void set_global_parameters() const;
 
 public:
+    std::string prediction{};
     bool initialized = false;
     static EncoderParameters parameters;
     float qp{1.0};
@@ -52,19 +50,17 @@ public:
 
     bool isLytro() const;
 
-  EncoderParameters() = default;
+    EncoderParameters() = default;
 
-  void parse_cli(int argc, char *argv[]);
+    void parse_cli(int argc, char *argv[]);
 
-  float getQp() const;
+    float getQp() const;
 
-  const std::string &getPathInput() const;
+    const std::string &getPathInput() const;
 
-  const std::string &getPathOutput() const;
+    const std::string &getPathOutput() const;
 
-    //EDUARDO BEGIN
     const std::string &getPrediction() const;
-    //EDUARDO END
 
     void report();
 
