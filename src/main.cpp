@@ -85,7 +85,6 @@ int main(int argc, char **argv) {
 
     Transform transform(encoderParameters);
 
-    // TODO: Entropy entropy(...)
     LRE lre(encoderParameters.dim_block);
 #if DPCM_DC
     DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},

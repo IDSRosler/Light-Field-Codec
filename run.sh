@@ -11,19 +11,20 @@ if [ "$DATASET_DIR" == "" ]; then
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/LRE_Lossless"
+  RESULT_DIR="./results/LRE_Output"
 fi
 
-QP=3
-QX=3
-QY=3
-QU=3
-QV=3
+QP=1
+QX=1
+QY=1
+QU=1
+QV=1
 LAMBDA=1
 DATASET=Bikes
 TRANSFORM=DCT_II
+PREDICTION_MODE=angular
 LOG_OUTPUT=no
-FLAGS="-lytro -experimental -lossless"
+FLAGS="-lytro -experimental"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -49,6 +50,7 @@ function simulation() {
     -blx 15 -bly 15 -blu 13 -blv 13 \
     -qx ${QX} -qy ${QY} -qu ${QU} -qv ${QV} -qp ${QP} \
     -lambda "${LAMBDA}" \
+    -prediction "${PREDICTION_MODE}" \
     -use-transforms ${TRANSFORM[@]} \
     -quadtree-max-inner-nodes ${NODES} \
     ${FLAGS} | tee "${LOGFILE}"
@@ -58,7 +60,7 @@ LOG_OUTPUT=yes
 
 TRANSFORM=(DCT_II)
 NODES=0
-FLAGS="-lytro -verbose -experimental -lossless"
+FLAGS="-lytro -verbose -experimental"
 simulation
 #
 #FLAGS="${FLAGS} -experimental"
