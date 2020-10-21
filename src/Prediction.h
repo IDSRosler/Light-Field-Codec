@@ -67,10 +67,6 @@ public:
 
     void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
-    void angularPredictRefHorizontal(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
-
-    void angularPredictRefVertical(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
-
     float sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
     float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
@@ -78,10 +74,6 @@ public:
     float sseHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
     float sseVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
-
-    void angularPredictRefHorizontalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
-
-    void angularPredictRefVerticalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
     void generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 

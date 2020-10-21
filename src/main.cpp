@@ -186,14 +186,23 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif // STATISTICS_TIME
-                        //EDUARDO END
-                        //EDUARDO BEGIN
-                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D,
-                                                                   encoderParameters.dim_block, pf4D, block, ref4D);
-                        newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
-                        newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
-
-                        //EDUARDO END
+                        if(encoderParameters.getPrediction() == "none"){
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else if(encoderParameters.getPrediction() == "angular"){
+                            newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
+                                                                       encoderParameters.dim_block, pf4D, block, ref4D);
+                            //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+                        } else if(encoderParameters.getPrediction() == "all"){
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else if(encoderParameters.getPrediction() == "DC"){
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else if(encoderParameters.getPrediction() == "IBC"){
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else {
+                            encoderParameters.prediction = "none";
+                            std::copy(orig4D, orig4D + SIZE, res4D);
+                        }
 
 #if STATISTICS_TIME
                         t.toc();
@@ -241,26 +250,27 @@ int main(int argc, char **argv) {
 
 
 
-
-                        //EDUARDO BEGIN
-                        newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
-                        //EDUARDO END
+                        if(encoderParameters.getPrediction() != "none"){
+                            newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
+                        } else{
+                            std::copy(ti4D, ti4D + SIZE, pi4D);
+                        }
 
 
 #if STATISTICS_TIME
                         rebuild.tic();
 #endif // STATISTICS_TIME
-                        //EDUARDO BEGIN
-                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
-                                   it_channel);//ppm reconstruído
-                        //EDUARDO END
+                            lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
+                                       it_channel);
 
 #if STATISTICS_TIME
                         rebuild.toc();
 #endif // STATISTICS_TIME
 
                         //EDUARDO BEGIN
-                        newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
+                        if(encoderParameters.getPrediction() != "none") {
+                            newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
+                        }
                         //EDUARDO END
                         encoder.write_completedBytes();
 
