@@ -41,6 +41,7 @@ From the `build` directory, run the binary `./LF_Codec`.
 | -qy                         | Int       | Default: 1 | Quantization weight in y dimension
 | -qu                         | Int       | Default: 1 | Quantization weight in u dimension
 | -qv                         | Int       | Default: 1 | Quantization weight in v dimension
+| -prediction                 | String    | Default: `angular` | Prediciton mode. Valid modes are `none`, `angular`, `all`, `DC`, `IBC(Intra Block Copy)`
 | -lambda                     | Float     | Default: 100 | Lagrangian multiplicative for the RD-COST 
 | -use-transforms             | List      | Default: `DCT_II` | Defines which transforms will be used during the encoding step. A space separated list is expected. Valid values are `DCT_II`, `DST_I`, `DST_VII`
 | -transform-min-angular-size | Int       | Default: 4| Minumum size of a block on the dimensions u,v
@@ -77,6 +78,7 @@ $LFCODEC_BIN -input "${DATASET_DIR}"              \
              -blx 15  -bly 15  -blu 13 -blv 13    \
              -qx 3    -qy 3    -qu 3   -qv 3      \
              -qp 3                                \
+             -prediction angular                  \
              -lambda 1                            \
              -use-transforms DCT_II DST_I DST_VII \
              -partition-tree-max-depth 2          \
