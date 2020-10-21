@@ -9,9 +9,9 @@ from threading import Lock
 class PlataformaExecucaoMultithread():
     """Parametros comados, numThreads é opicional"""
 
-    def __init__(self, comandos, output_file,  numThreads=5):
+    def __init__(self, comandos, output_file, numThreads=1):
         self.plaf_folder = output_file
-        self.log =  output_file + 'Logs/'
+        self.log = output_file.split('/')[-1] + 'Logs/'
         self.comandos = comandos
         self.numThreads = numThreads
         self.mutex = Lock()
@@ -23,7 +23,7 @@ class PlataformaExecucaoMultithread():
             os.system('mkdir ' + self.log)
 
         for d in self.comandos:
-            if not os.path.isdir(self.plaf_folder + d['output']):
+            if not os.path.isdir(self.plaf_folder + d['output'] ):
                 os.system('mkdir ' + self.plaf_folder + d['output'])
 
         self.start()
@@ -41,7 +41,7 @@ class PlataformaExecucaoMultithread():
 
                 if os.path.exists(self.plaf_folder + cmd['output']):
                     
-                    curr_cmd = ' '.join(['taskset -c ' + str(i+1), cmd['bin'], cmd['argv'], '>', self.log + cmd['output']])
+                    curr_cmd = ' '.join(['taskset -c ' + str(i+1), cmd['bin'], cmd['argv']])
                     
                     print(curr_cmd)
                     

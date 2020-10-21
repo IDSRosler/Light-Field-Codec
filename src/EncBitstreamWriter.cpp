@@ -1,9 +1,11 @@
 #include "EncBitstreamWriter.h"
 
-EncBitstreamWriter::EncBitstreamWriter(EncoderParameters *p, uint bufferSize) : EncBitstreamVLC(bufferSize, p) {
+EncBitstreamWriter::EncBitstreamWriter(EncoderParameters *p, uint bufferSize, bool fake) : EncBitstreamVLC(bufferSize, p) {
     this->p = p;
-    open_file(this->p->getPathOutput() + "binary.bin");
+    if (!fake)
+        open_file(this->p->getPathOutput() + "binary.bin");
 }
+
 
 void EncBitstreamWriter::writeHeader() {
     this->writeGolomb_ui(this->p->dim_LF.x);

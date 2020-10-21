@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# settings=(settings_luma
+#   settings_quant_luma
+#   settings_quant
+#   settings_reference)
+
+# for settings in ${settings[@]}; do
+#   python3 ./simulation.py -S $settings
+# done
+
+export DATASET_DIR=/home/bosin/lfcodec/datasets
+export RESULTS_DIR=/home/bosin/lfcodec/results-inverted-flip-order
+export BINARY=LF_Codec
+python3 simulation/simulation.py \
+      -x \
+      --metrics Y_MSE Y_PSNR Y_SSIM \
+      --discard *.ppm
+

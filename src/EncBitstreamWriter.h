@@ -6,7 +6,7 @@
 class EncBitstreamWriter : public EncBitstreamVLC {
 
 public:
-    EncBitstreamWriter(EncoderParameters *p, uint bufferSize);
+    EncBitstreamWriter(EncoderParameters *p, uint bufferSize, bool fake = false);
 
     void writeHeader();
 
@@ -22,6 +22,8 @@ public:
 
     uint getTotalBytes() const;
 
+
+
 private:
     std::ofstream fp;
 
@@ -32,5 +34,6 @@ private:
     EncoderParameters *p;
 
 };
+
 
 #endif //LF_CODEC_ENCBITSTREAMWRITER_H

@@ -1495,14 +1495,14 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
             }
         }
     }
-    this->sse_Selected[l] = mode-2 <= 15 ?  sseHorizontalFullBlock(orig_input, out, origSize) : sseVerticalFullBlock(orig_input, out, origSize);
+//     this->sse_Selected[l] = mode-2 <= 15 ?  sseHorizontalFullBlock(orig_input, out, origSize) : sseVerticalFullBlock(orig_input, out, origSize);
 
 
-//IDM begin Heat Map for Mode Selected
+// //IDM begin Heat Map for Mode Selected
 
-    mode_Selected[l] = min_mode;
-    std::cout << mode_Selected[l] << '\n';
-    l++;
+//     mode_Selected[l] = min_mode;
+//     std::cout << mode_Selected[l] << '\n';
+//     l++;
     
 //IDM end
 

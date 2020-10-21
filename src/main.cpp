@@ -1,392 +1,377 @@
 #include <iostream>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <functional>
+#include <memory>
 
-#include "EncoderParameters.h"
-#include "Quantization.h"
-#include "Transform.h"
-#include "LightField.h"
-#include "Statistics.h"
-#include "LRE.h"
-#include "DpcmDC.h"
 #include "EncBitstreamWriter.h"
+#include "LightField.h"
+#include "LightFieldMetrics.h"
+#include "Quantization.h"
+#include "Timer.h"
+#include "Transform.h"
 #include "Typedef.h"
-#include "Time.h"
+#include "TextReport.h"
+#include "EntropyEncoder.h"
 #include "Prediction.h"
+
+
+#include "utils.h"
+#include "TextReport.h"
 
 using namespace std;
 
-template<class T>
-void printVector(const std::string &msg, T *vet, int size) {
-    std::cout << std::endl << msg << std::endl;
-    for (int i = 0; i < size; ++i) {
-        std::cout << vet[i] << "\t";
+
+vector<string> Split(const string &s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
     }
-    std::cout << std::endl;
+    return tokens;
 }
+
+void display_stage(std::string message) { std::cout << message << std::endl; }
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
     encoderParameters.parse_cli(argc, argv);
     encoderParameters.report();
+    std::cout.flush();
+    TextReport report;
 
 #if STATISTICS_TIME
-    Time getBlock, rebuild, t, q, ti, qi, total_time;
+    Timer getBlock, rebuild, t, q, ti, qi, total_time;
 #endif
+
+    if (encoderParameters.display_stages)
+        display_stage("[Loading light field]");
 
     LightField lf(encoderParameters.dim_LF, encoderParameters.getPathInput(),
                   encoderParameters.isLytro());
 
-    float orig4D[encoderParameters.dim_block.getNSamples()],
-            ti4D[encoderParameters.dim_block.getNSamples()],
-            qf4D[encoderParameters.dim_block.getNSamples()],
-            tf4D[encoderParameters.dim_block.getNSamples()],
-            qi4D[encoderParameters.dim_block.getNSamples()],
-            pf4D[encoderParameters.dim_block.getNSamples()],
-            pi4D[encoderParameters.dim_block.getNSamples()];
+    const std::size_t SIZE = encoderParameters.dim_block.getNSamples();
 
-    int temp_lre[encoderParameters.dim_block.getNSamples()];
-    uint bits_per_4D_Block = 0;
+    std::shared_ptr<float[]> _orig4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _ti4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _qf4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _tf4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _qi4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _pf4D = std::shared_ptr<float[]>(new float[SIZE]);
+    std::shared_ptr<float[]> _pi4D = std::shared_ptr<float[]>(new float[SIZE]);
+
+    std::shared_ptr<int[]> _temp_lre = std::shared_ptr<int[]>(new int[SIZE]);
+
+    auto orig4D = _orig4D.get();
+    auto ti4D = _ti4D.get();
+    auto qf4D = _qf4D.get();
+    auto tf4D = _tf4D.get();
+    auto qi4D = _qi4D.get();
+    auto pf4D = _pf4D.get();
+    auto pi4D = _pi4D.get();
+    auto temp_lre = _temp_lre.get();
+
+    static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
+
 
     Prediction predictor;
     //EDUARDO BEGIN
-    Prediction newPredictor[3]{{(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
-                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
-                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)}};
+    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)}};
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-    //EDUARDO END
-    Transform transform(encoderParameters.dim_block);
-    Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
-                              encoderParameters.quant_weight_100);
+
+    bool should_show_block = false;
+    Transform transform(encoderParameters);
+
     // TODO: Entropy entropy(...)
-    LRE lre(encoderParameters.dim_block.getNSamples() ==
-            15 * 15 * 15 * 15); //todo: fixed block size (15x15x15x15) or (15x15x13x13)
+    LRE lre(encoderParameters.dim_block);
 #if DPCM_DC
     DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},
                      {encoderParameters.dim_LF.x},
                      {encoderParameters.dim_LF.x}};
 #endif
 
-    EncBitstreamWriter encoder(&encoderParameters, 10000000);
-    //encoder.writeHeader();
-
-#if STATISTICS_LOCAL
-    //    Statistics statistics_tf(encoderParameters.getPathOutput() + "localStatistics_transform.csv");
-        Statistics statistics_qf(encoderParameters.getPathOutput() + "localStatistics_quantization.csv");
-#endif
-
+    EntropyEncoder encoder(&encoderParameters, 10000000);
+    /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
     std::string sep = ",";
 
-#if TRACE_TRANSF
-    std::ofstream file_traceTransf;
-    file_traceTransf.open(encoderParameters.getPathOutput() + "traceTransf.csv");
-    file_traceTransf <<
-                     "channel" << sep <<
-                     "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v" << sep <<
-                     "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep;
-
-    for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-        file_traceTransf << i;
-        if (i != encoderParameters.dim_block.getNSamples() - 1) {
-            file_traceTransf << sep;
-        }
-    }
-    file_traceTransf << std::endl;
-#endif
-
-#if TRACE_QUANT
-    std::ofstream file_traceQuant;
-    file_traceQuant.open(encoderParameters.getPathOutput() + "traceQuant.csv");
-    file_traceQuant <<
-                    "channel" << sep <<
-                    "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v" << sep <<
-                    "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep;
-
-    for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-        file_traceQuant << i;
-        if (i != encoderParameters.dim_block.getNSamples() - 1) {
-            file_traceQuant << sep;
-        }
-    }
-    file_traceQuant << std::endl;
-#endif
-
-#if TRACE_LRE
-    std::ofstream file_traceLRE;
-    file_traceLRE.open(encoderParameters.getPathOutput() + "traceLre.csv");
-    file_traceLRE <<
-                  "channel" << sep <<
-                  "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v" << sep <<
-                  "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep <<
-                  "level" << sep << "run" << std::endl;
-#endif
     const Point4D dimLF = encoderParameters.dim_LF;
-
     Point4D it_pos, dimBlock, stride_lf, stride_block;
+
+    std::vector<index_t> seq_order(SIZE);
+    std::iota(seq_order.begin(), seq_order.end(), 0);
+
+#if STATISTICS_TIME
+    total_time.tic();
+#endif
+
+    std::string tree;
+    double ssim[3], psnr[3];
+    double ssim_sum[3] = {0};
+    double psnr_sum[3] = {0};
+    double mean_ssim;
+    double mean_psnr;
+
+    volatile float total_steps = 3;
+    total_steps *= std::ceil(dimLF.x / (float) encoderParameters.dim_block.x);
+    total_steps *= std::ceil(dimLF.y / (float) encoderParameters.dim_block.y);
+    total_steps *= std::ceil(dimLF.u / (float) encoderParameters.dim_block.u);
+    total_steps *= std::ceil(dimLF.v / (float) encoderParameters.dim_block.v);
+    float current_step = 1;
+
+    if (encoderParameters.display_stages)
+        display_stage("[Start encoding]");
+
 
 #if STATISTICS_TIME
     total_time.tic();
 #endif
     int block;
 
-    for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
-        for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
+    report.header({
+                          "Position",
+                          "Ch",
+                          "Descriptor",
+                          "RD-Cost",
+                          "SSE",
+                  });
 
-            for (it_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y) { // spatial
+    std::string transform_descriptor;
+    double rd_cost;
+    // angular
+    for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
+        for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
+            // spatial
+            for (it_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y) {
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
 
-                    dimBlock = Point4D(std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
-                                       std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
-                                       std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
-                                       std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v)
-                    );
+                    dimBlock = Point4D(
+                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
+                            std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
+                            std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
+                            std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v));
 
-                    stride_lf = Point4D(1, dimLF.x - dimBlock.x,
-                                        dimLF.x * (dimLF.y - dimBlock.y),
-                                        dimLF.x * dimLF.y * (dimLF.u - dimBlock.u)
-                    );
+                    stride_lf =
+                            Point4D(1, dimLF.x - dimBlock.x, dimLF.x * (dimLF.y - dimBlock.y),
+                                    dimLF.x * dimLF.y * (dimLF.u - dimBlock.u));
 
                     stride_block = Point4D(1, encoderParameters.dim_block.x - dimBlock.x,
                                            (encoderParameters.dim_block.y - dimBlock.y) *
                                            encoderParameters.dim_block.x,
                                            (encoderParameters.dim_block.u - dimBlock.u) *
-                                           encoderParameters.dim_block.x * encoderParameters.dim_block.y);
+                                           encoderParameters.dim_block.x *
+                                           encoderParameters.dim_block.y);
 
-                    std::cout << "Pos: " << it_pos << "\tBlock Size: " << dimBlock << std::endl;
-                    for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                        orig4D[i] = tf4D[i] = qf4D[i] = 0;
-                    }
 
                     block++;
 
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
-
 #if STATISTICS_TIME
                         getBlock.tic();
 #endif
+                        std::fill_n(orig4D, SIZE, 0);
+                        std::fill_n(tf4D, SIZE, 0);
+                        std::fill_n(qf4D, SIZE, 0);
+                        std::fill_n(temp_lre, SIZE, 0);
 
-                        lf.getBlock(orig4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
-                                    it_channel);
+                        lf.getBlock(orig4D, it_pos, dimBlock, stride_block,
+                                    encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
                         getBlock.toc();
-#endif
+#endif // STATISTICS_TIME
 
-#if TRANSF_QUANT
 
 #if STATISTICS_TIME
                         t.tic();
-#endif
+#endif // STATISTICS_TIME
+                        //EDUARDO END
                         //EDUARDO BEGIN
-                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, block, ref4D);
+                        newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D,
+                                                                   encoderParameters.dim_block, pf4D, block, ref4D);
                         newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                         newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
-                        transform.dct_4d(res4D, tf4D, dimBlock, encoderParameters.dim_block);
+
                         //EDUARDO END
-
-
 
 #if STATISTICS_TIME
                         t.toc();
-#endif
-
-#if TRACE_TRANSF
-                        file_traceTransf <<
-                                         it_channel << sep <<
-
-                                         it_pos.x << sep <<
-                                         it_pos.y << sep <<
-                                         it_pos.u << sep <<
-                                         it_pos.v << sep <<
-
-                                         dimBlock.x << sep <<
-                                         dimBlock.y << sep <<
-                                         dimBlock.u << sep <<
-                                         dimBlock.v << sep;
-
-                        for (auto it : tf4D) {
-                            file_traceTransf << it << sep;
+#endif // STATISTICS_TIME
+                        if (encoderParameters.enable_transforms) {
+                            transform.set_position(it_channel, it_pos);
+                            auto[_desc, _rd_cost] = transform.forward(res4D, qf4D, dimBlock);
+                            transform_descriptor = _desc;
+                            rd_cost = _rd_cost;
+                        } else {
+                            std::copy(res4D, res4D + SIZE, qf4D);
                         }
-
-                        file_traceTransf << std::endl;
-#endif
-
-#if QUANTIZATION
+#if STATISTICS_TIME
+                        t.tic();
+#endif // STATISTICS_TIME
 
 #if STATISTICS_TIME
-                        q.tic();
-#endif
+                        t.toc();
+#endif // STATISTICS_TIME
 
-                        quantization.foward(tf4D, qf4D);
+                        std::transform(qf4D, qf4D + SIZE, temp_lre,
+                                       [](auto value) { return static_cast<int>(std::round(value)); });
 
-#if DPCM_DC
-                        qf4D[0] -= (float) dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
-#endif
+                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
 
-#if STATISTICS_TIME
-                        q.toc();
-#endif
+                        auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
+                        /*auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);*/
 
-                        for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                            temp_lre[i] = (int) std::trunc(qf4D[i]);
-                        }
 
-                        auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
+                        std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
-                        bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(),
-                                                                 lre_result);
-
-#if TRACE_QUANT
-                        file_traceQuant <<
-                                        it_channel << sep <<
-                                        it_pos.x << sep <<
-                                        it_pos.y << sep <<
-                                        it_pos.u << sep <<
-                                        it_pos.v << sep <<
-
-                                        dimBlock.x << sep <<
-                                        dimBlock.y << sep <<
-                                        dimBlock.u << sep <<
-                                        dimBlock.v << sep;
-
-                        for (auto it : qf4D) {
-                            file_traceQuant << (int) it << sep;
-                        }
-
-                        file_traceQuant << std::endl;
-#endif
-
-#if TRACE_LRE
-                        for (auto it_lre : lre_result) {
-                            file_traceLRE <<
-                                          it_channel << sep <<
-                                          it_pos.x << sep <<
-                                          it_pos.y << sep <<
-                                          it_pos.u << sep <<
-                                          it_pos.v << sep <<
-
-                                          dimBlock.x << sep <<
-                                          dimBlock.y << sep <<
-                                          dimBlock.u << sep <<
-                                          dimBlock.v << sep <<
-
-                                          it_lre.level << sep <<
-                                          it_lre.run <<
-                                          std::endl;
-                        }
-#endif
-
-                        // TODO: entropy.encode
-
-#if STATISTICS_TIME
-                        qi.tic();
-#endif
-
-#if DPCM_DC
-                        qf4D[0] += (float) dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
-#endif
-                        quantization.inverse(qf4D, qi4D);
-
-#if STATISTICS_TIME
-                        qi.toc();
-#endif
-
-#else /* NO_QUANTIZATION */
-                        std::copy(tf4D, tf4D + encoderParameters.dim_block.getNSamples(), qi4D);
-#endif
 
 #if STATISTICS_TIME
                         ti.tic();
 #endif
+                        if (encoderParameters.enable_transforms) {
+                            transform.inverse(transform_descriptor, qi4D, ti4D, dimBlock);
+                        } else {
+                            std::copy(qi4D, qi4D + SIZE, ti4D);
+                        }
 
-                        transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
+#if STATISTICS_TIME
+                        ti.toc();
+#endif // STATISTICS_TIME
+
+
+
+
                         //EDUARDO BEGIN
                         newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         //EDUARDO END
 
-#if STATISTICS_TIME
-                        ti.toc();
-#endif
-
-#else /* NO_TRANSF_QUANT */
-                        std::copy(orig4D, orig4D + dimBlock.getNSamples(), ti4D);
-#endif
 
 #if STATISTICS_TIME
                         rebuild.tic();
-#endif
+#endif // STATISTICS_TIME
                         //EDUARDO BEGIN
-                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);//ppm reconstruído
+                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
+                                   it_channel);//ppm reconstruído
                         //EDUARDO END
 
 #if STATISTICS_TIME
                         rebuild.toc();
-#endif
-
-#if STATISTICS_LOCAL
-#if TRANSF_QUANT
-                        //                        statistics_tf.compute(std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()));
-                        //                        statistics_tf.write(it_pos, it_channel);
-#if QUANTIZATION
-                        statistics_qf.compute(
-                                std::vector<float>(qf4D, qf4D + encoderParameters.dim_block.getNSamples()),
-                                lre.getScanOrder());
-                        statistics_qf.compute_sse(orig4D, qi4D, dimBlock, stride_block);
-                        statistics_qf.write(it_pos, dimBlock, it_channel, lre_result, bits_per_4D_Block);
-#endif // QUANTIZATION
-#endif // TRANSF_QUANT
-#endif // STATISTICS_LOCAL
-
-#if DPCM_DC
-                        dpcmDc[it_channel].update((int) qf4D[0], true);
-#endif
+#endif // STATISTICS_TIME
 
                         //EDUARDO BEGIN
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         //EDUARDO END
                         encoder.write_completedBytes();
+
+
+#if LFCODEC_EXPORT_MICROIMAGES_TRANSFORM
+                         save_microimage(encoderParameters.getPathOutput(),
+                                         it_pos,
+                                         it_channel,
+                                         qf4D,
+                                         dimBlock,
+                                         make_stride(Point4D(15, 15, 13, 13)),
+                                         transform_descriptor);
+#endif
+                        if (encoderParameters.show_progress_bar)
+                            progress_bar(current_step / total_steps, 50);
+
+                        current_step++;
+                        auto sse = std::inner_product(orig4D, orig4D + SIZE, pi4D, 0.0,
+                                                      [](auto acc, auto val) { return acc + val; },
+                                                      [](auto blk, auto rec) {
+                                                          auto error = blk - rec;
+                                                          return error * error;
+                                                      });
+
+                        if (encoderParameters.verbose) {
+                            report.set_key("Position", it_pos);
+                            report.set_key("Ch", ch_names[it_channel]);
+                            report.set_key("Descriptor", transform_descriptor + transform.m_encoding_type);
+                            report.set_key("SSE", sse);
+                            report.set_key("RD-Cost", rd_cost);
+                            report.print();
+                        }
                     }
+                    /*++hypercube;*/
                 }
             }
         }
     }
 
+    if (encoderParameters.calculate_metrics) {
+        if (encoderParameters.display_stages)
+            display_stage("[Calculating quality metrics]");
+        for (std::size_t v = 0; v < dimLF.v; v++)
+            for (std::size_t u = 0; u < dimLF.u; u++)
+                for (std::size_t ch = 0; ch < 3; ch++) {
+                    auto ref = convertViewToMat(lf.yCbCr_original[ch], dimLF, u, v);
+                    auto rec = convertViewToMat(lf.yCbCr[ch], dimLF, u, v);
+                    psnr_sum[ch] += getPSNR(ref, rec, 10);
+                    ssim_sum[ch] += getMSSIM(ref, rec, 10);
+                }
+
+        for (int ch = 0; ch < 3; ch++) {
+            ssim[ch] = ssim_sum[ch] / (dimLF.v * dimLF.u);
+            psnr[ch] = psnr_sum[ch] / (dimLF.v * dimLF.u);
+        }
+
+        mean_ssim = (6 * ssim[0] + ssim[1] + ssim[2]) / 8;
+        mean_psnr = (6 * psnr[0] + psnr[1] + psnr[2]) / 8;
+    }
+
+    if (encoderParameters.display_stages)
+        display_stage("[Writing reconstructed Light Fields on disk]");
     lf.write(encoderParameters.getPathOutput());
     encoder.finish_and_write();
-    encoder.~EncBitstreamWriter();
 
+
+    if (encoderParameters.display_stages)
+        display_stage("[Done]");
 #if STATISTICS_TIME
     total_time.toc();
 #endif
+    auto size_bytes = encoder.getTotalBytes();
+    auto total_bpp = (float) (size_bytes * 1.25) / (float) dimLF.getNSamples();
 
-    cout << "\n#########################################################" << endl;
-    cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
-    cout << "#########################################################" << endl;
-
-#if STATISTICS_GLOBAL
-    // TODO: statistics (global)
+    display_report(std::cout, "Total Bytes", size_bytes);
+    display_report(std::cout, "Human readable size",
+                   to_human_readable(size_bytes));
+    display_report(std::cout, "Bpp", total_bpp);
+    if (encoderParameters.calculate_metrics) {
+        display_report(std::cout, "PSNR-Y", psnr[0]);
+        display_report(std::cout, "PSNR-U", psnr[1]);
+        display_report(std::cout, "PSNR-V", psnr[2]);
+        display_report(std::cout, "PSNR-YUV", mean_psnr);
+        display_report(std::cout, "SSIM-Y", ssim[0]);
+        display_report(std::cout, "SSIM-U", ssim[1]);
+        display_report(std::cout, "SSIM-V", ssim[2]);
+        display_report(std::cout, "SSIM-YUV", mean_ssim);
+#if STATISTICS_TIME
+        display_report(std::cout, "Transform::forward time: ", t.getTotalTime());
+        display_report(std::cout, "Transform::inverse time: ", ti.getTotalTime());
 #endif
-
-#if TRACE_QUANT
-    file_traceQuant.close();
-#endif
-
-#if TRACE_LRE
-    file_traceLRE.close();
-#endif
+    }
+    cout << std::endl;
 
 #if STATISTICS_TIME
-    std::ofstream file_time;
-    file_time.open(encoderParameters.getPathOutput() + "time.csv");
-    file_time <<
-              "GetBlock Time(sec)" << sep << "T Time(sec)" << sep << "Q Time(sec)" << sep << "TI Time(sec)" << sep <<
-              "QI Time(sec)" << sep << "Rebuild Time(sec)" << sep << "Total Time(sec)" << sep;
-    file_time << std::endl;
-    file_time <<
-              getBlock.getTotalTime() << sep << t.getTotalTime() << sep << q.getTotalTime() << sep << ti.getTotalTime()
-              << sep <<
-              qi.getTotalTime() << sep << rebuild.getTotalTime() << sep << total_time.getTotalTime() << sep;
-    file_time << std::endl;
+//  std::ofstream file_time;
+//  file_time.open(encoderParameters.getPathOutput() + "time.csv");
+//  file_time << "GetBlock Time(sec)" << sep << "T Time(sec)" << sep
+//            << "Q Time(sec)" << sep << "TI Time(sec)" << sep << "QI Time(sec)"
+//            << sep << "Rebuild Time(sec)" << sep << "Total Time(sec)" << sep;
+//  file_time << std::endl;
+//  file_time << getBlock.getTotalTime() << sep << t.getTotalTime() << sep
+//            << q.getTotalTime() << sep << ti.getTotalTime() << sep
+//            << qi.getTotalTime() << sep << rebuild.getTotalTime() << sep
+//            << total_time.getTotalTime() << sep;
+//  file_time << std::endl;
 #endif
 
     return 0;

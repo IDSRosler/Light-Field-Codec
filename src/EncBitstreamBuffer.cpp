@@ -7,7 +7,7 @@ EncBitstreamBuffer::EncBitstreamBuffer(int buffer_size) : buffer_size(buffer_siz
 void EncBitstreamBuffer::reset() { this->byte_pos = 0, this->bits_to_go = 8, this->byte_buf = 0; }
 
 EncBitstreamBuffer::~EncBitstreamBuffer() {
-//    free(this->buffer);
+    free(this->buffer);
 }
 
 uint EncBitstreamBuffer::getSize() {
