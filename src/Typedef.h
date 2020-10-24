@@ -14,7 +14,7 @@ using index_t = unsigned;
 #define DPCM_DC false
 #endif
 #ifndef STATISTICS_LOCAL
-#define STATISTICS_LOCAL false
+#define STATISTICS_LOCAL true
 #endif
 #ifndef STATISTICS_GLOBAL
 #define STATISTICS_GLOBAL false
@@ -46,7 +46,7 @@ using index_t = unsigned;
 #define LFCODEC_TRACE_TRANSFORM false
 #endif
 
-#define ENTROPY_TYPE false  // true: Arithmetic | false: LRE
+#define ENTROPY_TYPE true  // true: Arithmetic | false: LRE
 #define HEXADECA_TREE_PARTITION 2 // 0: Original | 1: Order 8 | 2: Order 4
 
 #ifndef LFCODEC_USE_QUANTIZATION

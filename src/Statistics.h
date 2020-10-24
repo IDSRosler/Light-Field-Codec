@@ -26,13 +26,15 @@ public:
     virtual ~Statistics();
 
     void write_headers(std::ofstream &output);
+    void write_headers();
 
     void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::vector<LRE_struct> &lre_result, std::size_t bits_per_4D_Block);
 
     void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
     void write(std::ostream &output, Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
 
-    
+    void write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel);
+    void compute_prediction_statistics(const std::vector<float> &input);
 
     double get_mean() const;
 
@@ -86,8 +88,6 @@ private:
     static float entropy_vector(std::vector<int> values);
 
     static float energy(std::vector<float> const &v);
-
-
 };
 
 #endif /* STATISTICS_H */

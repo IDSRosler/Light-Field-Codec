@@ -44,6 +44,11 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
     Timer getBlock, rebuild, t, q, ti, qi, total_time;
 #endif
+#if STATISTICS_LOCAL
+    Statistics statistics(encoderParameters.getPathOutput() + "statistics.csv");
+    vector<float> input;
+    int hypercube = 0;
+#endif
 
     if (encoderParameters.display_stages)
         display_stage("[Loading light field]");
@@ -197,6 +202,14 @@ int main(int argc, char **argv) {
                                                                        encoderParameters.dim_block, pf4D, block, ref4D);
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+#if STATISTICS_LOCAL
+                            input.clear();
+                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+                                input.push_back(res4D[i]);
+                            }
+                            statistics.compute_prediction_statistics(input);
+                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
+#endif
                         } else if(encoderParameters.getPrediction() == "all"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "DC"){
@@ -322,10 +335,9 @@ int main(int argc, char **argv) {
                             save_microimage(path, it_pos, it_channel, ti4D, dimBlock, stride, "_4_ti4D", 1);
                             save_microimage(path, it_pos, it_channel, pf4D, dimBlock, stride, "_5_pf4D", 1);
                             save_microimage(path, it_pos, it_channel, pi4D, dimBlock, stride, "_6_pi4D", 1);
-
                         }
                     }
-                    /*++hypercube;*/
+                    ++hypercube;
                 }
             }
         }
@@ -384,6 +396,10 @@ int main(int argc, char **argv) {
 #endif
     }
     cout << std::endl;
+
+#if STATISTICS_LOCAL
+    statistics.~Statistics();
+#endif
 
 #if STATISTICS_TIME
 //  std::ofstream file_time;
