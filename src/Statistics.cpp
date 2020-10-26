@@ -1,6 +1,7 @@
 
 
 #include "Statistics.h"
+#include <sstream>
 
 #include <cmath>
 #include <cassert>
