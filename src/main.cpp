@@ -160,14 +160,16 @@ int main(int argc, char **argv) {
     total_time.tic();
 #endif
     int block = 0;
+    if (encoderParameters.verbose) {
+        report.header({
+                      "Position",
+                      "Ch",
+                      "Descriptor",
+                      "RD-Cost",
+                      "SSE",
+                      });
+    }
 
-    report.header({
-                          "Position",
-                          "Ch",
-                          "Descriptor",
-                          "RD-Cost",
-                          "SSE",
-                  });
 
     std::string transform_descriptor;
     double rd_cost;

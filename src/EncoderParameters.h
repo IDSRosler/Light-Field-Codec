@@ -21,7 +21,7 @@ public:
     Point4D dim_LF{0, 0, 0, 0},
             dim_block{0, 0, 0, 0},
             quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
-    bool lytro{true};
+    bool lytro{false};
     float lambda = 1;
     float lee_c = 10;
     float lee_ai = 1023;
