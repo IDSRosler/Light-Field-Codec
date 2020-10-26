@@ -32,6 +32,30 @@ vector<string> Split(const string &s, char delimiter) {
     return tokens;
 }
 
+float calculate_entropy(std::vector<int> values) {
+    std::vector<std::tuple<int, std::size_t, float>> elements_count;
+
+    std::sort(values.begin(), values.end());
+    auto unique_values = values;
+
+    unique_values.resize(
+    std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
+
+    for (auto &i: unique_values) {
+        int v_count = std::count(values.begin(), values.end(), i);
+        float v_freq = float(v_count) / values.size();
+        elements_count.emplace_back(i, v_count, v_freq);
+    }
+
+    float prob, entropy = 0;
+    for (auto &it: elements_count) {
+        prob = std::get<2>(it);
+        entropy += (float)prob * std::log2(prob);
+    }
+    return -entropy;
+}
+
+
 void display_stage(const std::string& message) { std::cout << message << std::endl; }
 
 int main(int argc, char **argv) {
@@ -122,6 +146,15 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Start encoding]");
 
+    std::ofstream transform_stats;
+    std::vector<index_t> scan_order;
+    Point4D stride = make_stride(encoderParameters.dim_block);
+    if (encoderParameters.export_transform_stats) {
+        transform_stats = std::ofstream(encoderParameters.getPathOutput() + "transform_stats.csv");
+        transform_stats << "X,Y,U,V,Channel,TransformDescriptor,SSE,"
+                        << "ZerosBefore,EnergyBefore,EntropyBefore,"
+                        << "ZerosAfter,EnergyAfter,EntropyAfter\n";
+    }
 
 #if STATISTICS_TIME
     total_time.tic();
@@ -206,6 +239,9 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else if(encoderParameters.getPrediction() == "SHIFT"){
+                            std::transform(orig4D, orig4D + SIZE, res4D,
+                                           [](auto value) { return value - 512; });
                         } else {
                             encoderParameters.prediction = "none";
                             std::copy(orig4D, orig4D + SIZE, res4D);
@@ -258,8 +294,10 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
 
 
-
-                        if(encoderParameters.getPrediction() != "none"){
+                        if (encoderParameters.getPrediction() == "SHIFT") {
+                            std::transform(ti4D, ti4D + SIZE, pi4D,
+                                           [](auto value) { return value + 512; });
+                        } else if(encoderParameters.getPrediction() != "none"){
                             newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         } else{
                             std::copy(ti4D, ti4D + SIZE, pi4D);
@@ -277,6 +315,7 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
 
                         //EDUARDO BEGIN
+
                         if(encoderParameters.getPrediction() != "none") {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
@@ -304,7 +343,48 @@ int main(int argc, char **argv) {
                                                           auto error = blk - rec;
                                                           return error * error;
                                                       });
+                        if (encoderParameters.export_transform_stats) {
+                            scan_order = generate_scan_order(dimBlock, stride);
+                            // (x, y, u, v, ch, desc, rd_cost,
+                            // Before#0, BeforEnergy, BeforEntropy,
+                            // After#0, AfterEnergy, AfterEntropy,
 
+                            int zeros_before = 0;
+                            int zeros_after = 0;
+                            float energy_before = 0;
+                            float energy_after = 0;
+
+                            std::vector<int> values_before;
+                            std::vector<int> values_after;
+
+                            for (auto i: scan_order) {
+                                if (static_cast<int>(res4D[i]) == 0)  zeros_before++;
+                                if (temp_lre[i] == 0) zeros_after++;
+                                energy_before += res4D[i] * res4D[i];
+                                energy_after += temp_lre[i] * temp_lre[i];
+                                values_before.push_back(static_cast<int>(res4D[i]));
+                                values_after.push_back(temp_lre[i]);
+                            }
+                            energy_before /= scan_order.size();
+                            energy_after /= scan_order.size();
+
+                            float entropy_before = calculate_entropy(values_before);
+                            float entropy_after = calculate_entropy(values_after);
+
+                            transform_stats << it_pos.x << sep
+                                            << it_pos.y << sep
+                                            << it_pos.u << sep
+                                            << it_pos.v << sep
+                                            << it_channel << sep
+                                            << transform_descriptor << sep
+                                            << sse << sep
+                                            << zeros_before << sep
+                                            << energy_before << sep
+                                            << entropy_before << sep
+                                            << zeros_after << sep
+                                            << energy_after << sep
+                                            << entropy_after << "\n";
+                        }
                         if (encoderParameters.verbose) {
                             report.set_key("Position", it_pos);
                             report.set_key("Ch", ch_names[it_channel]);
@@ -316,7 +396,7 @@ int main(int argc, char **argv) {
 
                         if (encoderParameters.export_blocks) {
                             const auto &path = encoderParameters.getPathOutput();
-                            const auto stride = make_stride(Point4D(15,15,13,13));
+
                             save_microimage(path, it_pos, it_channel, orig4D, dimBlock, stride, "_1_orig4D", 1);
                             save_microimage(path, it_pos, it_channel, res4D, dimBlock, stride, "_2_res4D", 1);
                             save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D", 1);
