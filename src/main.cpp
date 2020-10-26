@@ -58,24 +58,14 @@ int main(int argc, char **argv) {
 
     const std::size_t SIZE = encoderParameters.dim_block.getNSamples();
 
-    std::shared_ptr<float[]> _orig4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _ti4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _qf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _tf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _qi4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _pf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _pi4D = std::shared_ptr<float[]>(new float[SIZE]);
-
-    std::shared_ptr<int[]> _temp_lre = std::shared_ptr<int[]>(new int[SIZE]);
-
-    auto orig4D = _orig4D.get();
-    auto ti4D = _ti4D.get();
-    auto qf4D = _qf4D.get();
-    auto tf4D = _tf4D.get();
-    auto qi4D = _qi4D.get();
-    auto pf4D = _pf4D.get();
-    auto pi4D = _pi4D.get();
-    auto temp_lre = _temp_lre.get();
+    float orig4D[SIZE];
+    float ti4D[SIZE];
+    float qf4D[SIZE];
+    float tf4D[SIZE];
+    float qi4D[SIZE];
+    float pf4D[SIZE];
+    float pi4D[SIZE];
+    int temp_lre[SIZE];
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
@@ -363,10 +353,11 @@ int main(int argc, char **argv) {
         mean_ssim = (6 * ssim[0] + ssim[1] + ssim[2]) / 8;
         mean_psnr = (6 * psnr[0] + psnr[1] + psnr[2]) / 8;
     }
-
+#pragma clang optimize off
     if (encoderParameters.display_stages)
         display_stage("[Writing reconstructed Light Fields on disk]");
     lf.write(encoderParameters.getPathOutput());
+#pragma clang optimize on
     encoder.finish_and_write();
 
 
