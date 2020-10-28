@@ -57,6 +57,7 @@ From the `build` directory, run the binary `./LF_Codec`.
 | -disable-transforms   | If set, disables the transform/quantization step
 | -lossless             | If set, no quantization is applyied
 | -uniform-quantization | If set, quantize all coefficients with the value passed to `-qp` parameter and ignore others
+| -export-blocks        | If set, exports blocks information for each step of the encoding
 
 
 

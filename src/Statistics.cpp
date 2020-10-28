@@ -1,27 +1,60 @@
 
 
 #include "Statistics.h"
+#include <sstream>
 
 #include <cmath>
 #include <cassert>
 Statistics::Statistics(const std::string &filename) {
     file_out.open(filename);
     assert(file_out.is_open());
-    write_headers(file_out);
+    //write_headers(file_out);
+    this->write_headers();
 } 
 
+void Statistics::write_headers(){
+    this->file_out
+            << "hypercube"                  << sep
+            << "channel"                    << sep
+            << "pos_x"                      << sep
+            << "pos_y"                      << sep
+            << "pos_u"                      << sep
+            << "pos_v"                      << sep
+            << "bl_x"                       << sep
+            << "bl_y"                       << sep
+            << "bl_u"                       << sep
+            << "bl_v"                       << sep
+            << "entropy"                     << sep
+            << "energy(x 0.00001)"                    << std::endl;
+}
+
+void Statistics::write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel){
+    this->file_out
+            <<  hypercube                   << sep
+            <<  it_channel                  << sep
+            <<  pos.x                       << sep
+            <<  pos.y                       << sep
+            <<  pos.u                       << sep
+            <<  pos.v                       << sep
+            <<  dimBlock.x                  << sep
+            <<  dimBlock.y                  << sep
+            <<  dimBlock.u                  << sep
+            <<  dimBlock.v                  << sep
+            << this->v_entropy               << sep
+            << this->v_energy * 0.00001              << std::endl;
+}
 
 void Statistics::write_headers(std::ofstream &output) {
     output 
         << "channel"                    << sep 
-        << "pos_x"                      << sep 
-        << "pos_y"                      << sep 
-        << "pos_u"                      << sep 
-        << "pos_v"                      << sep 
-        << "bl_x"                       << sep 
-        << "bl_y"                       << sep 
-        << "bl_u"                       << sep 
-        << "bl_v"                       << sep 
+        << "pos_x"                      << sep
+        << "pos_y"                      << sep
+        << "pos_u"                      << sep
+        << "pos_v"                      << sep
+        << "bl_x"                       << sep
+        << "bl_y"                       << sep
+        << "bl_u"                       << sep
+        << "bl_v"                       << sep
         << "segment"                    << sep
         << "dc"                         << sep           
         << "v_min"                      << sep 
@@ -144,6 +177,11 @@ void Statistics::write(Point4D &pos,
 
 Statistics::~Statistics() {
     if (this->file_out.is_open()) { this->file_out.close(); }
+}
+
+void Statistics::compute_prediction_statistics(const std::vector<float> &input){
+    this->v_energy = Statistics::energy(input);
+    this->v_entropy = Statistics::entropy_vector(std::vector<int>(input.begin(), input.end()));
 }
 
 void Statistics::compute(const std::vector<float> &input, const ushort *scan_order) {

@@ -24,6 +24,10 @@ public:
 
   void set(value_type x, value_type y, value_type u, value_type v);
 
+  bool is_equal(value_type _x, value_type _y, value_type _u, value_type _v) {
+      return *this == Point4D(_x, _y, _u, _v);
+  }
+
   std::vector<value_type> to_vector() const;
 
   friend std::ostream &operator<<(std::ostream &os, Point4D const &point);

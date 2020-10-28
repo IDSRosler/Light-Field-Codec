@@ -16,6 +16,9 @@ ArithmeticEncoder :: ArithmeticEncoder(Byte &buffer, uint &bits_to_go, Byte &byt
     this->bits_to_go = &bits_to_go;
     this->byte_buf = &byte_buf;
 
+    this->local_buffer = 0;
+    this->local_bits_to_go = 8;
+
     this->number_of_models = 0;
     this->model = nullptr;
 }
@@ -73,21 +76,40 @@ void ArithmeticEncoder :: Bit_plus_follow(int bit) {
 
 // WRITE A BIT IN THE BUFFER
 void ArithmeticEncoder :: Output_bit(int bit) {
-    *this->byte_buf >>= 1;               // Shift a bit to right
-    if (bit) *this->byte_buf |= 0x80;    // Put bit in top of buffer
-    if ((--(*this->bits_to_go)) == 0){
-        *this->bits_to_go = 8;
-        this->buffer[(*this->byte_pos)++] = *this->byte_buf;
-        *this->byte_buf = 0;
+    this->local_buffer >>= 1;               // Shift a bit to right
+    if (bit) this->local_buffer |= 0x80;    // Put bit in top of buffer
+    --this->local_bits_to_go;
+    if (this->local_bits_to_go == 0){
+        this->local_bits_to_go = 8;
+        this->writeCode2Buffer();
     }
 }
 
 // WRITE THE LAST BITS
 void ArithmeticEncoder :: Done_output_bits() {
-    *this->byte_buf = *this->byte_buf >> *this->bits_to_go;
-    *this->bits_to_go = 8;
-    this->buffer[(*this->byte_pos)++] = *this->byte_buf;
-    *this->byte_buf = 0;
+    this->local_buffer = this->local_buffer >> this->local_bits_to_go;
+    this->writeCode2Buffer();
+}
+
+void ArithmeticEncoder::writeCode2Buffer() {
+    unsigned int mask = 1 << 7;
+    int i;
+
+    for (i = 0; i < 8; i++){
+        *this->byte_buf <<= 1u;
+
+        if (this->local_buffer & mask){
+            *this->byte_buf |= 1u;
+        }
+
+        mask >>= 1u;
+
+        if ((--(*this->bits_to_go)) == 0) {
+            *this->bits_to_go = 8;
+            this->buffer[(*this->byte_pos)++] = *this->byte_buf;
+            *this->byte_buf = 0;
+        }
+    }
 }
 
 // CODEC RESET

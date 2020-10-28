@@ -6,20 +6,18 @@
 #include <functional>
 #include <memory>
 
+#include "Typedef.h"
+#include "utils.h"
 #include "EncBitstreamWriter.h"
 #include "LightField.h"
 #include "LightFieldMetrics.h"
 #include "Quantization.h"
 #include "Timer.h"
 #include "Transform.h"
-#include "Typedef.h"
 #include "TextReport.h"
 #include "EntropyEncoder.h"
 #include "Prediction.h"
 
-
-#include "utils.h"
-#include "TextReport.h"
 
 using namespace std;
 
@@ -34,7 +32,31 @@ vector<string> Split(const string &s, char delimiter) {
     return tokens;
 }
 
-void display_stage(std::string message) { std::cout << message << std::endl; }
+float calculate_entropy(std::vector<int> values) {
+    std::vector<std::tuple<int, std::size_t, float>> elements_count;
+
+    std::sort(values.begin(), values.end());
+    auto unique_values = values;
+
+    unique_values.resize(
+    std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
+
+    for (auto &i: unique_values) {
+        int v_count = std::count(values.begin(), values.end(), i);
+        float v_freq = float(v_count) / values.size();
+        elements_count.emplace_back(i, v_count, v_freq);
+    }
+
+    float prob, entropy = 0;
+    for (auto &it: elements_count) {
+        prob = std::get<2>(it);
+        entropy += (float)prob * std::log2(prob);
+    }
+    return -entropy;
+}
+
+
+void display_stage(const std::string& message) { std::cout << message << std::endl; }
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
@@ -46,6 +68,11 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
     Timer getBlock, rebuild, t, q, ti, qi, total_time;
 #endif
+#if STATISTICS_LOCAL
+    Statistics statistics(encoderParameters.getPathOutput() + "statistics.csv");
+    vector<float> input;
+    int hypercube = 0;
+#endif
 
     if (encoderParameters.display_stages)
         display_stage("[Loading light field]");
@@ -55,24 +82,14 @@ int main(int argc, char **argv) {
 
     const std::size_t SIZE = encoderParameters.dim_block.getNSamples();
 
-    std::shared_ptr<float[]> _orig4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _ti4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _qf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _tf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _qi4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _pf4D = std::shared_ptr<float[]>(new float[SIZE]);
-    std::shared_ptr<float[]> _pi4D = std::shared_ptr<float[]>(new float[SIZE]);
-
-    std::shared_ptr<int[]> _temp_lre = std::shared_ptr<int[]>(new int[SIZE]);
-
-    auto orig4D = _orig4D.get();
-    auto ti4D = _ti4D.get();
-    auto qf4D = _qf4D.get();
-    auto tf4D = _tf4D.get();
-    auto qi4D = _qi4D.get();
-    auto pf4D = _pf4D.get();
-    auto pi4D = _pi4D.get();
-    auto temp_lre = _temp_lre.get();
+    float orig4D[SIZE];
+    float ti4D[SIZE];
+    float qf4D[SIZE];
+    float tf4D[SIZE];
+    float qi4D[SIZE];
+    float pf4D[SIZE];
+    float pi4D[SIZE];
+    int temp_lre[SIZE];
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
@@ -85,11 +102,8 @@ int main(int argc, char **argv) {
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-
-    bool should_show_block = false;
     Transform transform(encoderParameters);
 
-    // TODO: Entropy entropy(...)
     LRE lre(encoderParameters.dim_block);
 #if DPCM_DC
     DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},
@@ -97,8 +111,12 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
+#if ENTROPY_TYPE
     EntropyEncoder encoder(&encoderParameters, 10000000);
-    /*EncBitstreamWriter encoderLRE(&encoderParameters, 10000000);*/
+#else
+    EncBitstreamWriter encoder(&encoderParameters, 10000000);
+#endif
+
     std::string sep = ",";
 
     const Point4D dimLF = encoderParameters.dim_LF;
@@ -128,19 +146,30 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Start encoding]");
 
+    std::ofstream transform_stats;
+    std::vector<index_t> scan_order;
+    Point4D stride = make_stride(encoderParameters.dim_block);
+    if (encoderParameters.export_transform_stats) {
+        transform_stats = std::ofstream(encoderParameters.getPathOutput() + "transform_stats.csv");
+        transform_stats << "X,Y,U,V,Channel,TransformDescriptor,SSE,"
+                        << "ZerosBefore,EnergyBefore,EntropyBefore,"
+                        << "ZerosAfter,EnergyAfter,EntropyAfter\n";
+    }
 
 #if STATISTICS_TIME
     total_time.tic();
 #endif
-    int block;
+    int block = 0;
+    if (encoderParameters.verbose) {
+        report.header({
+                      "Position",
+                      "Ch",
+                      "Descriptor",
+                      "RD-Cost",
+                      "SSE",
+                      });
+    }
 
-    report.header({
-                          "Position",
-                          "Ch",
-                          "Descriptor",
-                          "RD-Cost",
-                          "SSE",
-                  });
 
     std::string transform_descriptor;
     double rd_cost;
@@ -198,12 +227,23 @@ int main(int argc, char **argv) {
                                                                        encoderParameters.dim_block, pf4D, block, ref4D);
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+#if STATISTICS_LOCAL
+                            input.clear();
+                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+                                input.push_back(res4D[i]);
+                            }
+                            statistics.compute_prediction_statistics(input);
+                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
+#endif
                         } else if(encoderParameters.getPrediction() == "all"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "DC"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
+                        } else if(encoderParameters.getPrediction() == "SHIFT"){
+                            std::transform(orig4D, orig4D + SIZE, res4D,
+                                           [](auto value) { return value - 512; });
                         } else {
                             encoderParameters.prediction = "none";
                             std::copy(orig4D, orig4D + SIZE, res4D);
@@ -231,11 +271,13 @@ int main(int argc, char **argv) {
                         std::transform(qf4D, qf4D + SIZE, temp_lre,
                                        [](auto value) { return static_cast<int>(std::round(value)); });
 
-                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
-
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
-                        /*auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);*/
 
+#if ENTROPY_TYPE
+                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
+#else
+                        auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
+#endif
 
                         std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
@@ -254,8 +296,10 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
 
 
-
-                        if(encoderParameters.getPrediction() != "none"){
+                        if (encoderParameters.getPrediction() == "SHIFT") {
+                            std::transform(ti4D, ti4D + SIZE, pi4D,
+                                           [](auto value) { return value + 512; });
+                        } else if(encoderParameters.getPrediction() != "none"){
                             newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
                         } else{
                             std::copy(ti4D, ti4D + SIZE, pi4D);
@@ -273,10 +317,12 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
 
                         //EDUARDO BEGIN
+
                         if(encoderParameters.getPrediction() != "none") {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
                         //EDUARDO END
+
                         encoder.write_completedBytes();
 
 
@@ -299,7 +345,48 @@ int main(int argc, char **argv) {
                                                           auto error = blk - rec;
                                                           return error * error;
                                                       });
+                        if (encoderParameters.export_transform_stats) {
+                            scan_order = generate_scan_order(dimBlock, stride);
+                            // (x, y, u, v, ch, desc, rd_cost,
+                            // Before#0, BeforEnergy, BeforEntropy,
+                            // After#0, AfterEnergy, AfterEntropy,
 
+                            int zeros_before = 0;
+                            int zeros_after = 0;
+                            float energy_before = 0;
+                            float energy_after = 0;
+
+                            std::vector<int> values_before;
+                            std::vector<int> values_after;
+
+                            for (auto i: scan_order) {
+                                if (static_cast<int>(res4D[i]) == 0)  zeros_before++;
+                                if (temp_lre[i] == 0) zeros_after++;
+                                energy_before += res4D[i] * res4D[i];
+                                energy_after += temp_lre[i] * temp_lre[i];
+                                values_before.push_back(static_cast<int>(res4D[i]));
+                                values_after.push_back(temp_lre[i]);
+                            }
+                            energy_before /= scan_order.size();
+                            energy_after /= scan_order.size();
+
+                            float entropy_before = calculate_entropy(values_before);
+                            float entropy_after = calculate_entropy(values_after);
+
+                            transform_stats << it_pos.x << sep
+                                            << it_pos.y << sep
+                                            << it_pos.u << sep
+                                            << it_pos.v << sep
+                                            << it_channel << sep
+                                            << transform_descriptor << sep
+                                            << sse << sep
+                                            << zeros_before << sep
+                                            << energy_before << sep
+                                            << entropy_before << sep
+                                            << zeros_after << sep
+                                            << energy_after << sep
+                                            << entropy_after << "\n";
+                        }
                         if (encoderParameters.verbose) {
                             report.set_key("Position", it_pos);
                             report.set_key("Ch", ch_names[it_channel]);
@@ -308,8 +395,21 @@ int main(int argc, char **argv) {
                             report.set_key("RD-Cost", rd_cost);
                             report.print();
                         }
+
+                        if (encoderParameters.export_blocks) {
+                            const auto &path = encoderParameters.getPathOutput();
+
+                            save_microimage(path, it_pos, it_channel, orig4D, dimBlock, stride, "_1_orig4D", 1);
+                            save_microimage(path, it_pos, it_channel, res4D, dimBlock, stride, "_2_res4D", 1);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D", 1);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D_energy", 2);
+                            save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D_bitlength", 3);
+                            save_microimage(path, it_pos, it_channel, ti4D, dimBlock, stride, "_4_ti4D", 1);
+                            save_microimage(path, it_pos, it_channel, pf4D, dimBlock, stride, "_5_pf4D", 1);
+                            save_microimage(path, it_pos, it_channel, pi4D, dimBlock, stride, "_6_pi4D", 1);
+                        }
                     }
-                    /*++hypercube;*/
+                    ++hypercube;
                 }
             }
         }
@@ -328,17 +428,18 @@ int main(int argc, char **argv) {
                 }
 
         for (int ch = 0; ch < 3; ch++) {
-            ssim[ch] = ssim_sum[ch] / (dimLF.v * dimLF.u);
-            psnr[ch] = psnr_sum[ch] / (dimLF.v * dimLF.u);
+            ssim[ch] = ssim_sum[ch] / static_cast<double>(dimLF.v * dimLF.u);
+            psnr[ch] = psnr_sum[ch] / static_cast<double>(dimLF.v * dimLF.u);
         }
 
         mean_ssim = (6 * ssim[0] + ssim[1] + ssim[2]) / 8;
         mean_psnr = (6 * psnr[0] + psnr[1] + psnr[2]) / 8;
     }
-
+#pragma clang optimize off
     if (encoderParameters.display_stages)
         display_stage("[Writing reconstructed Light Fields on disk]");
     lf.write(encoderParameters.getPathOutput());
+#pragma clang optimize on
     encoder.finish_and_write();
 
 
@@ -348,11 +449,10 @@ int main(int argc, char **argv) {
     total_time.toc();
 #endif
     auto size_bytes = encoder.getTotalBytes();
-    auto total_bpp = (float) (size_bytes * 1.25) / (float) dimLF.getNSamples();
+    auto total_bpp = static_cast<double>(size_bytes)/static_cast<double>(dimLF.getNSamples());
 
     display_report(std::cout, "Total Bytes", size_bytes);
-    display_report(std::cout, "Human readable size",
-                   to_human_readable(size_bytes));
+    display_report(std::cout, "Human readable size", to_human_readable(size_bytes));
     display_report(std::cout, "Bpp", total_bpp);
     if (encoderParameters.calculate_metrics) {
         display_report(std::cout, "PSNR-Y", psnr[0]);
@@ -369,6 +469,10 @@ int main(int argc, char **argv) {
 #endif
     }
     cout << std::endl;
+
+#if STATISTICS_LOCAL
+    statistics.~Statistics();
+#endif
 
 #if STATISTICS_TIME
 //  std::ofstream file_time;
