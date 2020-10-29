@@ -87,7 +87,7 @@ void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origS
     }
 }
 
-void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &origSize) {
+void Prediction::get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *this->pred_references.begin(); // left above
     int numElements = origSize.getNSamples();
     if (y == 0) ref.available = false;
@@ -95,9 +95,11 @@ void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &orig
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
+        available = true;
     }else{
         for (int i = 0; i < numElements ; ++i)
             out[i] = 0;
+        available = false;
     }
 }
 
@@ -131,54 +133,134 @@ void Prediction::predictRef(const float *orig_input, const float *ref, const Poi
 
 }
 
-float Prediction::sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
+void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
+    float refAbove4D[origSize.getNSamples()],
+            refLeft4D[origSize.getNSamples()],
+            refAboveRight4D[origSize.getNSamples()],
+            refAboveLeft4D[origSize.getNSamples()];;
 
-    // Horizontal
-    it_pos.x = origSize.x - 1;
-    it_pos.u = floor(origSize.u / 2);
+    bool availableL, availableA, availableAR, availableAL;
+    float medL = 0, medA = 0, medAR = 0,  medAL = 0, medTotal = 0;
+    int cont = 0;
 
-    it_pos.y = 0;
-    it_pos.v = 0;
+    this->predictor = 0;
 
-    float sum = 0;
-    int pos = 0;
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
 
-    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-
-            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-
-                pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                sum += abs(orig_input[pos] - prediction_input[pos]);
-            }
+    if(availableL){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            medL += refLeft4D[i];
+        }
+        medL = medL/origSize.getNSamples();
+        medTotal += medL;
+        cont++;
     }
-    return sum;
+    if(availableA){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            medA += refAbove4D[i];
+        }
+        medA = medA/origSize.getNSamples();
+        medTotal += medA;
+        cont++;
+    }
+    if(availableAR){
+        for(int i = 0; i < origSize.getNSamples(); ++i){
+            medAR += refAboveRight4D[i];
+        }
+        medAR = medAR/origSize.getNSamples();
+        medTotal += medAR;
+        cont++;
+    }
+    if(availableAL){
+        for(int i = 0; i < origSize.getNSamples(); ++i){
+            medAL += refAboveLeft4D[i];
+        }
+        medAL = medAL/origSize.getNSamples();
+        medTotal += medL;
+        cont++;
+    }
+    medTotal = medTotal/cont;
+    for (int i = 0; i < origSize.getNSamples(); ++i){
+        out[i] = medTotal;
+    }
 }
 
-float Prediction::sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
+void Prediction::IBC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
+    float refAbove4D[origSize.getNSamples()],
+            refLeft4D[origSize.getNSamples()],
+            refAboveRight4D[origSize.getNSamples()],
+            refAboveLeft4D[origSize.getNSamples()];
 
-    // Horizontal - variable
-    it_pos.x = 0;
-    it_pos.u = 0;
+    bool availableL, availableA, availableAR, availableAL;
+    float sseA = 0, sseL = 0, sseAR = 0, sseAL = 0, sse = 0;
+    int index = 0;
 
-    // Vertical - fixed
-    it_pos.y = origSize.y - 1;
-    it_pos.v = floor(origSize.v / 2);
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
 
-    float sum = 0;
-    int pos = 0;
-
-    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-
-        for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-            pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                  + (it_pos.v * origSize.x * origSize.y * origSize.u);
-            sum += abs(orig_input[pos] - prediction_input[pos]);
+    if(availableA) {
+        sseA = this->sseBlock(orig_input, refAbove4D, origSize);
+        sse = sseA;
+        index = 1;
+    }
+    if(availableL) {
+        sseL = this->sseBlock(orig_input, refLeft4D, origSize);
+        if(availableA){
+            if(sseL < sse){
+                sse = sseL;
+                index = 2;
+            }
+        } else{
+            sse = sseL;
         }
     }
+    if(availableAR) {
+        sseAR = this->sseBlock(orig_input, refAboveRight4D, origSize);
+        if(availableA || availableL){
+            if(sseAR < sse){
+                sse = sseAR;
+                index = 3;
+            }
+        } else{
+            sse = sseAR;
+        }
+    }
+    if(availableAL) {
+        sseAL = this->sseBlock(orig_input, refAboveLeft4D, origSize);
+        if(availableA || availableL || availableAR){
+            if(sseAL < sse){
+                sse = sseAL;
+                index = 4;
+            }
+        } else{
+            sse = sseAR;
+        }
+    }
+
+    if(index == 1){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAbove4D[i];
+    } else if(index == 2){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refLeft4D[i];
+    } else if(index == 3){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAboveRight4D[i];
+    } else if(index == 4){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAboveLeft4D[i];
+    }
+}
+
+float Prediction::sseBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    float sum = 0;
+    for (int i = 0; i < origSize.getNSamples() ; ++i)
+        sum += pow(orig_input[i] - prediction_input[i], 2);
     return sum;
 }
 

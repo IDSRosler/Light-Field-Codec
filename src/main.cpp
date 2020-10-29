@@ -238,9 +238,11 @@ int main(int argc, char **argv) {
                         } else if(encoderParameters.getPrediction() == "all"){
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "DC"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "SHIFT"){
                             std::transform(orig4D, orig4D + SIZE, res4D,
                                            [](auto value) { return value - 512; });

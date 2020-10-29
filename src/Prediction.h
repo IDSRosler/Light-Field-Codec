@@ -61,15 +61,17 @@ public:
 
     void get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void get_referenceLA(uint x, uint y, float *out, const Point4D &origSize);
+    void get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
     void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
     void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
-    float sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+    void DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
 
-    float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+    void IBC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
+
+    float sseBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
     float sseHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
