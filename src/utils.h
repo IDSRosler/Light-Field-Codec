@@ -146,6 +146,7 @@ std::vector<PartitionDescriptor> parse_descriptor(std::string_view descriptor, c
 std::vector<std::string> convert_fbt_to_descriptor(std::string tree_repr, std::size_t index);
 std::unique_ptr<std::deque<std::pair<Point4D, Point4D>>> split_coordinate(char type, const Point4D& _offset, const Point4D& _shape, bool unsafe = false);
 bool is_valid_descriptor(const std::string& descriptor);
+float calculate_entropy(std::vector<int> values);
 
 template <typename Iter, typename Func>
 void for_each_4d(const Iter *block, const Point4D& shape, const Point4D& stride, Func f) {

@@ -32,38 +32,14 @@ vector<string> Split(const string &s, char delimiter) {
     return tokens;
 }
 
-float calculate_entropy(std::vector<int> values) {
-    std::vector<std::tuple<int, std::size_t, float>> elements_count;
-
-    std::sort(values.begin(), values.end());
-    auto unique_values = values;
-
-    unique_values.resize(
-    std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
-
-    for (auto &i: unique_values) {
-        int v_count = std::count(values.begin(), values.end(), i);
-        float v_freq = float(v_count) / values.size();
-        elements_count.emplace_back(i, v_count, v_freq);
-    }
-
-    float prob, entropy = 0;
-    for (auto &it: elements_count) {
-        prob = std::get<2>(it);
-        entropy += (float)prob * std::log2(prob);
-    }
-    return -entropy;
-}
-
 
 void display_stage(const std::string& message) { std::cout << message << std::endl; }
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
     encoderParameters.parse_cli(argc, argv);
-    encoderParameters.report();
-    std::cout.flush();
-    TextReport report;
+    
+    
 
 #if STATISTICS_TIME
     Timer getBlock, rebuild, t, q, ti, qi, total_time;
@@ -143,22 +119,20 @@ int main(int argc, char **argv) {
     total_steps *= std::ceil(dimLF.v / (float) encoderParameters.dim_block.v);
     float current_step = 1;
 
-    if (encoderParameters.display_stages)
-        display_stage("[Start encoding]");
+    
 
-    std::ofstream transform_stats;
+
     std::vector<index_t> scan_order;
     Point4D stride = make_stride(encoderParameters.dim_block);
-    if (encoderParameters.export_transform_stats) {
-        transform_stats = std::ofstream(encoderParameters.getPathOutput() + "transform_stats.csv");
-        transform_stats << "X,Y,U,V,Channel,TransformDescriptor,SSE,"
-                        << "ZerosBefore,EnergyBefore,EntropyBefore,"
-                        << "ZerosAfter,EnergyAfter,EntropyAfter\n";
-    }
+    
 
 #if STATISTICS_TIME
     total_time.tic();
 #endif
+    TextReport report;
+    std::ofstream *csv_file = nullptr;
+    TextReport *csv_report = nullptr;
+    
     int block = 0;
     if (encoderParameters.verbose) {
         report.header({
@@ -169,10 +143,36 @@ int main(int argc, char **argv) {
                       "SSE",
                       });
     }
+    std::vector<std::string> bin_names = {
+            "Bin0", "Bin1", "Bin2", "Bin3", "Bin4", "Bin5", "Bin6", 
+            "Bin7", "Bin8", "Bin9", "Bin10", "Bin11", "Bin12", "Bin13",
+            "Bin14", "Bin15", "Bin16", "Bin17", "Bin18", "Bin19", 
+            "Bin20", "Bin21", "Bin22", "Bin23", "Bin24", "Bin25", 
+            "Bin26", "Bin27", "Bin28", "Bin29", "Bin30", "Bin31"
+    };
+    if (encoderParameters.export_statistics) {
+        csv_file = new std::ofstream(encoderParameters.getPathOutput() + "statistics_report.csv");
+        csv_report = new TextReport(*csv_file);
+
+        csv_report->set_separator(",");
+        csv_report->header({
+            "Position", "Channel", "Source", "Sum", "AbsSum", "Max", "Min", 
+            "Mean", "Std", "Energy", "Entropy", "SSE", "Bitsize",
+            "Bin0", "Bin1", "Bin2", "Bin3", "Bin4", "Bin5", "Bin6", 
+            "Bin7", "Bin8", "Bin9", "Bin10", "Bin11", "Bin12", "Bin13",
+            "Bin14", "Bin15", "Bin16", "Bin17", "Bin18", "Bin19", 
+            "Bin20", "Bin21", "Bin22", "Bin23", "Bin24", "Bin25", 
+            "Bin26", "Bin27", "Bin28", "Bin29", "Bin30", "Bin31"
+        });
+    }
 
 
     std::string transform_descriptor;
     double rd_cost;
+    encoderParameters.report();
+    std::cout.flush();
+    if (encoderParameters.display_stages)
+        display_stage("[Start encoding]");
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
 
                     dimBlock = Point4D(
-                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
+                            std::min(encoderParameters.dim_block.x,  dimLF.x - it_pos.x),
                             std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
                             std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
                             std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v));
@@ -326,15 +326,6 @@ int main(int argc, char **argv) {
                         encoder.write_completedBytes();
 
 
-#if LFCODEC_EXPORT_MICROIMAGES_TRANSFORM
-                         save_microimage(encoderParameters.getPathOutput(),
-                                         it_pos,
-                                         it_channel,
-                                         qf4D,
-                                         dimBlock,
-                                         make_stride(Point4D(15, 15, 13, 13)),
-                                         transform_descriptor);
-#endif
                         if (encoderParameters.show_progress_bar)
                             progress_bar(current_step / total_steps, 50);
 
@@ -345,48 +336,7 @@ int main(int argc, char **argv) {
                                                           auto error = blk - rec;
                                                           return error * error;
                                                       });
-                        if (encoderParameters.export_transform_stats) {
-                            scan_order = generate_scan_order(dimBlock, stride);
-                            // (x, y, u, v, ch, desc, rd_cost,
-                            // Before#0, BeforEnergy, BeforEntropy,
-                            // After#0, AfterEnergy, AfterEntropy,
-
-                            int zeros_before = 0;
-                            int zeros_after = 0;
-                            float energy_before = 0;
-                            float energy_after = 0;
-
-                            std::vector<int> values_before;
-                            std::vector<int> values_after;
-
-                            for (auto i: scan_order) {
-                                if (static_cast<int>(res4D[i]) == 0)  zeros_before++;
-                                if (temp_lre[i] == 0) zeros_after++;
-                                energy_before += res4D[i] * res4D[i];
-                                energy_after += temp_lre[i] * temp_lre[i];
-                                values_before.push_back(static_cast<int>(res4D[i]));
-                                values_after.push_back(temp_lre[i]);
-                            }
-                            energy_before /= scan_order.size();
-                            energy_after /= scan_order.size();
-
-                            float entropy_before = calculate_entropy(values_before);
-                            float entropy_after = calculate_entropy(values_after);
-
-                            transform_stats << it_pos.x << sep
-                                            << it_pos.y << sep
-                                            << it_pos.u << sep
-                                            << it_pos.v << sep
-                                            << it_channel << sep
-                                            << transform_descriptor << sep
-                                            << sse << sep
-                                            << zeros_before << sep
-                                            << energy_before << sep
-                                            << entropy_before << sep
-                                            << zeros_after << sep
-                                            << energy_after << sep
-                                            << entropy_after << "\n";
-                        }
+                        
                         if (encoderParameters.verbose) {
                             report.set_key("Position", it_pos);
                             report.set_key("Ch", ch_names[it_channel]);
@@ -398,7 +348,6 @@ int main(int argc, char **argv) {
 
                         if (encoderParameters.export_blocks) {
                             const auto &path = encoderParameters.getPathOutput();
-
                             save_microimage(path, it_pos, it_channel, orig4D, dimBlock, stride, "_1_orig4D", 1);
                             save_microimage(path, it_pos, it_channel, res4D, dimBlock, stride, "_2_res4D", 1);
                             save_microimage(path, it_pos, it_channel, qf4D, dimBlock, stride, "_3_qf4D", 1);
@@ -407,6 +356,67 @@ int main(int argc, char **argv) {
                             save_microimage(path, it_pos, it_channel, ti4D, dimBlock, stride, "_4_ti4D", 1);
                             save_microimage(path, it_pos, it_channel, pf4D, dimBlock, stride, "_5_pf4D", 1);
                             save_microimage(path, it_pos, it_channel, pi4D, dimBlock, stride, "_6_pi4D", 1);
+                        }
+
+                        if (encoderParameters.export_statistics) {
+                            static std::vector<std::string> block_names = {
+                                "orig4D", "res4D", "qf4D"
+                            };
+                            float *blocks[3] = {orig4D, res4D, qf4D};
+                            auto samples = dimBlock.getNSamples();
+                            for (int i = 0; i < 3; i++) {
+                                float *block = blocks[i];
+                                float mean = 0;
+                                float std_dev = 0;
+                                float min = block[0];
+                                float max = block[0];
+                                float sum = 0;
+                                float abs_sum = 0;
+                                float energy = 0;
+                                int bins[32] = {0};
+                                std::vector<int> values;
+
+                                FOREACH_4D_IDX(n, dimBlock, stride) {
+                                    auto value = block[n];
+                                    int int_value = static_cast<int>(value);
+                                    sum += value;
+                                    abs_sum += std::abs(value);
+                                    energy += value * value;
+                                    min = std::min(min, value);
+                                    max = std::max(max, value);
+                                    int bin = std::floor(std::log2(std::abs(int_value) + 1));
+                                    if (bin < 0 || bin > 31)
+                                        assert(false);
+                                    bins[bin]++;
+                                    values.push_back(int_value);
+                                }
+
+                                mean = sum / samples;
+                                FOREACH_4D_IDX(n, dimBlock, stride) {
+                                    auto diff = block[n] - mean;
+                                    std_dev += diff * diff;
+                                }
+                                std_dev = std::sqrt(std_dev / samples);
+
+
+                                csv_report->set_key("Position", it_pos);
+                                csv_report->set_key("Channel", it_channel);
+                                csv_report->set_key("Source", block_names[i]);
+                                csv_report->set_key("Sum", sum);
+                                csv_report->set_key("AbsSum", abs_sum);
+                                csv_report->set_key("Max", max);
+                                csv_report->set_key("Min", min);
+                                csv_report->set_key("Mean", mean);
+                                csv_report->set_key("Std", std_dev);
+                                csv_report->set_key("Energy", energy);
+                                csv_report->set_key("Entropy", calculate_entropy(values));
+#if !ENTROPY_TYPE
+                                csv_report->set_key("Bitsize", lre_size);
+#endif
+                                for (int bin = 0; bin < 32; bin++)
+                                    csv_report->set_key(bin_names[bin], bins[bin]);
+                                csv_report->write();
+                            }
                         }
                     }
                     ++hypercube;
