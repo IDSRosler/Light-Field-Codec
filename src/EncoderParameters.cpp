@@ -65,8 +65,10 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->verbose = true;
         } else if (flag == "-experimental"){
             this->experimental = true;
-        } else if (flag == "-export-transform-stats") {
-            this->export_transform_stats = true;
+        } else if (flag == "-export-statistics") {
+            export_statistics = true;
+        } else if (flag == "-export-transform-inner-stats") {
+            this->export_transform_inner_stats = true;
         } else if (flag == "-use-transforms") {
             while(argv[++it][0] != '-')
                 use_transforms.emplace_back(argv[it]);

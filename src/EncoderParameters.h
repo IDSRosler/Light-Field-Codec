@@ -39,8 +39,11 @@ public:
     bool lossless = false;
     bool uniform_quantization = false;
 
+
     bool enable_transforms = true;
-    bool export_transform_stats = false;
+    bool export_statistics = false;
+    /* Export statistics for every all tested partition tree blocks */
+    bool export_transform_inner_stats = false;
     bool export_blocks = false;
 
     std::vector<std::string> use_transforms;

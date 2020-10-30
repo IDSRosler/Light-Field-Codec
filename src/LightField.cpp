@@ -1,5 +1,6 @@
 
 #include "LightField.h"
+#include <cstdlib>
 
 LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
 
@@ -51,8 +52,8 @@ void LightField::read(const std::string &path) {
             mViewFilePointer = fopen(name_ppm.c_str(), "rb");
 
             if (mViewFilePointer == nullptr) {
-                printf("unable to open %s view file for reading\n", name_ppm.c_str());
-                assert(false);
+                printf("LightField: unable to open %s view file for reading.\n", name_ppm.c_str());
+                exit(EXIT_FAILURE);
             }
 
             fscanf(mViewFilePointer, "%s", tag);
