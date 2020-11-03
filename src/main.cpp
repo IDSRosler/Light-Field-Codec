@@ -69,14 +69,14 @@ int main(int argc, char **argv) {
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
-
-    Prediction predictor;
-    //EDUARDO BEGIN
     Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
                                {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
                                {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)}};
-    float ref4D[encoderParameters.dim_block.getNSamples()],
-            res4D[encoderParameters.dim_block.getNSamples()];
+    float ref4D[SIZE];
+    float res4D[SIZE];
+    float pfAngular4D[SIZE];
+    float pfDC4D[SIZE];
+    float pfIBC4D[SIZE];
 
     Transform transform(encoderParameters);
 
@@ -236,7 +236,24 @@ int main(int argc, char **argv) {
                             statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
 #endif
                         } else if(encoderParameters.getPrediction() == "all"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+                            newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
+                                                                             encoderParameters.dim_block, pfAngular4D, block, ref4D);
+                            float sseAngular = newPredictor[it_channel].sseBlock(orig4D, pfAngular4D, encoderParameters.dim_block);
+
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfDC4D);
+                            float sseDC = newPredictor[it_channel].sseBlock(orig4D, pfDC4D, encoderParameters.dim_block);
+
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfIBC4D);
+                            float sseIBC = newPredictor[it_channel].sseBlock(orig4D, pfIBC4D, encoderParameters.dim_block);
+
+                            if(sseAngular <= sseDC && sseAngular <= sseIBC){
+                                std::copy(pfAngular4D, pfAngular4D + SIZE, res4D);
+                            } else if(sseDC <= sseAngular && sseDC <= sseIBC){
+                                std::copy(pfDC4D, pfDC4D + SIZE, res4D);
+                            } else{
+                                std::copy(pfIBC4D, pfIBC4D + SIZE, res4D);
+                            }
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "DC"){
                             newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
@@ -318,12 +335,9 @@ int main(int argc, char **argv) {
                         rebuild.toc();
 #endif // STATISTICS_TIME
 
-                        //EDUARDO BEGIN
-
                         if(encoderParameters.getPrediction() != "none") {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
-                        //EDUARDO END
 
                         encoder.write_completedBytes();
 

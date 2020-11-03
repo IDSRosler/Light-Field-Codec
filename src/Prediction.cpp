@@ -1,8 +1,6 @@
 #include "Prediction.h"
-//EDUARDO BEGIN
 #include <cmath>
 #include <iostream>
-//EDUARDO END
 
 //idm bibliotecas pra escrita do arquivo CSV
 #include <iostream>
@@ -10,42 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
 Prediction::Prediction(){
-    this->predictor = 0;
-    this->predictors[0] = 0;
-    this->predictors[1] = 0;
-    this->predictors[2] = 0;
 }
 
-Prediction::~Prediction(){
-
-}
-
-//Preditor atual é apenas uma média do LF.
-void Prediction::predict(const float *orig_input, const Point4D &origSize, float *out ){
-    this->predictor = 0;
-
-    this->num_elementos = origSize.getNSamples();
-
-    for (int i = 0; i < this->num_elementos; ++i)
-        this->predictor += orig_input[i];
-
-    this->predictor = this->predictor/this->num_elementos;
-
-    for (int i = 0; i < this->num_elementos; ++i){
-        out[i] = orig_input[i] - this->predictor;
-    }
-}
-
-void Prediction::rec(float *input, float *out, Point4D &dim_block){
-    for (int i = 0; i < this->num_elementos ; ++i)
-        out[i] = input[i] + this->predictor;
-}
-
-
-//EDUARDO BEGIN
 ValueBlockPred::ValueBlockPred(float *block4D, bool available, uint blockSize){
     this->available = available;
     for(int i = 0; i < blockSize ; ++i){
@@ -119,31 +84,15 @@ void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out ){
-    this->predictor = 0;
-    int numElements = origSize.getNSamples();
-
-    for (int i = 0; i < numElements; ++i)
-        this->predictor += ref[i];
-
-    this->predictor = this->predictor/numElements;
-
-    for (int i = 0; i < numElements; ++i)
-        out[i] = orig_input[i] - this->predictor;
-
-}
-
 void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()],
             refAboveRight4D[origSize.getNSamples()],
-            refAboveLeft4D[origSize.getNSamples()];;
+            refAboveLeft4D[origSize.getNSamples()];
 
     bool availableL, availableA, availableAR, availableAL;
     float medL = 0, medA = 0, medAR = 0,  medAL = 0, medTotal = 0;
     int cont = 0;
-
-    this->predictor = 0;
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
@@ -179,10 +128,14 @@ void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point
             medAL += refAboveLeft4D[i];
         }
         medAL = medAL/origSize.getNSamples();
-        medTotal += medL;
+        medTotal += medAL;
         cont++;
     }
-    medTotal = medTotal/cont;
+    if(cont == 0){
+        medTotal = 0;
+    } else{
+        medTotal = medTotal/cont;
+    }
     for (int i = 0; i < origSize.getNSamples(); ++i){
         out[i] = medTotal;
     }
@@ -254,6 +207,9 @@ void Prediction::IBC(uint pos_x, uint pos_y, const float *orig_input, const Poin
     } else if(index == 4){
         for (int i = 0; i < origSize.getNSamples(); ++i)
             out[i] = refAboveLeft4D[i];
+    } else if(index == 0){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = 0;
     }
 }
 
@@ -289,39 +245,6 @@ float Prediction::sseHorizontal(const float *orig_input, const float *prediction
     return sum;
 }
 
-/*
-float Prediction::sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
-
-    // Horizontal
-    it_pos.x = 0;
-    it_pos.u = 0;
-    it_pos.y = 0;
-    it_pos.v = 0;
-
-    float sum = 0;
-    int pos = 0;
-
-    // percorre vetor out na ordem horizontal espacial
-    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-
-            // percorre vetor out na ordem horizontal angular
-            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
-                }
-            }
-        }
-    }
-
-    return sum;
-}
- */
-
 float Prediction::sseVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     Point4D it_pos;
 
@@ -347,47 +270,6 @@ float Prediction::sseVertical(const float *orig_input, const float *prediction_i
     }
     return sum;
 }
-
-/*
-float Prediction::sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
-
-    it_pos.x = 0;
-    it_pos.u = 0;
-    it_pos.y = 0;
-    it_pos.v = 0;
-
-    float sum = 0;
-    int pos = 0;
-
-    // percorre vetor out na ordem vertical espacial
-    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-
-            // percorre vetor out na ordem vertical angular
-            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-                for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
-                }
-            }
-        }
-    }
-    return sum;
-}
- */
-
-/*
-float Prediction::sad(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    float sum = 0;
-    for (int i = 0; i < origSize.getNSamples(); ++i){
-        sum += abs(orig_input[i] - prediction_input[i]);
-        //printf("%d\n",  i);
-    }
-    return sum;
-}*/
-
 
 void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
     Point4D it_pos_out;
@@ -1675,13 +1557,6 @@ void Prediction::blockGenerator(const Point4D &origSize, int mode, int mPGMScale
 
     this->write(origRGB, origSize, mPGMScale, start_t, start_s, fileName + "_gen_" + std::to_string(mode) + ".ppm");
     this->write(predRGB, origSize, mPGMScale, start_t, start_s, fileName + "_pred_" + std::to_string(mode) + ".ppm");
-}
-
-void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
-    int numElements = origSize.getNSamples();
-
-    for (int i = 0; i < numElements; ++i)
-        out[i] = input[i] + this->predictor;
 }
 
 void Prediction::update(float *curr, bool available, uint blockSize) {

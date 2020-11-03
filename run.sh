@@ -22,7 +22,7 @@ QV=1
 LAMBDA=100
 DATASET=Bikes/Bikes
 TRANSFORM=DCT_II
-PREDICTION_MODE=angular
+PREDICTION_MODE=all
 LOG_OUTPUT=no
 FLAGS="-lytro -experimental -lossless"
 
@@ -60,7 +60,7 @@ LOG_OUTPUT=yes
 
 TRANSFORM=(DCT_II)
 NODES=0
-FLAGS="-lytro -verbose -experimental"
+FLAGS="-lytro -verbose -experimental -export-statistics"
 simulation
 #
 #FLAGS="${FLAGS} -experimental"
