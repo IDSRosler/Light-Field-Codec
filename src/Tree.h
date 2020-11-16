@@ -66,7 +66,9 @@ struct Attributes{
          n_one = 0,
          n_two = 0,
          n_greater_than_two = 0,
-         hypercubo_size = 0;
+         hypercubo_size = 0,
+         sig_coeff = 0;
+
 
     int max_value = 0;
 

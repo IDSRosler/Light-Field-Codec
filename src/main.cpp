@@ -87,11 +87,16 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
-#if ENTROPY_TYPE
-    EntropyEncoder encoder(&encoderParameters, 10000000);
-#else
-    EncBitstreamWriter encoder(&encoderParameters, 10000000);
-#endif
+    EntropyEncoder *encoder;
+    EncBitstreamWriter *encoderLRE;
+
+    if (encoderParameters.getEntropyType() == "arithmetic"){
+        encoder = new EntropyEncoder(&encoderParameters, 10000000);
+        delete(encoderLRE);
+    } else {
+        encoderLRE = new EncBitstreamWriter(&encoderParameters, 10000000);
+        delete(encoder);
+    }
 
     std::string sep = ",";
 
@@ -273,11 +278,11 @@ int main(int argc, char **argv) {
 
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
 
-#if ENTROPY_TYPE
-                        encoder.encodeHypercube(temp_lre, encoderParameters.dim_block);
-#else
-                        auto lre_size = encoder.write4DBlock(temp_lre, SIZE, lre_result);
-#endif
+                        if (encoderParameters.getEntropyType() == "arithmetic"){
+                            encoder->encodeHypercube(temp_lre, encoderParameters.dim_block, hypercube, ch_names[it_channel]);
+                        } else {
+                            auto lre_size = encoderLRE->write4DBlock(temp_lre, SIZE, lre_result);
+                        }
 
                         std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
@@ -323,8 +328,11 @@ int main(int argc, char **argv) {
                         }
                         //EDUARDO END
 
-                        encoder.write_completedBytes();
-
+                        if (encoderParameters.getEntropyType() == "arithmetic"){
+                            encoder->write_completedBytes();
+                        } else {
+                            encoderLRE->write_completedBytes();
+                        }
 
                         if (encoderParameters.show_progress_bar)
                             progress_bar(current_step / total_steps, 50);
@@ -450,15 +458,25 @@ int main(int argc, char **argv) {
         display_stage("[Writing reconstructed Light Fields on disk]");
     lf.write(encoderParameters.getPathOutput());
 #pragma clang optimize on
-    encoder.finish_and_write();
 
+    if (encoderParameters.getEntropyType() == "arithmetic"){
+        encoder->finish_and_write();
+    } else {
+        encoderLRE->finish_and_write();
+    }
 
     if (encoderParameters.display_stages)
         display_stage("[Done]");
 #if STATISTICS_TIME
     total_time.toc();
 #endif
-    auto size_bytes = encoder.getTotalBytes();
+    uint size_bytes;
+    if (encoderParameters.getEntropyType() == "arithmetic"){
+        size_bytes = encoder->getTotalBytes();
+    } else {
+        size_bytes = encoderLRE->getTotalBytes();
+    }
+
     auto total_bpp = static_cast<double>(size_bytes)/static_cast<double>(dimLF.getNSamples());
 
     display_report(std::cout, "Total Bytes", size_bytes);

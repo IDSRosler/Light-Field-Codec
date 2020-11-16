@@ -11,7 +11,7 @@ if [ "$DATASET_DIR" == "" ]; then
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/Arithmetic"
+  RESULT_DIR="./results/test/Arithmetic"
 fi
 
 QP=20
@@ -20,9 +20,10 @@ QY=20
 QU=20
 QV=20
 LAMBDA=1
-DATASET=Sideboard
+DATASET=Bikes
 TRANSFORM=DCT_II
 PREDICTION_MODE=angular
+ENTROPY_TYPE=arithmetic
 LOG_OUTPUT=no
 FLAGS="-lytro -experimental"
 
@@ -46,11 +47,12 @@ function simulation() {
   $BINARY \
     -input "${DATASET_DIR}/${DATASET}/" \
     -output "${RESULT_DIR}/${SIMULATION_ID}/" \
-    -lfx 512 -lfy 512 -lfu 8 -lfv 8 \
+    -lfx 625 -lfy 434 -lfu 13 -lfv 13 \
     -blx 15 -bly 15 -blu 13 -blv 13 \
     -qx ${QX} -qy ${QY} -qu ${QU} -qv ${QV} -qp ${QP} \
     -lambda "${LAMBDA}" \
     -prediction "${PREDICTION_MODE}" \
+    -entropy-type "${ENTROPY_TYPE}" \
     -use-transforms ${TRANSFORM[@]} \
     -quadtree-max-inner-nodes ${NODES} \
     ${FLAGS} | tee "${LOGFILE}"

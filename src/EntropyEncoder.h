@@ -33,7 +33,7 @@ public:
     EntropyEncoder(EncoderParameters *parameters, uint bufferSize);
     ~EntropyEncoder();
 
-    void encodeHypercube(int *bitstream, const Point4D &dim_block);
+    void encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube, string ch);
     void finish_and_write();
     void write_completedBytes();
     uint getTotalBytes() const;
@@ -43,6 +43,7 @@ private:
     void EncodeSyntacticElements(vector<SyntacticElements> lfbpu);
 
     void ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsFrequency& freq);
+    void Write_Statistics();
 
     Tree tree;
     Node *root = nullptr;
@@ -50,6 +51,19 @@ private:
     uint totalBytes{0};
 
     std::ofstream outputFile;
+    std::ofstream statistics_file;
+
+    int hypercube,
+            sig_sub,
+            n_sig_sub,
+            sig_coeff,
+            n_sig_coeff,
+            one,
+            two,
+            gr_two,
+            max_value;
+
+    string ch;
 
     std::ofstream freqFile;
 

@@ -42,6 +42,7 @@ From the `build` directory, run the binary `./LF_Codec`.
 | -qu                         | Int       | Default: 1 | Quantization weight in u dimension
 | -qv                         | Int       | Default: 1 | Quantization weight in v dimension
 | -prediction                 | String    | Default: `angular` | Prediciton mode. Valid modes are `none`, `angular`, `all`, `DC`, `IBC(Intra Block Copy)`
+| -entropy-type               | String    | Default: `arithmetic` | Entropy types. Valid types are `arithmetic`, `lre`
 | -lambda                     | Float     | Default: 100 | Lagrangian multiplicative for the RD-COST 
 | -use-transforms             | List      | Default: `DCT_II` | Defines which transforms will be used during the encoding step. A space separated list is expected. Valid values are `DCT_II`, `DST_I`, `DST_VII`
 | -transform-min-angular-size | Int       | Default: 4| Minumum size of a block on the dimensions u,v

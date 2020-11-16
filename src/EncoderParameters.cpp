@@ -87,6 +87,8 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             enable_transforms = false;
         } else if (flag == "-export-blocks") {
             export_blocks = true;
+        } else if (flag == "-entropy-type") {
+            entropy = argv[++it];
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
@@ -119,6 +121,9 @@ const std::string &EncoderParameters::getPrediction() const {
     if(this->prediction == "") return "angular"; else return this->prediction;
 }
 
+const std::string &EncoderParameters::getEntropyType() const {
+    if(this->entropy == "arithmetic" || this->entropy == "lre") return this->entropy; else return "arithmetic";
+}
 
 
 void EncoderParameters::report() {
@@ -132,6 +137,7 @@ void EncoderParameters::report() {
     display_report(std::cout, "Transform Min angular size", transform_min_angular_size);
     display_report(std::cout, "Transform Min spatial size", transform_min_spatial_size);
     display_report(std::cout, "Partition Tree Max Depth", Transform::PARTITION_TREE_DEPTH);
+    display_report(std::cout, "Entropy", this->entropy);
     display_report(std::cout, "QP", this->qp);
     display_report(std::cout, "Quantization Weight (*100)", this->quant_weight_100);
     display_report(std::cout, "Lytro", (this->lytro ? "YES" : "NO"));

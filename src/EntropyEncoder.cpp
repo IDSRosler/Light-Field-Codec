@@ -7,18 +7,50 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
     //last update
     this->freqFile.open(this->parameters->getPathOutput() + "frequency.csv");
     this->freqFile << "LFBPU, Freq_sig_0, Freq_sig_1, Freq_grOne_0, Freq_grOne_1, Freq_grTwo_0, Freq_grTwo_1, Freq_sign_0, Freq_sign_1" << endl;
+
+    this->statistics_file.open(this->parameters->getPathOutput() + "Entropy_Statistics.csv");
+    this->statistics_file << "Hypercube, "
+                             "Channel, "
+                             "Sig_Subpartitions, "
+                             "Non_Sig_Subpartitions, "
+                             "Sig_Coefficients, "
+                             "Non_Sig_Coefficients, "
+                             "One_Coefficients, "
+                             "Two_Coefficients,"
+                             "Gr_Two,"
+                             "Abs_Max_Value" << endl;
+
 }
 
 EntropyEncoder::~EntropyEncoder() {
 }
 
-void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
+void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube, string ch) {
+
+    this->hypercube = hypercube;
+    this->ch = ch;
+    this->sig_sub = 0;
+    this->n_sig_sub = 0;
+    this->sig_coeff = 0;
+    this->n_sig_coeff = 0;
+    this->one = 0;
+    this->two = 0;
+    this->gr_two = 0;
+    this->max_value = 0;
+
     int last = -1;
     vector<int> run;
     vector<SyntacticElements> lfbpu_elements; // light field base processing unit
 
     this->root = this->tree.CreateRoot(bitstream, dim_block);    // create tree
     this->tree.CreateTree(this->root, dim_block, {0,0,0,0});
+
+    this->sig_coeff = this->root->att->sig_coeff;
+    this->n_sig_coeff = (dim_block.x * dim_block.y * dim_block.u * dim_block.v) - this->sig_coeff;
+    this->one = this->root->att->n_one;
+    this->two = this->root->att->n_two;
+    this->gr_two = this->root->att->n_greater_than_two;
+    this->max_value = this->root->att->max_value;
 
     this->tree.ComputeLast(last);   // compute last (block level)
     this->encodeLast(last);
@@ -30,10 +62,20 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block) {
 
         this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
 
+        this->sig_sub = lfbpu_elements.size();
+        this->n_sig_sub = 256 - this->sig_sub;
+
         this->EncodeSyntacticElements(lfbpu_elements);
 
         lfbpu_elements.clear();
     }
+    else{
+        this->n_sig_sub = 256;
+        this->sig_sub = 256 - this->n_sig_sub;
+    }
+
+    this->Write_Statistics();
+    ++this->hypercube;
 
     this->tree.DeleteTree(&this->root); // delete tree
 }
@@ -99,6 +141,7 @@ void EntropyEncoder::finish_and_write() {
 
     //last update
     if (this->freqFile.is_open()) this->freqFile.close();
+    if (this->statistics_file.is_open()) this->statistics_file.close();
 }
 
 uint EntropyEncoder::getTotalBytes() const {
@@ -203,4 +246,18 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsF
         sign_mean_0 << "," <<
         sign_mean_1 << endl;
     this->freqFile << endl;
+}
+
+void EntropyEncoder::Write_Statistics(){
+    this->statistics_file <<
+                          this->hypercube << "," <<
+                          this->ch << "," <<
+                          this->sig_sub << "," <<
+                          this->n_sig_sub << "," <<
+                          this->sig_coeff << "," <<
+                          this->n_sig_coeff << "," <<
+                          this->one << "," <<
+                          this->two << "," <<
+                          this->gr_two << "," <<
+                          this->max_value << endl;
 }

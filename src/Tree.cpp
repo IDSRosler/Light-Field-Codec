@@ -118,7 +118,7 @@ void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, in
             for (int it_y = start_y; it_y < end_y; ++it_y) {
                 for (int it_x = start_x; it_x < end_x; ++it_x) {
                     if (abs(att->max_value) < abs(this->hypercube->data[it_x][it_y][it_u][it_v])) { att->max_value = abs(this->hypercube->data[it_x][it_y][it_u][it_v]);}
-                    if (this->hypercube->data[it_x][it_y][it_u][it_v] != 0) {att->significant_value = true;}
+                    if (this->hypercube->data[it_x][it_y][it_u][it_v] != 0) {att->significant_value = true; ++att->sig_coeff;}
                     if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 0) {++att->n_zero;}
                     else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 1) {++att->n_one;}
                     else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 2) {++att->n_two;}

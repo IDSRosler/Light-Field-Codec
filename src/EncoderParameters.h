@@ -51,6 +51,8 @@ public:
     std::size_t transform_min_angular_size = 4;
     std::size_t transform_min_spatial_size = 4;
 
+    std::string entropy = "arithmetic";
+
     bool isLytro() const;
 
     EncoderParameters() = default;
@@ -65,7 +67,10 @@ public:
 
     const std::string &getPrediction() const;
 
+    const std::string &getEntropyType() const;
+
     void report();
+
 
 };
 
