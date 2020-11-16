@@ -535,3 +535,30 @@ std::tuple<Point4D, Point4D> partition_at(const Point4D &from_shape,
     }
     return std::make_tuple(shape, offset);
 }
+
+
+float calculate_entropy(std::vector<int> values) {
+    std::vector<std::tuple<int, std::size_t, float>> elements_count;
+
+    std::sort(values.begin(), values.end());
+    auto unique_values = values;
+
+    unique_values.resize(
+    std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
+
+    for (auto &i: unique_values) {
+        int v_count = std::count(values.begin(), values.end(), i);
+        float v_freq = float(v_count) / values.size();
+        elements_count.emplace_back(i, v_count, v_freq);
+    }
+
+    float prob, entropy = 0;
+    for (auto &it: elements_count) {
+        prob = std::get<2>(it);
+        entropy += (float)prob * std::log2(prob);
+    }
+    return -entropy;
+}
+
+
+

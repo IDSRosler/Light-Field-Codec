@@ -1,12 +1,17 @@
 
 
 #include "Statistics.h"
-
+#include <sstream>
+#include <fstream>
 #include <cmath>
 #include <cassert>
+#include <cstdlib>
 Statistics::Statistics(const std::string &filename) {
     file_out.open(filename);
-    assert(file_out.is_open());
+    if(!file_out.is_open()) {
+        std::cerr << "Statistics: cannot create file '" << filename << "'\n";
+        exit(EXIT_FAILURE);        
+    }
     //write_headers(file_out);
     this->write_headers();
 } 

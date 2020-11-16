@@ -18,9 +18,9 @@ std::ostream &operator<<(std::ostream &os, Point4D const &point)
 {
   std::stringstream ss;
   ss << "("
-     << point.x << ", "
-     << point.y << ", "
-     << point.u << ", "
+     << point.x << "; "
+     << point.y << "; "
+     << point.u << "; "
      << point.v << ")";
   os << ss.str();
   return os;

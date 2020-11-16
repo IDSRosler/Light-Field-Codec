@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cfloat>
 #include <map>
+#include <cstdint>
 
 #include "Point4D.h"
 #include "LRE.h"

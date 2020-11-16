@@ -23,6 +23,16 @@ Transform::Transform(Point4D &shape) {
 Transform::Transform(EncoderParameters &params) : Transform(params.dim_block) {
     codec_parameters = params;
     fake_encoder = std::make_unique<EncBitstreamWriter>(&codec_parameters, 1048576, true);
+    if (codec_parameters.export_transform_inner_stats) {
+        stats_file = std::ofstream(codec_parameters.getPathOutput() + "transform_inner_stats.csv");
+        stats_file << "Pos,Channel,Shape,Offset,Transform,SSE,Bitsize,Cost\n";
+    }
+}
+Transform::~Transform() {
+    if (codec_parameters.export_transform_inner_stats) {
+        stats_file.close();
+    }
+    
 }
 
 float *Transform::get_coefficients(Transform::TransformType type,
@@ -377,9 +387,24 @@ auto Transform::find_min_rd_cost(const float *block,
             min_cost = rd_cost;
             node->transform = transform;
         }
+        // Pos,Channel,Shape,Offset,Transform,SSE,Bitsize,Cost
+        if (codec_parameters.export_transform_inner_stats) {
+            stats_file << position << ","
+                    << channel << ","
+                    << shape << ","
+                    << offset << ","
+                    << transform << ","
+                    << sse << ","
+                    << encoding_size << ","
+                    << rd_cost << "\n";
+        }
     }
     return std::make_tuple(min_cost, node);
 }
+
+
+
+
 
 
 auto Transform::min_partition_tree(const float *block,

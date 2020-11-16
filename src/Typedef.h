@@ -2,6 +2,8 @@
 #ifndef TYPEDEF_H
 #define TYPEDEF_H
 
+#include <stdint.h>
+
 #define USE_YCbCr 1 // 0: no, 1: mule, 2: other
 
 using index_t = unsigned;

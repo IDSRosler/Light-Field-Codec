@@ -58,6 +58,7 @@ public:
     explicit Transform(Point4D &shape);
 
     explicit Transform(EncoderParameters &params);
+    ~Transform();
 
     void set_position(int channel, const Point4D &current_pos);
 
@@ -90,6 +91,7 @@ private:
 
     int channel = 0;
     size_t flat_size = 0;
+    std::ofstream stats_file;
 
     std::unique_ptr<float[]> m_partial_block = nullptr;
     std::unique_ptr<float[]> m_temp_r_block = nullptr;

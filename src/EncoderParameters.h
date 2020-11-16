@@ -21,7 +21,7 @@ public:
     Point4D dim_LF{0, 0, 0, 0},
             dim_block{0, 0, 0, 0},
             quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
-    bool lytro{true};
+    bool lytro{false};
     float lambda = 1;
     float lee_c = 10;
     float lee_ai = 1023;
@@ -39,12 +39,15 @@ public:
     bool lossless = false;
     bool uniform_quantization = false;
 
+
     bool enable_transforms = true;
+    bool export_statistics = false;
+    /* Export statistics for every all tested partition tree blocks */
+    bool export_transform_inner_stats = false;
     bool export_blocks = false;
 
     std::vector<std::string> use_transforms;
     std::string transforms_in_use;
-    std::size_t quadtree_max_inner_nodes = 1;
     std::size_t transform_min_angular_size = 4;
     std::size_t transform_min_spatial_size = 4;
 

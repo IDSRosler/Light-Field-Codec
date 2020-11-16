@@ -65,6 +65,10 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->verbose = true;
         } else if (flag == "-experimental"){
             this->experimental = true;
+        } else if (flag == "-export-statistics") {
+            export_statistics = true;
+        } else if (flag == "-export-transform-inner-stats") {
+            this->export_transform_inner_stats = true;
         } else if (flag == "-use-transforms") {
             while(argv[++it][0] != '-')
                 use_transforms.emplace_back(argv[it]);
@@ -98,8 +102,6 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
         ss << transform;
         Transform::T_CHOICES.push_back(Transform::get_type(transform));
     }
-    for (std::size_t n = 0; n <= quadtree_max_inner_nodes; n++)
-        Transform::QUADTREE_NODES_COUNT.push_back(4 * n + 1);
 
     transforms_in_use = ss.str();
     this->dim_LF.updateNSamples();
@@ -129,7 +131,7 @@ void EncoderParameters::report() {
     display_report(std::cout, "Transform", transforms_in_use);
     display_report(std::cout, "Transform Min angular size", transform_min_angular_size);
     display_report(std::cout, "Transform Min spatial size", transform_min_spatial_size);
-    display_report(std::cout, "Quadtree max inner nodes", this->quadtree_max_inner_nodes);
+    display_report(std::cout, "Partition Tree Max Depth", Transform::PARTITION_TREE_DEPTH);
     display_report(std::cout, "QP", this->qp);
     display_report(std::cout, "Quantization Weight (*100)", this->quant_weight_100);
     display_report(std::cout, "Lytro", (this->lytro ? "YES" : "NO"));

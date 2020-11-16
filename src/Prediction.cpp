@@ -1,6 +1,6 @@
 #include "Prediction.h"
 //EDUARDO BEGIN
-#include <math.h>
+#include <cmath>
 #include <iostream>
 //EDUARDO END
 
