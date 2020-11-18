@@ -16,9 +16,9 @@ class EncSymbol : public EncBitstreamBuffer{
 public:
     EncSymbol(uint bufferSize = 50);
 
-    void encodeLast(int last);
-    void encodeRun(std::vector<int> run);
-    void encodeRem(int rem);
+    int encodeLast(int last);
+    int encodeRun(std::vector<int> run);
+    int encodeRem(int rem);
 
     int writeSyntaxElement(int info, int len);
     ~EncSymbol();

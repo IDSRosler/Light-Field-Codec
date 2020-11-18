@@ -20,6 +20,8 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
                              "Gr_Two,"
                              "Abs_Max_Value" << endl;
 
+    this->bitrate_file.open(this->parameters->getPathOutput() + "Entropy_Statistics_Bitrate.csv");
+    this->bitrate_file << "Hypercube, Channel, Last_Block_Level, Run, Last_Coefficient_Level, SyntacticElements, Rem" << endl;
 }
 
 EntropyEncoder::~EntropyEncoder() {
@@ -38,6 +40,12 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->gr_two = 0;
     this->max_value = 0;
 
+    this->last_b = 0;
+    this->run_b  = 0;
+    this->last_c = 0;
+    this->syntactic_c = 0;
+    this->rem_c = 0;
+
     int last = -1;
     vector<int> run;
     vector<SyntacticElements> lfbpu_elements; // light field base processing unit
@@ -53,11 +61,14 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->max_value = this->root->att->max_value;
 
     this->tree.ComputeLast(last);   // compute last (block level)
-    this->encodeLast(last);
+
+    //this->last_b = this->encodeLast(last);
 
     if (last > 0){
         this->tree.ComputeRun(run, last);  // compute run (block level)
-        this->encodeRun(run);
+
+        //this->run_b = this->encodeRun(run);
+
         run.clear();
 
         this->tree.ComputeSyntacticElements(lfbpu_elements, last);  // compute syntactic elements (coefficients level)
@@ -104,8 +115,8 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
     this->arith_encoder.Print_model(sign_model);*/
 
     for (int i = 0; i < lfbpu.size(); ++i) {
-        if (lfbpu[i].last != -1){
-            this->encodeLast(lfbpu[i].last); // encode last
+        if (lfbpu[i].last > -1){
+            this->last_c = this->encodeLast(lfbpu[i].last); // encode last
             for (auto sig: lfbpu[i].sig){ // encode sig
                 this->arith_encoder.Encode_symbol(sig, sig_model);
             }
@@ -118,12 +129,13 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
             for (auto sign : lfbpu[i].sign){ // encode sign
                 this->arith_encoder.Encode_symbol(sign, sign_model);
             }
-            this->arith_encoder.Done_encoding();
+            this->syntactic_c += this->arith_encoder.Done_encoding();
             for (auto rem : lfbpu[i].rem){ // encode rem
-                this->encodeRem(rem);
+                //this->rem_c += this->encodeRem(rem);
             }
         }
     }
+    this->arith_encoder.Reset();
 }
 
 void EntropyEncoder::write_completedBytes() {
@@ -142,6 +154,7 @@ void EntropyEncoder::finish_and_write() {
     //last update
     if (this->freqFile.is_open()) this->freqFile.close();
     if (this->statistics_file.is_open()) this->statistics_file.close();
+    if (this->bitrate_file.is_open()) this->bitrate_file.close();
 }
 
 uint EntropyEncoder::getTotalBytes() const {
@@ -260,4 +273,13 @@ void EntropyEncoder::Write_Statistics(){
                           this->two << "," <<
                           this->gr_two << "," <<
                           this->max_value << endl;
+
+    this->bitrate_file <<
+                        this->hypercube << "," <<
+                        this->ch << "," <<
+                        ceil((float)this->last_b/8) << "," <<
+                        ceil((float)this->run_b/8) << "," <<
+                        ceil((float)this->last_c/8) << "," <<
+                        ceil((float)this->syntactic_c/8) << "," <<
+                        ceil((float) this->rem_c/8) << endl;
 }

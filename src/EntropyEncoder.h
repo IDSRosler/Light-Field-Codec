@@ -52,8 +52,9 @@ private:
 
     std::ofstream outputFile;
     std::ofstream statistics_file;
+    std::ofstream bitrate_file;
 
-    int hypercube,
+    int     hypercube,
             sig_sub,
             n_sig_sub,
             sig_coeff,
@@ -62,6 +63,12 @@ private:
             two,
             gr_two,
             max_value;
+
+    int     last_b,
+            run_b,
+            last_c,
+            syntactic_c,
+            rem_c;
 
     string ch;
 

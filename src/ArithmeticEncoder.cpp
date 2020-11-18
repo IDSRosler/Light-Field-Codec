@@ -21,6 +21,8 @@ ArithmeticEncoder :: ArithmeticEncoder(Byte &buffer, uint &bits_to_go, Byte &byt
 
     this->number_of_models = 0;
     this->model = nullptr;
+
+    this->total_bits = 0;
 }
 
 //ENCODE A SYMBOL
@@ -57,12 +59,14 @@ void ArithmeticEncoder :: Encode_symbol(int symbol, int model) {
 }
 
 // END OF ENCODING
-void ArithmeticEncoder::Done_encoding() { // Output two bits that select the quarter that the current code range contains
+int ArithmeticEncoder::Done_encoding() { // Output two bits that select the quarter that the current code range contains
     ++this->bits_to_follow;
     if (this->low < First_qtr) this->Bit_plus_follow(0);
     else this->Bit_plus_follow(1);
 
     this->Done_output_bits();
+
+    return this->total_bits;
 }
 
 // OUTPUT BITS PLUS THE FOLLOWING OPPOSITE BITS
@@ -110,6 +114,9 @@ void ArithmeticEncoder::writeCode2Buffer() {
             *this->byte_buf = 0;
         }
     }
+    this->local_bits_to_go = 8;
+    this->local_buffer = 0;
+    this->total_bits += 8;
 }
 
 // CODEC RESET
@@ -117,6 +124,11 @@ void ArithmeticEncoder :: Reset() {
     this->low = 0;
     this->high = Max_Value;
     this->bits_to_follow = 0;
+
+    this->local_buffer = 0;
+    this->local_bits_to_go = 8;
+
+    this->total_bits = 0;
 
     for (int i = 0; i < this->number_of_models; ++i) {
         if (this->model[i].cumulative_frequency != nullptr) free(this->model[i].cumulative_frequency);

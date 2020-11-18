@@ -31,7 +31,7 @@ public:
 
     //ARITHMETIC ENCODER
     void Encode_symbol(int symbol, int model);
-    void Done_encoding(void);
+    int Done_encoding(void);
     void Set_output_file(char *path);
     void Reset(void);
 
@@ -61,6 +61,7 @@ private:
 
     unsigned int local_buffer;
     uint local_bits_to_go;
+    int total_bits;
 
     //PROBABILISTIC MODELS
     int number_of_models;

@@ -28,7 +28,7 @@ void EncSymbol::writeCode2Buffer(symbol *sym) {
     }
 }
 
-void EncSymbol::encodeLast(int last) { // Max value 255 - 8 bits
+int EncSymbol::encodeLast(int last) { // Max value 255 - 8 bits
     symbol sym{};
 
     sym.value = last;
@@ -36,16 +36,20 @@ void EncSymbol::encodeLast(int last) { // Max value 255 - 8 bits
     sym.bitpattern = last;
 
     this->writeCode2Buffer(&sym);
+
+    return sym.len;
 }
 
-void EncSymbol::encodeRun(std::vector<int> run) {
+int EncSymbol::encodeRun(std::vector<int> run) {
+    int total_bits = 0;
     for (int i = 0; i < run.size(); ++i) {
-        this->expGolombEncode_ui(run[i]);
+        total_bits += this->expGolombEncode_ui(run[i]);
     }
+    return total_bits;
 }
 
-void EncSymbol::encodeRem(int rem) {
-    this->expGolombEncode_ui(rem);
+int EncSymbol::encodeRem(int rem) {
+    return this->expGolombEncode_ui(rem);
 }
 
 int EncSymbol::expGolombEncode_ui(int value) {
