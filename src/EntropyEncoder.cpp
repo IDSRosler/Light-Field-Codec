@@ -62,12 +62,12 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
 
     this->tree.ComputeLast(last);   // compute last (block level)
 
-    //this->last_b = this->encodeLast(last);
+    this->last_b = this->encodeLast(last);
 
     if (last > 0){
         this->tree.ComputeRun(run, last);  // compute run (block level)
 
-        //this->run_b = this->encodeRun(run);
+        this->run_b = this->encodeRun(run);
 
         run.clear();
 
@@ -131,7 +131,7 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
             }
             this->syntactic_c += this->arith_encoder.Done_encoding();
             for (auto rem : lfbpu[i].rem){ // encode rem
-                //this->rem_c += this->encodeRem(rem);
+                this->rem_c += this->encodeRem(rem);
             }
         }
     }

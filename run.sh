@@ -11,7 +11,7 @@ if [ "$DATASET_DIR" == "" ]; then
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/test/Last_Block_Level_Test"
+  RESULT_DIR="./results/No_Prediction_tests/LRE"
 fi
 
 QP=20
@@ -20,10 +20,10 @@ QY=20
 QU=20
 QV=20
 LAMBDA=1
-DATASET=Bikes
+DATASET=StonePillarsOutside
 TRANSFORM=DCT_II
 PREDICTION_MODE=none
-ENTROPY_TYPE=arithmetic
+ENTROPY_TYPE=lre
 LOG_OUTPUT=no
 FLAGS="-lytro -experimental"
 
