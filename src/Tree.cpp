@@ -144,8 +144,8 @@ void Tree::ComputeLast(int &last) {
 
     this->SortBufferPositions();
 
-    for (index = (this->order4_SubPartitionsBuffer.size() - 1); index > 0; --index) {
-        if (this->order4_SubPartitionsBuffer[index]->att->significant_value != 0){
+    for (index = this->order4_SubPartitionsBuffer.size() - 1; index >= 0; --index) {
+        if (this->order4_SubPartitionsBuffer[index]->att->significant_value){
             break;
         }
     }
@@ -157,7 +157,7 @@ void Tree::ComputeRun(vector<int> &v_run, int last) {
     int index = last-1;
 
     while (index >= 0){ // Calcula a corrida de blocos zerados
-        while (index >= 0 && this->order4_SubPartitionsBuffer[index]->att->significant_value == 0){
+        while (index >= 0 && !this->order4_SubPartitionsBuffer[index]->att->significant_value){
             ++run;
             --index;
         }
@@ -214,7 +214,7 @@ void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, i
 }
 
 void Tree::LFBPUToVector(vector<int> &v_coefficients, int index) {
-    if(order4_SubPartitionsBuffer[index]->att->significant_value != 0) {
+    if(order4_SubPartitionsBuffer[index]->att->significant_value) {
         for (int v = order4_SubPartitionsBuffer[index]->start.v ; v < order4_SubPartitionsBuffer[index]->end.v ; ++v) {
             for (int u = order4_SubPartitionsBuffer[index]->start.u ; u < order4_SubPartitionsBuffer[index]->end.u ; ++u) {
                 for (int y = order4_SubPartitionsBuffer[index]->start.y ; y < order4_SubPartitionsBuffer[index]->end.y ; ++y) {

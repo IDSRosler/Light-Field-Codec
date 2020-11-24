@@ -11,6 +11,7 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
     this->statistics_file.open(this->parameters->getPathOutput() + "Entropy_Statistics.csv");
     this->statistics_file << "Hypercube, "
                              "Channel, "
+                             "Last_Block_Level, "
                              "Sig_Subpartitions, "
                              "Non_Sig_Subpartitions, "
                              "Sig_Coefficients, "
@@ -21,7 +22,7 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
                              "Abs_Max_Value" << endl;
 
     this->bitrate_file.open(this->parameters->getPathOutput() + "Entropy_Statistics_Bitrate.csv");
-    this->bitrate_file << "Hypercube, Channel, Last_Block_Level, Run, Last_Coefficient_Level, SyntacticElements, Rem" << endl;
+    this->bitrate_file << "Hypercube, Channel, Last_Block_Level, Run, Last_Coefficient_Level, SyntacticElements, Rem, BitstreamByStep" << endl;
 }
 
 EntropyEncoder::~EntropyEncoder() {
@@ -62,9 +63,11 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
 
     this->tree.ComputeLast(last);   // compute last (block level)
 
+    this->last = last;
+
     this->last_b = this->encodeLast(last);
 
-    if (last > 0){
+    if (last >= 0){
         this->tree.ComputeRun(run, last);  // compute run (block level)
 
         this->run_b = this->encodeRun(run);
@@ -91,7 +94,7 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->tree.DeleteTree(&this->root); // delete tree
 }
 
-void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> lfbpu) {
+void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {
     int sig_model = this->arith_encoder.Add_model();
     int gr_one_model = this->arith_encoder.Add_model();
     int gr_two_model = this->arith_encoder.Add_model();
@@ -166,7 +169,7 @@ void EntropyEncoder::open_file(const string &filename) {
     assert(this->outputFile.is_open());
 }
 
-void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsFrequency& elem_freq) {
+void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, ElementsFrequency& elem_freq) {
     int size, q0 = 0,
         cont_sig = 0, cont_one = 0,
         cont_two = 0,cont_sign = 0,
@@ -265,6 +268,7 @@ void EntropyEncoder::Write_Statistics(){
     this->statistics_file <<
                           this->hypercube << "," <<
                           this->ch << "," <<
+                          this->last << "," <<
                           this->sig_sub << "," <<
                           this->n_sig_sub << "," <<
                           this->sig_coeff << "," <<
@@ -281,5 +285,6 @@ void EntropyEncoder::Write_Statistics(){
                         ceil((float)this->run_b/8) << "," <<
                         ceil((float)this->last_c/8) << "," <<
                         ceil((float)this->syntactic_c/8) << "," <<
-                        ceil((float) this->rem_c/8) << endl;
+                        ceil((float) this->rem_c/8)<< "," <<
+                        this->byte_pos << endl;
 }

@@ -40,9 +40,9 @@ public:
 
 private:
     void open_file(const string &filename);
-    void EncodeSyntacticElements(vector<SyntacticElements> lfbpu);
+    void EncodeSyntacticElements(vector<SyntacticElements> &lfbpu);
 
-    void ComputeFrequency(vector<SyntacticElements> lfbpu, ElementsFrequency& freq);
+    void ComputeFrequency(vector<SyntacticElements> &lfbpu, ElementsFrequency& freq);
     void Write_Statistics();
 
     Tree tree;
@@ -55,6 +55,7 @@ private:
     std::ofstream bitrate_file;
 
     int     hypercube,
+            last,
             sig_sub,
             n_sig_sub,
             sig_coeff,

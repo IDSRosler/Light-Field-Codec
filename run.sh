@@ -11,7 +11,7 @@ if [ "$DATASET_DIR" == "" ]; then
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/No_Prediction_tests/LRE"
+  RESULT_DIR="./results/Statistics/LRE"
 fi
 
 QP=20
@@ -20,7 +20,7 @@ QY=20
 QU=20
 QV=20
 LAMBDA=1
-DATASET=StonePillarsOutside
+DATASET=Bikes
 TRANSFORM=DCT_II
 PREDICTION_MODE=none
 ENTROPY_TYPE=lre

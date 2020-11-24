@@ -4,16 +4,16 @@
 BINARY="./cmake-build-release/LF_Codec"
 DATASET_DIR="/home/igor/Documentos/Git/Full_datasets"
 
-RESULT_DIR_ARITH="./results/test/Arithmetic"
-RESULT_DIR_LRE="./results/test/LRE"
+RESULT_DIR_ARITH="./results/Statistics/Arithmetic"
+RESULT_DIR_LRE="./results/Statistics/LRE"
 
-DATASETS=(Bikes DangerDeMort StonePillarsOutside FontainVincent2)
+DATASETS=(Bikes)
 LAMBDA=1
 PREDICTION_MODE=none
 TRANSFORM=(DCT_II)
-QPS=(1 3 7 20)
+QPS=(1 3 7)
 NODES=0
-ENTROPY_TYPE=(arithmetic lre)
+ENTROPY_TYPE=(arithmetic)
 LOG_OUTPUT=yes
 FLAGS="-lytro -verbose -experimental"
 
