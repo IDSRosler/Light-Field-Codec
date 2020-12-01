@@ -21,15 +21,14 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
                              "Gr_Two,"
                              "Abs_Max_Value" << endl;
 
-    this->bitrate_file.open(this->parameters->getPathOutput() + "Entropy_Statistics_Bitrate.csv");
-    this->bitrate_file << "Hypercube, Channel, Last_Block_Level, Run, Last_Coefficient_Level, SyntacticElements, Rem, BitstreamByStep" << endl;
+    this->bitrate_steps.open(this->parameters->getPathOutput() + "Bitrate_Steps.csv");
+    this->bitrate_steps << "Hypercube, Channel, Last_Block_Level_Step, Run_Step, Last_Coefficient_Level_Step, SyntacticElements_Step, Rem_Step, Total_Steps, BitstreamByStep" << endl;
 }
 
 EntropyEncoder::~EntropyEncoder() {
 }
 
 void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube, string ch) {
-
     this->hypercube = hypercube;
     this->ch = ch;
     this->sig_sub = 0;
@@ -41,11 +40,11 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->gr_two = 0;
     this->max_value = 0;
 
-    this->last_b = 0;
-    this->run_b  = 0;
-    this->last_c = 0;
-    this->syntactic_c = 0;
-    this->rem_c = 0;
+    this->last_b_s = 0;
+    this->run_b_s  = 0;
+    this->last_c_s = 0;
+    this->syntactic_c_s = 0;
+    this->rem_c_s = 0;
 
     int last = -1;
     vector<int> run;
@@ -65,12 +64,16 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
 
     this->last = last;
 
-    this->last_b = this->encodeLast(last);
+    this->before = this->byte_pos;
+    this->encodeLast(last);
+    this->last_b_s = this->byte_pos - this->before;
 
     if (last >= 0){
         this->tree.ComputeRun(run, last);  // compute run (block level)
 
-        this->run_b = this->encodeRun(run);
+        this->before = this->byte_pos;
+        this->encodeRun(run);
+        this->run_b_s = this->byte_pos - this->before;
 
         run.clear();
 
@@ -89,7 +92,6 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     }
 
     this->Write_Statistics();
-    ++this->hypercube;
 
     this->tree.DeleteTree(&this->root); // delete tree
 }
@@ -119,7 +121,11 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {
 
     for (int i = 0; i < lfbpu.size(); ++i) {
         if (lfbpu[i].last > -1){
-            this->last_c = this->encodeLast(lfbpu[i].last); // encode last
+            this->before = this->byte_pos;
+            this->encodeLast(lfbpu[i].last); // encode last
+            this->last_c_s += this->byte_pos - this->before;
+
+            this->before = this->byte_pos;
             for (auto sig: lfbpu[i].sig){ // encode sig
                 this->arith_encoder.Encode_symbol(sig, sig_model);
             }
@@ -132,9 +138,13 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {
             for (auto sign : lfbpu[i].sign){ // encode sign
                 this->arith_encoder.Encode_symbol(sign, sign_model);
             }
-            this->syntactic_c += this->arith_encoder.Done_encoding();
+            this->arith_encoder.Done_encoding();
+            this->syntactic_c_s += this->byte_pos - this->before;
+
             for (auto rem : lfbpu[i].rem){ // encode rem
-                this->rem_c += this->encodeRem(rem);
+                this->before = this->byte_pos;
+                this->encodeRem(rem);
+                this->rem_c_s += this->byte_pos - this->before;
             }
         }
     }
@@ -157,7 +167,7 @@ void EntropyEncoder::finish_and_write() {
     //last update
     if (this->freqFile.is_open()) this->freqFile.close();
     if (this->statistics_file.is_open()) this->statistics_file.close();
-    if (this->bitrate_file.is_open()) this->bitrate_file.close();
+    if (this->bitrate_steps.is_open()) this->bitrate_steps.close();
 }
 
 uint EntropyEncoder::getTotalBytes() const {
@@ -278,13 +288,14 @@ void EntropyEncoder::Write_Statistics(){
                           this->gr_two << "," <<
                           this->max_value << endl;
 
-    this->bitrate_file <<
-                        this->hypercube << "," <<
-                        this->ch << "," <<
-                        ceil((float)this->last_b/8) << "," <<
-                        ceil((float)this->run_b/8) << "," <<
-                        ceil((float)this->last_c/8) << "," <<
-                        ceil((float)this->syntactic_c/8) << "," <<
-                        ceil((float) this->rem_c/8)<< "," <<
-                        this->byte_pos << endl;
+    this->bitrate_steps <<
+                       this->hypercube << "," <<
+                       this->ch << "," <<
+                       this->last_b_s << "," <<
+                       this->run_b_s << "," <<
+                       this->last_c_s << "," <<
+                       this->syntactic_c_s << "," <<
+                       this->rem_c_s << "," <<
+                       this->last_b_s + this->run_b_s + this->last_c_s + this->syntactic_c_s + this->rem_c_s << "," <<
+                       this->byte_pos << endl;
 }

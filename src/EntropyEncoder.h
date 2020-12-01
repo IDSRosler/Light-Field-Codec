@@ -52,24 +52,26 @@ private:
 
     std::ofstream outputFile;
     std::ofstream statistics_file;
-    std::ofstream bitrate_file;
+    std::ofstream bitrate_steps;
 
-    int     hypercube,
-            last,
-            sig_sub,
-            n_sig_sub,
-            sig_coeff,
-            n_sig_coeff,
-            one,
-            two,
-            gr_two,
-            max_value;
+    int hypercube,
+        last,
+        sig_sub,
+        n_sig_sub,
+        sig_coeff,
+        n_sig_coeff,
+        one,
+        two,
+        gr_two,
+        max_value;
 
-    int     last_b,
-            run_b,
-            last_c,
-            syntactic_c,
-            rem_c;
+    int last_b_s,
+        run_b_s,
+        last_c_s,
+        syntactic_c_s,
+        rem_c_s;
+
+    uint before;
 
     string ch;
 

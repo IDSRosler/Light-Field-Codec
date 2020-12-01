@@ -60,13 +60,13 @@ void ArithmeticEncoder :: Encode_symbol(int symbol, int model) {
 
 // END OF ENCODING
 int ArithmeticEncoder::Done_encoding() { // Output two bits that select the quarter that the current code range contains
-    int bits = this->total_bits;
-
     ++this->bits_to_follow;
     if (this->low < First_qtr) this->Bit_plus_follow(0);
     else this->Bit_plus_follow(1);
 
     this->Done_output_bits();
+
+    int bits = this->total_bits;
 
     this->total_bits = 0;
 
