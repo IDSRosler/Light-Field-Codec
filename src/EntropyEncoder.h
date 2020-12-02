@@ -41,12 +41,17 @@ public:
 private:
     void open_file(const string &filename);
     void EncodeSyntacticElements(vector<SyntacticElements> &lfbpu);
+    void finishHypercubeEncoding(vector<SyntacticElements> &lfbpu);
 
     void ComputeFrequency(vector<SyntacticElements> &lfbpu, ElementsFrequency& freq);
+    void ComputeFrequency(vector<int> &freq);
+
     void Write_Statistics();
 
     Tree tree;
     Node *root = nullptr;
+
+    vector<int> e_buffer;
 
     uint totalBytes{0};
 

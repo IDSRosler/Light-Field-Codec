@@ -20,6 +20,8 @@ public:
     int encodeRun(std::vector<int> run);
     int encodeRem(int rem);
 
+    int encodeSymbol(std::vector<int> &e_buffer, int code, std::string type);
+
     int writeSyntaxElement(int info, int len);
     ~EncSymbol();
 

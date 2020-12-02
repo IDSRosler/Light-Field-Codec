@@ -144,7 +144,7 @@ void Tree::ComputeLast(int &last) {
 
     this->SortBufferPositions();
 
-    for (index = this->order4_SubPartitionsBuffer.size() - 1; index >= 0; --index) {
+    for (index = this->order4_SubPartitionsBuffer.size() - 1; index > 0; --index) {
         if (this->order4_SubPartitionsBuffer[index]->att->significant_value){
             break;
         }
@@ -174,6 +174,7 @@ void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, i
     vector<int> v_coefficients;
     SyntacticElements elem;
     elem.reset();
+    v_coefficients.clear();
     for (int i = last; i >= 0; --i) {
         this->LFBPUToVector(v_coefficients, i);
         if (!v_coefficients.empty()){

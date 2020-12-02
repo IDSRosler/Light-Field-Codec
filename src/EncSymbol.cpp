@@ -40,6 +40,36 @@ int EncSymbol::encodeLast(int last) { // Max value 255 - 8 bits
     return sym.len;
 }
 
+int EncSymbol::encodeSymbol(std::vector<int> & e_buffer, int code, std::string type){
+    int m;
+    symbol sym{};
+
+
+    if (type == "8-bits"){ // 8 bits
+        sym.value = code;
+        sym.len = 8;
+        sym.bitpattern = code;
+    } else { // expgolomb code
+        sym.value = code;
+        m = floor(log2(sym.value + 1));
+        sym.len = (m * 2) + 1;
+        sym.bitpattern = sym.value + 1;
+    }
+
+
+    // write buffer
+    unsigned int mask = 1 << (sym.len - 1);
+    int i;
+    for (i = 0; i < sym.len; i++){
+        if (sym.bitpattern & mask){
+            e_buffer.push_back(1);
+        } else{
+            e_buffer.push_back(0);
+        }
+        mask >>= 1u;
+    }
+}
+
 int EncSymbol::encodeRun(std::vector<int> run) {
     int total_bits = 0;
     for (int i = 0; i < run.size(); ++i) {
