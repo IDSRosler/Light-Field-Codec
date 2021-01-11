@@ -54,7 +54,7 @@ public:
 
     void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
+    void DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int channel);
 
     void IBC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
 
@@ -68,7 +68,7 @@ public:
 
     void generateReferenceVectorVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 
-    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref);
+    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel);
 
     void angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref );
 

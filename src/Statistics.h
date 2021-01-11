@@ -34,7 +34,7 @@ public:
     void write(Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
     void write(std::ostream &output, Point4D &pos, Point4D &dimBlock, std::size_t it_channel, std::string segment = "");
 
-    void write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel);
+    void write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel, std::string predMode);
     void compute_prediction_statistics(const std::vector<float> &input);
 
     double get_mean() const;

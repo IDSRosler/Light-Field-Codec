@@ -166,6 +166,12 @@ int main(int argc, char **argv) {
         });
     }
 
+    int contDC = 0, contIBC = 0, contAng = 0;
+    float *predBlock[3], *predBlockRGB[3];
+    for(int i = 0; i <3; ++i) {
+        predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+    }
 
     std::string transform_descriptor;
     double rd_cost;
@@ -224,7 +230,7 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "angular"){
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                       encoderParameters.dim_block, pf4D, block, ref4D);
+                                                                       encoderParameters.dim_block, pf4D, block, ref4D, it_channel);
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
 #if STATISTICS_LOCAL
@@ -233,29 +239,47 @@ int main(int argc, char **argv) {
                                 input.push_back(res4D[i]);
                             }
                             statistics.compute_prediction_statistics(input);
-                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
+                            //statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
 #endif
                         } else if(encoderParameters.getPrediction() == "all"){
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                             encoderParameters.dim_block, pfAngular4D, block, ref4D);
+                                                                             encoderParameters.dim_block, pfAngular4D, block, ref4D, it_channel);
                             float sseAngular = newPredictor[it_channel].sseBlock(orig4D, pfAngular4D, encoderParameters.dim_block);
 
-                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfDC4D);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfDC4D, it_channel);
                             float sseDC = newPredictor[it_channel].sseBlock(orig4D, pfDC4D, encoderParameters.dim_block);
 
                             newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfIBC4D);
                             float sseIBC = newPredictor[it_channel].sseBlock(orig4D, pfIBC4D, encoderParameters.dim_block);
+                            std::string predMode = "";
 
                             if(sseAngular <= sseDC && sseAngular <= sseIBC){
-                                std::copy(pfAngular4D, pfAngular4D + SIZE, res4D);
+                                std::copy(pfAngular4D, pfAngular4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfAngular4D, encoderParameters.dim_block, res4D);
+                                contAng ++;
+                                predMode = "angular";
                             } else if(sseDC <= sseAngular && sseDC <= sseIBC){
-                                std::copy(pfDC4D, pfDC4D + SIZE, res4D);
+                                std::copy(pfDC4D, pfDC4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfDC4D, encoderParameters.dim_block, res4D);
+                                contDC ++;
+                                predMode = "DC";
                             } else{
-                                std::copy(pfIBC4D, pfIBC4D + SIZE, res4D);
+                                std::copy(pfIBC4D, pfIBC4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfIBC4D, encoderParameters.dim_block, res4D);
+                                contIBC ++;
+                                predMode = "IBC";
                             }
-                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+                            //newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+
+                            input.clear();
+                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+                                input.push_back(res4D[i]);
+                            }
+                            statistics.compute_prediction_statistics(input);
+                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel], predMode);
+
                         } else if(encoderParameters.getPrediction() == "DC"){
-                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, it_channel);
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
                             newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
@@ -266,6 +290,32 @@ int main(int argc, char **argv) {
                         } else {
                             encoderParameters.prediction = "none";
                             std::copy(orig4D, orig4D + SIZE, res4D);
+                        }
+
+                        for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+                            //predBlock[it_channel][i] = orig4D[i];
+                            predBlock[it_channel][i] = pf4D[i];
+                        }
+
+
+//                            float *testBlock[3], *testBlockRGB[3];
+//                            for(int i = 0; i <3; ++i) {
+//                                testBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+//                                testBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+//                            }
+//                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+//                                testBlock[it_channel][i] = 0;
+//                            }
+
+                               // std::cout << orig4D[0] << std::endl;
+
+                        if(it_channel == 2){
+                            newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB,
+                                                    lf.mPGMScale);
+
+                            newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                                                lf.start_s,
+                                                encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
                         }
 
 #if STATISTICS_TIME
@@ -328,7 +378,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         rebuild.tic();
 #endif // STATISTICS_TIME
-                            lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
+                            lf.rebuild(pf4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
                                        it_channel);
 
 #if STATISTICS_TIME
@@ -489,6 +539,9 @@ int main(int argc, char **argv) {
         display_report(std::cout, "SSIM-U", ssim[1]);
         display_report(std::cout, "SSIM-V", ssim[2]);
         display_report(std::cout, "SSIM-YUV", mean_ssim);
+        display_report(std::cout, "Angular", contAng);
+        display_report(std::cout, "DC", contDC);
+        display_report(std::cout, "IBC", contIBC);
 #if STATISTICS_TIME
         display_report(std::cout, "Transform::forward time: ", t.getTotalTime());
         display_report(std::cout, "Transform::inverse time: ", ti.getTotalTime());

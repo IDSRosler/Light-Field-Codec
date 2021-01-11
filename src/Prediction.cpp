@@ -84,7 +84,7 @@ void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
+void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int channel){
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()],
             refAboveRight4D[origSize.getNSamples()],
@@ -136,8 +136,36 @@ void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point
     } else{
         medTotal = medTotal/cont;
     }
-    for (int i = 0; i < origSize.getNSamples(); ++i){
-        out[i] = medTotal;
+    //for (int i = 0; i < origSize.getNSamples(); ++i){
+    //    out[i] = medTotal;
+    //}
+
+    Point4D it_pos;
+
+
+    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    int pos_out = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                                  + (it_pos.v * origSize.x * origSize.y * origSize.u);
+
+                    if (it_pos.u == 0 && (it_pos.v == 0 || it_pos.v == origSize.v - 1)
+                        || it_pos.u == origSize.u - 1 && (it_pos.v == 0 || it_pos.v == origSize.v - 1)) {//pixels pretos
+
+                        if(channel == 0){
+                            out[pos_out] = -448;
+                        }else{
+                            out[pos_out] = 0;
+                        }
+
+                    } else {
+                        out[pos_out] = medTotal;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -342,7 +370,7 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
     }
 }
 
-void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref){
+void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel){
     Point4D it_pos_in;
     Point4D it_pos_out;
 
@@ -356,7 +384,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     it_pos_out.v = 0;
     it_pos_out.y = 0;
 
-    int num_modes = 33; //33
+    int num_modes = 0; //33
     int d = 0;
     int C = 0;
     int ind = 0;
@@ -585,8 +613,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        //min_mode = 15; //fix mode
-        //min_d = 0; //fix d
+        min_mode = 16; //fix mode
+        min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
 
@@ -613,11 +641,14 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
+                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
 
-                                out[pos_out] = refLeft4D[pos_out];
+                                if(channel == 0){
+                                    out[pos_out] = -448;
+                                }else{
+                                    out[pos_out] = 0;
+                                }
 
                             } else {
 
@@ -631,15 +662,15 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                 pos = ind + 1;
 
 
-                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (ind == 1 && it_pos_out.u <= 1)
-                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (pos == 1 && it_pos_out.u <= 1)
-                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                    out[pos_out] = refLeft4D[pos_out];
-                                } else{
+//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (ind == 1 && it_pos_out.u <= 1)
+//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (pos == 1 && it_pos_out.u <= 1)
+//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+//
+//                                    out[pos_out] = refLeft4D[pos_out];
+//                                } else{
 
                                     R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
                                                                 (ind * origSize.y * origSize.u)];
@@ -654,7 +685,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                     */
 
                                     out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                }
+                                //}
                             }
                         }
                     }
@@ -685,11 +716,14 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
+                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
 
-                                out[pos_out] = refAbove4D[pos_out];
+                                if(channel == 0){
+                                    out[pos_out] = -448;
+                                }else{
+                                    out[pos_out] = 0;
+                                }
 
                             } else {
 
@@ -702,15 +736,15 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                 }
                                 pos = ind + 1;
 
-                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (ind == 1 && it_pos_out.u <= 1)
-                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (pos == 1 && it_pos_out.u <= 1)
-                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                    out[pos_out] = refAbove4D[pos_out];
-                                } else {
+//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (ind == 1 && it_pos_out.u <= 1)
+//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (pos == 1 && it_pos_out.u <= 1)
+//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+//
+//                                    out[pos_out] = refAbove4D[pos_out];
+//                                } else {
                                     /*
                                     if(ind > origSize.u){
                                         int aux = origSize.u - ind;
@@ -734,7 +768,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                                     (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
                                     */
                                     out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                }
+                                //}
                             }
                         }
                     }

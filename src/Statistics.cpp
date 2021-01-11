@@ -20,6 +20,7 @@ void Statistics::write_headers(){
     this->file_out
             << "hypercube"                  << sep
             << "channel"                    << sep
+            << "prediction mode"            << sep
             << "pos_x"                      << sep
             << "pos_y"                      << sep
             << "pos_u"                      << sep
@@ -32,10 +33,11 @@ void Statistics::write_headers(){
             << "energy(x 0.00001)"                    << std::endl;
 }
 
-void Statistics::write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel){
+void Statistics::write_prediction_statistics(int hypercube, Point4D &pos, Point4D &dimBlock, std::string it_channel, std::string predMode){
     this->file_out
             <<  hypercube                   << sep
             <<  it_channel                  << sep
+            <<  predMode                    << sep
             <<  pos.x                       << sep
             <<  pos.y                       << sep
             <<  pos.u                       << sep
