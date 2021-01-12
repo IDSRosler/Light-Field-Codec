@@ -167,10 +167,18 @@ int main(int argc, char **argv) {
     }
 
     int contDC = 0, contIBC = 0, contAng = 0;
-    float *predBlock[3], *predBlockRGB[3];
+    float *predBlock[3], *predBlockRGB[3], *refVBlock[3], *refVBlockRGB[3];
     for(int i = 0; i <3; ++i) {
         predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
         predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+        refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+    }
+    float *testBlock[3], *testBlockRGB[3];
+    for(int i = 0; i <3; ++i) {
+        testBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        testBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
     }
 
     std::string transform_descriptor;
@@ -230,7 +238,7 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "angular"){
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                       encoderParameters.dim_block, pf4D, block, ref4D, it_channel);
+                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel);
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
 #if STATISTICS_LOCAL
@@ -293,19 +301,11 @@ int main(int argc, char **argv) {
                         }
 
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                            //predBlock[it_channel][i] = orig4D[i];
-                            predBlock[it_channel][i] = pf4D[i];
+                            predBlock[it_channel][i] = orig4D[i];
+                            //predBlock[it_channel][i] = pf4D[i];
                         }
 
 
-//                            float *testBlock[3], *testBlockRGB[3];
-//                            for(int i = 0; i <3; ++i) {
-//                                testBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-//                                testBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
-//                            }
-//                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-//                                testBlock[it_channel][i] = 0;
-//                            }
 
                                // std::cout << orig4D[0] << std::endl;
 
@@ -313,9 +313,16 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB,
                                                     lf.mPGMScale);
 
-                            newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                            newPredictor->write(predBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
                                                 encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB,
+                                                          lf.mPGMScale);
+
+                            newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                                                lf.start_s,
+                                                encoderParameters.getPathOutput() + "ref_" + std::to_string(block));
                         }
 
 #if STATISTICS_TIME

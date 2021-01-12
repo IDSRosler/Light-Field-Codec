@@ -343,7 +343,7 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
     it_pos_out.u = 0;
     it_pos_out.v = 0;
 
-    int cont = 0, cont2 = origSize.x * origSize.u * origSize.v; //15*13*13 = 2535
+    int cont = 0, cont2 = origSize.x * origSize.u * origSize.v -1; //15*13*13 = 2535
     int pos_ref, pos_out;
 
     for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
@@ -614,13 +614,13 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //}
 
         min_mode = 16; //fix mode
-        min_d = 0; //fix d
+        min_d = 32; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
 
-            for(int i = 0; i < origSize.getNSamples(); i++){
-                ref[i] = refLeft4D[i];
-            }
+//            for(int i = 0; i < origSize.getNSamples(); i++){
+//                ref[i] = refLeft4D[i];
+//            }
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
@@ -693,8 +693,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             }
         } else{ //Vertical
 
-            for(int i = 0; i < origSize.getNSamples(); i++){
-                ref[i] = refAbove4D[i];
+            for(int i = 0; i < (origSize.x * origSize.u * origSize.v)*2; i++){
+                ref[i] = refAboveGeneratedVector[i];
             }
 
             // Horizontal - variable
@@ -755,6 +755,10 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                         }
                                     }
                                      */
+
+                                    if(it_pos_out.u == 6 && it_pos_out.v == origSize.v - 1 && block == 42){
+                                        std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
+                                    }
 
                                     R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
@@ -1430,12 +1434,12 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", origSize.x * origSize.u, origSize.y * origSize.v, mPGMScale);
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x) * 2, origSize.v, mPGMScale);
 
     Point4D it_pos;
 
         for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-            for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+            for (it_pos.x = 0; it_pos.x < origSize.x *2; it_pos.x += 1) {
                 for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
                     int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
