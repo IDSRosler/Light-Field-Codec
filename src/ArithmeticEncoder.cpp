@@ -99,6 +99,49 @@ void ArithmeticEncoder :: Done_output_bits() {
     this->writeCode2Buffer();
 }
 
+// UPDATE THE MODEL TO ACCOUNT FOR A NEW SYMBOL
+void ArithmeticEncoder :: update_model(int symbol, int m)
+{
+    int i;
+    unsigned long int cum;
+
+    symbol = this->model[m].symbol_to_index[symbol];
+
+    if (this->model[m].cumulative_frequency[0]==Max_freq)
+    {
+        cum = 0;
+
+        for (i = this->model[m].number_of_symbols; i>=0; i--)
+        {
+            this->model[m].frequency[i] = (model[m].frequency[i]+1)/2;
+            this->model[m].cumulative_frequency[i] = cum;
+            cum += this->model[m].frequency[i];
+        }
+    }
+    this->model[m].frequency[0] = 0;
+
+    for (i = symbol; this->model[m].frequency[i]==this->model[m].frequency[i-1]; i--) ;
+    if (i<symbol)
+    {
+        int ch_i, ch_symbol;
+
+        ch_i = this->model[m].index_to_symbol[i];
+        ch_symbol = this->model[m].index_to_symbol[symbol];
+        this->model[m].index_to_symbol[i] = ch_symbol;
+        this->model[m].index_to_symbol[symbol] = ch_i;
+        this->model[m].symbol_to_index[ch_i] = symbol;
+        this->model[m].symbol_to_index[ch_symbol] = i;
+    }
+
+    this->model[m].frequency[i] += 1;
+
+    while (i>0)
+    {
+        i--;
+        this->model[m].cumulative_frequency[i]++;
+    }
+}
+
 void ArithmeticEncoder::writeCode2Buffer() {
     unsigned int mask = 1 << 7;
     int i;
@@ -201,12 +244,12 @@ void ArithmeticEncoder::Start_model(int number_of_symbols, vector<int> frequency
     this->model[model].cumulative_frequency[number_of_symbols] = 0;
     this->model[model].frequency[0] = 0;
 
-    for (int i = 0; i < frequency.size(); ++i) {
+    /*for (int i = 0; i < frequency.size(); ++i) {
         this->model[model].frequency[i+1] = frequency[i];
-    }
+    }*/
 
     for (int j = number_of_symbols; j > 0; --j) {
-        //this->model[model].frequency[j] = 1;
+        this->model[model].frequency[j] = 1;
         this->model[model].cumulative_frequency[j-1] = this->model[model].cumulative_frequency[j] +
                                                  this->model[model].frequency[j];
     }

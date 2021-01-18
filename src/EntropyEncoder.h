@@ -41,10 +41,12 @@ public:
 private:
     void open_file(const string &filename);
     void EncodeSyntacticElements(vector<SyntacticElements> &lfbpu);
-    void finishHypercubeEncoding(vector<SyntacticElements> &lfbpu);
+    void encodeSyntacticElements(vector<SyntacticElements> &lfbpu);
 
     void ComputeFrequency(vector<SyntacticElements> &lfbpu, ElementsFrequency& freq);
     void ComputeFrequency(vector<int> &freq);
+
+    int encodeSymbol(int code, int model, std::string type);
 
     void Write_Statistics();
 
@@ -75,6 +77,13 @@ private:
         last_c_s,
         syntactic_c_s,
         rem_c_s;
+
+    int model_8bits;
+    int model_exp;
+    int model_sig;
+    int model_grone;
+    int model_grtwo;
+    int model_sign;
 
     uint before;
 

@@ -3,7 +3,8 @@
 # Default values
 if [ "$BINARY" == "" ]; then
   echo "Variable BINARY not found. Using default value."
-  BINARY="./cmake-build-release/LF_Codec"
+  BINARY="./cmake-build-debug/LF_Codec"
+  #BINARY="./cmake-build-release/LF_Codec"
 fi
 if [ "$DATASET_DIR" == "" ]; then
   echo "Variable DATASET_DIR not found. Using default value."
@@ -14,11 +15,11 @@ if [ "$RESULT_DIR" == "" ]; then
   RESULT_DIR="./results/Statistics/Arithmetic"
 fi
 
-QP=20
-QX=20
-QY=20
-QU=20
-QV=20
+QP=1
+QX=1
+QY=1
+QU=1
+QV=1
 LAMBDA=1
 DATASET=Bikes
 TRANSFORM=DCT_II

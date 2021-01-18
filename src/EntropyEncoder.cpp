@@ -60,12 +60,29 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->gr_two = this->root->att->n_greater_than_two;
     this->max_value = this->root->att->max_value;
 
+    this->model_8bits = this->arith_encoder.Add_model();
+    this->model_exp = this->arith_encoder.Add_model();
+    this->model_sig = this->arith_encoder.Add_model();
+    this->model_grone = this->arith_encoder.Add_model();
+    this->model_grtwo = this->arith_encoder.Add_model();
+    this->model_sign = this->arith_encoder.Add_model();
+
+    vector<int> freq;
+    this->ComputeFrequency(freq);
+
+    this->arith_encoder.Start_model(2, freq, this->model_8bits);
+    this->arith_encoder.Start_model(2, freq, this->model_exp);
+    this->arith_encoder.Start_model(2, freq, this->model_sig);
+    this->arith_encoder.Start_model(2, freq, this->model_grone);
+    this->arith_encoder.Start_model(2, freq, this->model_grtwo);
+    this->arith_encoder.Start_model(2, freq, this->model_sign);
+
     this->tree.ComputeLast(last);   // compute last (block level)
 
     this->last = last;
 
     this->before = this->byte_pos;
-    this->encodeSymbol(this->e_buffer, last, "8-bits");
+    this->encodeSymbol(last, this->model_8bits, "8-bits");
     //this->encodeLast(last);
     this->last_b_s = this->byte_pos - this->before;
 
@@ -74,7 +91,7 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
 
         this->before = this->byte_pos;
         for (auto value : run){
-            this->encodeSymbol(this->e_buffer, value, "exp");
+            this->encodeSymbol(value, this->model_exp, "exp");
         }
         //this->encodeRun(run);
         this->run_b_s = this->byte_pos - this->before;
@@ -86,7 +103,7 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
         this->sig_sub = lfbpu_elements.size();
         this->n_sig_sub = 256 - this->sig_sub;
 
-        this->finishHypercubeEncoding(lfbpu_elements);
+        this->encodeSyntacticElements(lfbpu_elements);
         //this->EncodeSyntacticElements(lfbpu_elements);
 
         lfbpu_elements.clear();
@@ -96,47 +113,72 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
         this->sig_sub = 256 - this->n_sig_sub;
     }
 
+    this->arith_encoder.Done_encoding();
+    this->arith_encoder.Reset();
+    this->e_buffer.clear();
+
     this->Write_Statistics();
 
     this->tree.DeleteTree(&this->root); // delete tree
 }
 
-void EntropyEncoder::finishHypercubeEncoding(vector<SyntacticElements> &lfbpu){
+int EntropyEncoder::encodeSymbol(int code, int model, std::string type){
+    symbol sym{};
+
+
+    if (type == "bit"){ // bit
+        sym.value = code;
+        sym.len = 1;
+        sym.bitpattern = code;
+    } else if (type == "8-bits"){ // 8 bits
+        sym.value = code;
+        sym.len = 8;
+        sym.bitpattern = code;
+    } else { // expgolomb code
+        int m;
+        sym.value = code;
+        m = floor(log2(sym.value + 1));
+        sym.len = (m * 2) + 1;
+        sym.bitpattern = sym.value + 1;
+    }
+
+    // write buffer
+    unsigned int mask = 1 << (sym.len - 1);
+    int i;
+    for (i = 0; i < sym.len; i++){
+        if (sym.bitpattern & mask){
+            this->arith_encoder.Encode_symbol(1, model);
+            this->arith_encoder.update_model(1, model);
+        } else{
+            this->arith_encoder.Encode_symbol(0, model);
+            this->arith_encoder.update_model(0, model);
+        }
+        mask >>= 1u;
+    }
+}
+
+void EntropyEncoder::encodeSyntacticElements(vector<SyntacticElements> &lfbpu){
     // Add bits on buffer
     for (int i = 0; i < lfbpu.size(); ++i) {
         if (lfbpu[i].last >= 0){
-            this->encodeSymbol(this->e_buffer, lfbpu[i].last, "8-bits"); // encode last
-            for (auto sig: lfbpu[i].sig){ // encode sig
-                this->e_buffer.push_back(sig);
+            this->encodeSymbol(lfbpu[i].last, this->model_8bits, "8-bits"); // encode last
+            for (int sig: lfbpu[i].sig){ // encode sig
+                this->encodeSymbol(sig, this->model_sig, "bit");
             }
-            for (auto gr_one : lfbpu[i].gr_one){ // encode gr_one
-                this->e_buffer.push_back(gr_one);
+            for (int gr_one : lfbpu[i].gr_one){ // encode gr_one
+                this->encodeSymbol(gr_one, this->model_grone, "bit");
             }
-            for (auto gr_two : lfbpu[i].gr_two){ // encode gr_two
-                this->e_buffer.push_back(gr_two);
+            for (int gr_two : lfbpu[i].gr_two){ // encode gr_two
+                this->encodeSymbol(gr_two, this->model_grtwo, "bit");
             }
-            for (auto sign : lfbpu[i].sign){ // encode sign
-                this->e_buffer.push_back(sign);
+            for (int sign : lfbpu[i].sign){ // encode sign
+                this->encodeSymbol(sign, this->model_sign, "bit");
             }
-            for (auto rem : lfbpu[i].rem){ // encode rem
-                this->encodeSymbol(this->e_buffer, rem, "exp");
+            for (int rem : lfbpu[i].rem){ // encode rem
+                this->encodeSymbol(rem, this->model_exp, "exp");
             }
         }
     }
-
-    int model = this->arith_encoder.Add_model();
-
-    vector<int> freq;
-    this->ComputeFrequency(freq);
-
-    this->arith_encoder.Start_model(2, freq, model);
-
-    for (auto symbol : this->e_buffer) {
-        this->arith_encoder.Encode_symbol(symbol, model);
-    }
-    this->arith_encoder.Done_encoding();
-    this->arith_encoder.Reset();
-    this->e_buffer.clear();
 }
 
 void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {

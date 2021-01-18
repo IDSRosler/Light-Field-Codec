@@ -16,6 +16,7 @@ typedef unsigned long int Code_Value;                           // Type of a ari
 #define First_qtr ((unsigned long int)Max_Value/4 + 1)       // Point after first quarter
 #define Half ((unsigned long int)2*First_qtr)                   // Point after second quarter
 #define Third_qtr ((unsigned long int)3*First_qtr)              // point after thrird quarter
+#define Max_freq 131071
 
 typedef struct {
     int number_of_symbols;
@@ -32,7 +33,7 @@ public:
     //ARITHMETIC ENCODER
     void Encode_symbol(int symbol, int model);
     int Done_encoding(void);
-    void Set_output_file(char *path);
+    void update_model(int symbol, int m);     // Update histogram tables for model m
     void Reset(void);
 
     //PROBABILISTIC MODELS
