@@ -80,6 +80,8 @@ int main(int argc, char **argv) {
 
     Transform transform(encoderParameters);
 
+    Quantization quantization(encoderParameters.dim_block, encoderParameters);
+
     LRE lre(encoderParameters.dim_block);
 #if DPCM_DC
     DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},
@@ -259,12 +261,14 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
                         if (encoderParameters.enable_transforms) {
                             transform.set_position(it_channel, it_pos);
-                            auto[_desc, _rd_cost] = transform.forward(res4D, qf4D, dimBlock);
+                            auto[_desc, _rd_cost] = transform.forward(res4D, tf4D, dimBlock);
                             transform_descriptor = _desc;
                             rd_cost = _rd_cost;
                         } else {
-                            std::copy(res4D, res4D + SIZE, qf4D);
+                            std::copy(res4D, res4D + SIZE, tf4D);
                         }
+
+                        quantization.foward(tf4D, qf4D);
 #if STATISTICS_TIME
                         t.tic();
 #endif // STATISTICS_TIME
@@ -284,12 +288,14 @@ int main(int argc, char **argv) {
                             auto lre_size = encoderLRE->write4DBlock(temp_lre, SIZE, lre_result);
                         }
 
-                        std::copy(temp_lre, temp_lre + SIZE, qi4D);
+                        //std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
 
 #if STATISTICS_TIME
                         ti.tic();
 #endif
+                        quantization.inverse(qf4D, qi4D);
+
                         if (encoderParameters.enable_transforms) {
                             transform.inverse(transform_descriptor, qi4D, ti4D, dimBlock);
                         } else {

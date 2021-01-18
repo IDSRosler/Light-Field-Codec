@@ -14,7 +14,7 @@ PREDICTION_MODE=none
 TRANSFORM=(DCT_II)
 QPS=(1 3 7 20)
 NODES=0
-ENTROPY_TYPE=(arithmetic LRE)
+ENTROPY_TYPE=(arithmetic lre)
 LOG_OUTPUT=yes
 FLAGS="-lytro -verbose -experimental"
 
