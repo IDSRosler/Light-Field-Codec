@@ -33,7 +33,7 @@ public:
     EntropyEncoder(EncoderParameters *parameters, uint bufferSize);
     ~EntropyEncoder();
 
-    void encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube, string ch);
+    void encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube_pos, string channel);
     void finish_and_write();
     void write_completedBytes();
     uint getTotalBytes() const;
@@ -46,7 +46,7 @@ private:
     void ComputeFrequency(vector<SyntacticElements> &lfbpu, ElementsFrequency& freq);
     void ComputeFrequency(vector<int> &freq);
 
-    int encodeSymbol(int code, int model, std::string type);
+    int encodeSymbol(int code, int model, const std::string& type);
 
     void Write_Statistics();
 
@@ -71,6 +71,8 @@ private:
         two,
         gr_two,
         max_value;
+
+    float mean_value;
 
     int last_b_s,
         run_b_s,

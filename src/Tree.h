@@ -103,15 +103,15 @@ struct Node{
         this->node_pos = pos;
     }
 
-    void SetAttributes(Attributes *att){
-        this->att = att;
+    void SetAttributes(Attributes *attr){
+        this->att = attr;
     }
 };
 
 class Tree {
 public:
     Tree();
-    Node* CreateRoot(int *bitstream, const Point4D &dim_block);
+    Node* CreateRoot(const int *bitstream, const Point4D &dim_block);
 
     void ComputeLast(int &last);
     void ComputeRun(vector<int> &v_run, int last);

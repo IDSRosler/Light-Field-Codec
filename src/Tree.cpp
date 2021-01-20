@@ -1,12 +1,10 @@
 #include "Tree.h"
 
-Tree::Tree() {
-}
+Tree::Tree() = default;
 
-Tree::~Tree() {
-}
+Tree::~Tree() = default;
 
-Node* Tree::CreateRoot(int *bitstream, const Point4D &dim_block) {
+Node* Tree::CreateRoot(const int *bitstream, const Point4D &dim_block) {
 
     //this->hypercube = new Hypercube(dim_block.x, dim_block.y, dim_block.u, dim_block.v); //Not zero padding
 
@@ -19,7 +17,7 @@ Node* Tree::CreateRoot(int *bitstream, const Point4D &dim_block) {
         for (int it_u = 0; it_u < this->hypercube->dim.u; ++it_u) {
             for (int it_y = 0; it_y < this->hypercube->dim.y; ++it_y) {
                 for (int it_x = 0; it_x < this->hypercube->dim.x; ++it_x) {
-                    if (i < (dim_block.x * dim_block.y * dim_block.u * dim_block.v)) {
+                    if (i < static_cast<int>(dim_block.x * dim_block.y * dim_block.u * dim_block.v)) {
                         this->hypercube->data[it_x][it_y][it_u][it_v] = bitstream[i];
                         i++;
                     }
@@ -63,7 +61,7 @@ void Tree::CreateTree(Node * root, const Point4D &pos, Point_4D middle_before) {
                            (int)ceil((double)root->hypercube_dim.u/2),
                            (int)ceil((double)root->hypercube_dim.v/2)};
 
-        Point_4D start = {0,0,0,0};
+        Point_4D start;
 
         for (int i = 0; i < HEXADECA; ++i) {
             start = this->ComputeStart(i, middle);
@@ -111,8 +109,8 @@ void Tree::ComputePositions(Point_4D start, Point_4D middle_before, Point_4D mid
 }
 
 void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v) {
-    int acc = 0;
-    Attributes *att = new Attributes();
+    float acc = 0.0;
+    auto *att = new Attributes();
     for (int it_v = start_v; it_v < end_v; ++it_v) {
         for (int it_u = start_u; it_u < end_u; ++it_u) {
             for (int it_y = start_y; it_y < end_y; ++it_y) {
@@ -123,12 +121,13 @@ void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, in
                     else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 1) {++att->n_one;}
                     else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 2) {++att->n_two;}
                     else {++att->n_greater_than_two;}
+                    acc += static_cast<float>(abs(this->hypercube->data[it_x][it_y][it_u][it_v]));
                 }
             }
         }
     }
     att->hypercubo_size = node->hypercube_dim.x * node->hypercube_dim.y * node->hypercube_dim.u * node->hypercube_dim.v;
-    att->mean_value = (float)acc / att->hypercubo_size;
+    att->mean_value = acc / static_cast<float>(att->hypercubo_size);
     node->SetAttributes(att);
 }
 
@@ -144,7 +143,7 @@ void Tree::ComputeLast(int &last) {
 
     this->SortBufferPositions();
 
-    for (index = this->order4_SubPartitionsBuffer.size() - 1; index > 0; --index) {
+    for (index = static_cast<int>(this->order4_SubPartitionsBuffer.size() - 1); index > 0; --index) {
         if (this->order4_SubPartitionsBuffer[index]->att->significant_value){
             break;
         }
@@ -178,7 +177,7 @@ void Tree::ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, i
     for (int i = last; i >= 0; --i) {
         this->LFBPUToVector(v_coefficients, i);
         if (!v_coefficients.empty()){
-            for (j = v_coefficients.size() - 1; j >= 0; --j) { // compute last (coefficient level)
+            for (j = static_cast<int>(v_coefficients.size() - 1); j >= 0; --j) { // compute last (coefficient level)
                 if (v_coefficients[j] != 0) {
                     break;
                 }
