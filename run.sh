@@ -3,15 +3,15 @@
 # Default values
 if [ "$BINARY" == "" ]; then
   echo "Variable BINARY not found. Using default value."
-  BINARY="./cmake-build-release/LF_Codec"
+  BINARY="./build/LF_Codec"
 fi
 if [ "$DATASET_DIR" == "" ]; then
   echo "Variable DATASET_DIR not found. Using default value."
-  DATASET_DIR="/home/eduardo/Documentos/ViTech/Datasets"
+  DATASET_DIR="/home/italo/Documentos/Light-Field-Codec/LFs/"
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="/home/eduardo/Documentos/ViTech/Output/FinalResults"
+  RESULT_DIR="/home/italo/Documentos/Light-Field-Codec/outputs"
 fi
 
 QP=1

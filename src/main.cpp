@@ -254,10 +254,10 @@ int main(int argc, char **argv) {
                                                                              encoderParameters.dim_block, pfAngular4D, block, ref4D, it_channel);
                             float sseAngular = newPredictor[it_channel].sseBlock(orig4D, pfAngular4D, encoderParameters.dim_block);
 
-                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfDC4D, it_channel);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pfDC4D, it_channel);
                             float sseDC = newPredictor[it_channel].sseBlock(orig4D, pfDC4D, encoderParameters.dim_block);
 
-                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pfIBC4D);
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pfIBC4D);
                             float sseIBC = newPredictor[it_channel].sseBlock(orig4D, pfIBC4D, encoderParameters.dim_block);
                             std::string predMode = "";
 
@@ -287,10 +287,10 @@ int main(int argc, char **argv) {
                             statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel], predMode);
 
                         } else if(encoderParameters.getPrediction() == "DC"){
-                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D, it_channel);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pf4D, it_channel);
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
-                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pf4D);
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "SHIFT"){
                             std::transform(orig4D, orig4D + SIZE, res4D,
@@ -301,19 +301,19 @@ int main(int argc, char **argv) {
                         }
 
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                            predBlock[it_channel][i] = orig4D[i];
-                            //predBlock[it_channel][i] = pf4D[i];
+                            //predBlock[it_channel][i] = orig4D[i];
+                            predBlock[it_channel][i] = pf4D[i];
                         }
 
 
 
-                               // std::cout << orig4D[0] << std::endl;
+                        std::cout << std::to_string(block) << std::endl;
 
                         if(it_channel == 2){
                             newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB,
                                                     lf.mPGMScale);
 
-                            newPredictor->write(predBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                            newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
                                                 encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
 

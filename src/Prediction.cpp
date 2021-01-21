@@ -68,11 +68,20 @@ void Prediction::get_referenceAL(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
+void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available, int block) {
     ValueBlockPred ref = *(this->pred_references.begin() + 2); // above right
     int numElements = origSize.getNSamples();
+    this->countLFend;
+
     if (y == 0) ref.available = false;
-    if (x == 0) ref.available = false;
+    if (block == countLFend) {
+        ref.available = false;
+        countLFend += 42;
+        std::cout << countLFend << std::endl;
+    }
+
+
+
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
@@ -84,7 +93,7 @@ void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int channel){
+void Prediction::DC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out, int channel){
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()],
             refAboveRight4D[origSize.getNSamples()],
@@ -96,7 +105,7 @@ void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
-    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
     this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
 
     if(availableL){
@@ -169,7 +178,7 @@ void Prediction::DC(uint pos_x, uint pos_y, const float *orig_input, const Point
     }
 }
 
-void Prediction::IBC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out ){
+void Prediction::IBC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out ){
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()],
             refAboveRight4D[origSize.getNSamples()],
@@ -181,7 +190,7 @@ void Prediction::IBC(uint pos_x, uint pos_y, const float *orig_input, const Poin
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
-    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
     this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
 
     if(availableA) {
@@ -407,12 +416,32 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
-    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
+    std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
 
-    if(not availableL && not availableA){ //sem referência
+
+    if (not availableL && availableA){
         for(int i = 0; i < origSize.getNSamples(); i++){
-            out[i] = orig_input[i];
+                out[i] = refAbove4D[i];
         }
+    }else if(not availableL && not availableA){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+                out[i] = orig_input[i];
+        }
+    }else if(not availableL ^ not availableA){ //sem referência
+        
+       
+            for(int i = 0; i < origSize.getNSamples(); i++)
+                out[i] = refLeft4D[i];
+            
+            std::cout << " ENTROU NO 1" << std::endl ;
+
+    }else if( not availableAR ){{
+        for(int i = 0; i < origSize.getNSamples(); i++)
+            out[i] = refLeft4D[i];  
+        
+        std::cout << " ENTROU NO 2" << std::endl ;
+    }
     }else{ //com referência
         if(availableA){
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
@@ -1419,6 +1448,8 @@ void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int 
                                   + (it_pos.v * origSize.x * origSize.y * origSize.u);
 
                     WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+
+                
                 }
             }
         }
@@ -1463,8 +1494,12 @@ void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPG
         unsigned short bigEndianPixelValue = (mNumberOfFileBytesPerPixelComponent == 2) ? change_endianness_16b(
                 ClippedPixelValue) : ClippedPixelValue;
 
+
         fwrite(&bigEndianPixelValue, mNumberOfFileBytesPerPixelComponent, 1, mViewFilePointer);
+        fflush(mViewFilePointer);
     }
+
+        std::cout << rgb[2][pixelPositionInCache] << std::endl;
 
 }
 

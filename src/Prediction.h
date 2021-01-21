@@ -24,7 +24,7 @@ class Prediction {
 public:
     explicit Prediction();
 
-    int l;
+    int l, countLFend = 41;
 
     int mode_Selected[1218],  sse_Selected[1218] = {0};
 
@@ -52,11 +52,11 @@ public:
 
     void get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available);
+    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available, int block);
 
-    void DC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int channel);
+    void DC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out, int channel);
 
-    void IBC(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
+    void IBC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out );
 
     float sseBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
