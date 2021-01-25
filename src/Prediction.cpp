@@ -642,8 +642,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        min_mode = 16; //fix mode
-        min_d = 32; //fix d
+        min_mode = 14; //fix mode
+        min_d = 16; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
 
@@ -703,7 +703,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
                                     R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
                                                                 (ind * origSize.y * origSize.u)];
-                                    R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
+                                    R1 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
                                                                 (pos * origSize.y * origSize.u)];
 
                                     /*
@@ -793,6 +793,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
                                     R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
+
+                                    std::cout << "\n  Referencias  " << R0 << ' - ' << R1 << std::endl;
+
+
+
 
                                     /*
                                     R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
@@ -1208,8 +1213,8 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
 
 // //IDM begin Heat Map for Mode Selected
 
-//     mode_Selected[l] = min_mode;
-//     std::cout << mode_Selected[l] << '\n';
+     //mode_Selected[l] = min_mode;
+     std::cout <<  "modo = " << min_mode << '\n';
 //     l++;
     
 //IDM end
@@ -1483,6 +1488,43 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
 }
 
+/* writeVector modificado para vertical
+
+PROXIMO PASSO: VERIFICAR SE WRITE NAO ESCREVE NEM INICIO DO VETOR QUE AI EH NO PREENCHIMENTO
+
+
+// IDM  writeVector alterado pra imprimir vizinhos na vertical
+void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
+    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
+    if (mViewFilePointer == nullptr) {
+        printf("unable to open %s view file for writing\n", fileName.c_str());
+        //assert(false);
+    }
+
+    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.v * origSize.y) * 2, origSize.u, mPGMScale);
+
+    Point4D it_pos;
+
+        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+            for (it_pos.y = 0; it_pos.y < origSize.y *2; it_pos.y += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    int pos_out = (it_pos.y) + (it_pos.v * origSize.y);
+
+                    std::cout << "\n " << rgb[2][pos_out] << std::endl;
+
+                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                }
+            }
+        }
+
+}
+
+
+*/
+
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
 
     for (int component_index = 0; component_index < 3; component_index++) {
@@ -1499,7 +1541,7 @@ void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPG
         fflush(mViewFilePointer);
     }
 
-        std::cout << rgb[2][pixelPositionInCache] << std::endl;
+       // std::cout << rgb[2][pixelPositionInCache] << std::endl;
 
 }
 
