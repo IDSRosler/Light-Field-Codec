@@ -11,6 +11,7 @@
 #include "EncoderParameters.h"
 #include "Point4D.h"
 #include "Typedef.h"
+#include "EntropyReport.h"
 
 #define HEXADECA 16
 
@@ -113,7 +114,7 @@ public:
     Tree();
     Node* CreateRoot(const int *bitstream, const Point4D &dim_block);
 
-    void ComputeLast(int &last);
+    void ComputeLast(int &last, EntropyReport &report);
     void ComputeRun(vector<int> &v_run, int last);
     void ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last);
 

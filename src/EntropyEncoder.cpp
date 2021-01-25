@@ -6,26 +6,12 @@ EntropyEncoder::EntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
     this->parameters = parameters;
     this->open_file(this->parameters->getPathOutput() + "LightField.bin");
 
-    //last update
+    this->report.openFiles(this->parameters->getPathOutput());
+    this->report.setHeaders();
+
+    /*//last update
     this->freqFile.open(this->parameters->getPathOutput() + "frequency.csv");
-    this->freqFile << "LFBPU, Freq_sig_0, Freq_sig_1, Freq_grOne_0, Freq_grOne_1, Freq_grTwo_0, Freq_grTwo_1, Freq_sign_0, Freq_sign_1" << endl;
-
-    this->statistics_file.open(this->parameters->getPathOutput() + "Entropy_Statistics.csv");
-    this->statistics_file << "Hypercube, "
-                             "Channel, "
-                             "Last_Block_Level, "
-                             "Sig_Subpartitions, "
-                             "Non_Sig_Subpartitions, "
-                             "Sig_Coefficients, "
-                             "Non_Sig_Coefficients, "
-                             "One_Coefficients, "
-                             "Two_Coefficients,"
-                             "Gr_Two,"
-                             "Abs_Max_Value,"
-                             "Abs_Mean_Value" << endl;
-
-    this->bitrate_steps.open(this->parameters->getPathOutput() + "Bitrate_Steps.csv");
-    this->bitrate_steps << "Hypercube, Channel, Last_Block_Level_Step, Run_Step, Last_Coefficient_Level_Step, SyntacticElements_Step, Rem_Step, Total_Steps, BitstreamByStep" << endl;
+    this->freqFile << "LFBPU, Freq_sig_0, Freq_sig_1, Freq_grOne_0, Freq_grOne_1, Freq_grTwo_0, Freq_grTwo_1, Freq_sign_0, Freq_sign_1" << endl;*/
 }
 
 EntropyEncoder::~EntropyEncoder() = default;
@@ -42,12 +28,6 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->gr_two = 0;
     this->max_value = 0;
     this->mean_value = 0;
-
-    this->last_b_s = 0;
-    this->run_b_s  = 0;
-    this->last_c_s = 0;
-    this->syntactic_c_s = 0;
-    this->rem_c_s = 0;
 
     int last_block = -1;
     vector<int> run;
@@ -81,54 +61,47 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->arith_encoder.Start_model(2, freq, this->model_grtwo);
     this->arith_encoder.Start_model(2, freq, this->model_sign);
 
-    this->tree.ComputeLast(last_block);   // compute last (block level)
+    this->report.setAtt(this->hypercube, this->ch);
+
+    this->tree.ComputeLast(last_block, this->report);   // compute last (block level)
 
     this->last = last_block;
 
-    this->before = this->byte_pos;
     this->encodeSymbol(last_block, this->model_8bits, "8-bits");
     //this->encodeLast(last_block);
-    this->last_b_s = this->byte_pos - this->before;
 
-    if (last >= 0){
-        this->tree.ComputeRun(run, last_block);  // compute run (block level)
+    this->tree.ComputeRun(run, this->last);  // compute run (block level)
 
-        this->before = this->byte_pos;
-        for (auto value : run){
-            this->encodeSymbol(value, this->model_exp, "exp");
-        }
-        //this->encodeRun(run);
-        this->run_b_s = this->byte_pos - this->before;
-
-        run.clear();
-
-        this->tree.ComputeSyntacticElements(lfbpu_elements, last_block);  // compute syntactic elements (coefficients level)
-
-        this->sig_sub = lfbpu_elements.size();
-        this->n_sig_sub = 256 - this->sig_sub;
-
-        this->encodeSyntacticElements(lfbpu_elements);
-        //this->EncodeSyntacticElements(lfbpu_elements);
-
-        lfbpu_elements.clear();
+    for (auto value : run){
+        this->encodeSymbol(value, this->model_exp, "exp");
     }
-    else{
-        this->n_sig_sub = 256;
-        this->sig_sub = 256 - this->n_sig_sub;
-    }
+    //this->encodeRun(run);
+
+    run.clear();
+
+    this->tree.ComputeSyntacticElements(lfbpu_elements, this->last);  // compute syntactic elements (coefficients level)
+
+    this->sig_sub = lfbpu_elements.size();
+    this->n_sig_sub = 256 - this->sig_sub;
+
+    this->encodeSyntacticElements(lfbpu_elements);
+    //this->EncodeSyntacticElements(lfbpu_elements);
+
+    lfbpu_elements.clear();
 
     this->arith_encoder.Done_encoding();
     this->arith_encoder.Reset();
     this->e_buffer.clear();
 
-    this->Write_Statistics();
+    this->report.writeStatistics(this->last, this->sig_sub, this->n_sig_sub,
+                                 this->sig_coeff, this->n_sig_coeff, this->one, this->two, this->gr_two,
+                                 this->max_value, this->mean_value);
 
     this->tree.DeleteTree(&this->root); // delete tree
 }
 
 int EntropyEncoder::encodeSymbol(int code, int model, const std::string& type){
     symbol sym{};
-
 
     if (type == "bit"){ // bit
         sym.value = code;
@@ -159,6 +132,8 @@ int EntropyEncoder::encodeSymbol(int code, int model, const std::string& type){
         }
         mask >>= 1u;
     }
+
+    return sym.len;
 }
 
 void EntropyEncoder::encodeSyntacticElements(vector<SyntacticElements> &lfbpu){
@@ -209,11 +184,8 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {
 
     for (auto & i : lfbpu) {
         if (i.last > -1){
-            this->before = this->byte_pos;
             this->encodeLast(i.last); // encode last
-            this->last_c_s += this->byte_pos - this->before;
 
-            this->before = this->byte_pos;
             for (auto sig: i.sig){ // encode sig
                 this->arith_encoder.Encode_symbol(sig, sig_model);
             }
@@ -227,12 +199,9 @@ void EntropyEncoder::EncodeSyntacticElements(vector<SyntacticElements> &lfbpu) {
                 this->arith_encoder.Encode_symbol(sign, sign_model);
             }
             this->arith_encoder.Done_encoding();
-            this->syntactic_c_s += this->byte_pos - this->before;
 
             for (auto rem : i.rem){ // encode rem
-                this->before = this->byte_pos;
                 this->encodeRem(rem);
-                this->rem_c_s += this->byte_pos - this->before;
             }
         }
     }
@@ -252,10 +221,10 @@ void EntropyEncoder::finish_and_write() {
     this->write_completedBytes();
     if (this->outputFile.is_open()) this->outputFile.close();
 
-    //last update
-    if (this->freqFile.is_open()) this->freqFile.close();
-    if (this->statistics_file.is_open()) this->statistics_file.close();
-    if (this->bitrate_steps.is_open()) this->bitrate_steps.close();
+    this->report.closeFiles();
+
+   /* //last update
+    if (this->freqFile.is_open()) this->freqFile.close();*/
 }
 
 uint EntropyEncoder::getTotalBytes() const {
@@ -291,12 +260,12 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
         two0 = 0, sum_two0 = 0,
         sign0 = 0, sum_sing0 = 0;
 
-    for (int i = 0; i < lfbpu.size(); ++i) {
+    for (auto & i : lfbpu) {
 
-        size = lfbpu[i].sig.size();
+        size = i.sig.size();
         if (size > 0){
             for (int j = 0; j < size; ++j) {    //freq sig
-                if (lfbpu[i].sig[j] == 0)
+                if (i.sig[j] == 0)
                     ++q0;
             }
             sig0 = std::round(((float)q0/size)*100);
@@ -305,10 +274,10 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
             q0 = 0;
         }
 
-        size = lfbpu[i].gr_one.size();
+        size = i.gr_one.size();
         if (size > 0) {
             for (int j = 0; j < size; ++j) {    //freq one
-                if (lfbpu[i].gr_one[j] == 0)
+                if (i.gr_one[j] == 0)
                     ++q0;
             }
             one0 = std::round(((float)q0/size)*100);
@@ -317,10 +286,10 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
             q0 = 0;
         }
 
-        size = lfbpu[i].gr_two.size();
+        size = i.gr_two.size();
         if (size > 0) {
             for (int j = 0; j < size; ++j) {    //freq tow
-                if (lfbpu[i].gr_two[j] == 0)
+                if (i.gr_two[j] == 0)
                     ++q0;
             }
             two0 = std::round(((float)q0/size)*100);
@@ -329,10 +298,10 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
             q0 = 0;
         }
 
-        size = lfbpu[i].sign.size();
+        size = i.sign.size();
         if (size > 0) {
             for (int j = 0; j < size; ++j) {    //freq sign
-                if (lfbpu[i].sign[j] == 0)
+                if (i.sign[j] == 0)
                     ++q0;
             }
             sign0 = std::round(((float)q0/size)*100);
@@ -341,7 +310,7 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
             q0 = 0;
         }
 
-        this->freqFile << i << "," <<
+       /* this->freqFile << i << "," <<
                            sig0 << "," <<
                            100 - sig0 << "," <<
                            one0 << "," <<
@@ -350,7 +319,7 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
                            100 - two0 << "," <<
                            sign0 << "," <<
                            100 - sign0 << "," << endl;
-
+*/
     }
 
     int sig_mean_0 = std::round(sum_sig0/cont_sig);
@@ -364,7 +333,7 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
 
     elem_freq.setFrequency(sig_mean_0, sig_mean_1, one_mean_0, one_mean_1, two_mean_0, two_mean_1, sign_mean_0, sign_mean_1);
 
-    this->freqFile << endl;
+    /*this->freqFile << endl;
     this->freqFile << "Mean_of_Frequency_per_Hypercube, " <<
         sig_mean_0 << "," <<
         sig_mean_1 << "," <<
@@ -374,32 +343,5 @@ void EntropyEncoder::ComputeFrequency(vector<SyntacticElements> &lfbpu, Elements
         two_mean_1 << "," <<
         sign_mean_0 << "," <<
         sign_mean_1 << endl;
-    this->freqFile << endl;
-}
-
-void EntropyEncoder::Write_Statistics(){
-    this->statistics_file <<
-                          this->hypercube << "," <<
-                          this->ch << "," <<
-                          this->last << "," <<
-                          this->sig_sub << "," <<
-                          this->n_sig_sub << "," <<
-                          this->sig_coeff << "," <<
-                          this->n_sig_coeff << "," <<
-                          this->one << "," <<
-                          this->two << "," <<
-                          this->gr_two << "," <<
-                          this->max_value << "," <<
-                          this->mean_value << endl;
-
-    this->bitrate_steps <<
-                       this->hypercube << "," <<
-                       this->ch << "," <<
-                       this->last_b_s << "," <<
-                       this->run_b_s << "," <<
-                       this->last_c_s << "," <<
-                       this->syntactic_c_s << "," <<
-                       this->rem_c_s << "," <<
-                       this->last_b_s + this->run_b_s + this->last_c_s + this->syntactic_c_s + this->rem_c_s << "," <<
-                       this->byte_pos << endl;
+    this->freqFile << endl;*/
 }

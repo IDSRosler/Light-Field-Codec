@@ -4,6 +4,7 @@
 #include "EncSymbol.h"
 #include "ArithmeticEncoder.h"
 #include "Tree.h"
+#include "EntropyReport.h"
 
 using namespace std;
 
@@ -40,6 +41,7 @@ public:
 
 private:
     void open_file(const string &filename);
+
     void EncodeSyntacticElements(vector<SyntacticElements> &lfbpu);
     void encodeSyntacticElements(vector<SyntacticElements> &lfbpu);
 
@@ -47,8 +49,6 @@ private:
     void ComputeFrequency(vector<int> &freq);
 
     int encodeSymbol(int code, int model, const std::string& type);
-
-    void Write_Statistics();
 
     Tree tree;
     Node *root = nullptr;
@@ -58,8 +58,8 @@ private:
     uint totalBytes{0};
 
     std::ofstream outputFile;
-    std::ofstream statistics_file;
-    std::ofstream bitrate_steps;
+    /*std::ofstream statistics_file;
+    std::ofstream bitrate_steps;*/
 
     int hypercube,
         last,
@@ -74,12 +74,6 @@ private:
 
     float mean_value;
 
-    int last_b_s,
-        run_b_s,
-        last_c_s,
-        syntactic_c_s,
-        rem_c_s;
-
     int model_8bits;
     int model_exp;
     int model_sig;
@@ -87,11 +81,11 @@ private:
     int model_grtwo;
     int model_sign;
 
-    uint before;
-
     string ch;
 
     std::ofstream freqFile;
+
+    EntropyReport report;
 
     EncoderParameters *parameters;
 
