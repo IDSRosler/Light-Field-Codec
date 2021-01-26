@@ -238,7 +238,9 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "angular"){
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel);
+                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel, lf.mPGMScale, encoderParameters.getPathOutput());
+
+                            std::cout << *refVBlock[it_channel] << endl;
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
 #if STATISTICS_LOCAL
@@ -250,8 +252,11 @@ int main(int argc, char **argv) {
                             //statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
 #endif
                         } else if(encoderParameters.getPrediction() == "all"){
+
+                            std::cout << "ENTORU ONDE NAO DEVIA" << std::endl;
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                             encoderParameters.dim_block, pfAngular4D, block, ref4D, it_channel);
+                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel, lf.mPGMScale, encoderParameters.getPathOutput());
+
                             float sseAngular = newPredictor[it_channel].sseBlock(orig4D, pfAngular4D, encoderParameters.dim_block);
 
                             newPredictor[it_channel].DC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pfDC4D, it_channel);
@@ -317,12 +322,12 @@ int main(int argc, char **argv) {
                                                 lf.start_s,
                                                 encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
 
-                            newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB,
-                                                          lf.mPGMScale);
+                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB,
+                                                           lf.mPGMScale);
 
-                            newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
-                                                encoderParameters.getPathOutput() + "ref_" + std::to_string(block));
+                                                 encoderParameters.getPathOutput() + "ref_" + std::to_string(block));
                         }
 
 #if STATISTICS_TIME

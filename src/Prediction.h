@@ -26,6 +26,8 @@ public:
 
     int l, countLFend = 41;
 
+    float *refBlock[3], *refBlockRGB[3];
+
     int mode_Selected[1218],  sse_Selected[1218] = {0};
 
     uint resol_x; //tamanho
@@ -68,7 +70,7 @@ public:
 
     void generateReferenceVectorVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 
-    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel);
+    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel, int mPGMScale, std::string outputPath);
 
     void angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref );
 
