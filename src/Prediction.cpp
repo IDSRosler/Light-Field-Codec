@@ -37,20 +37,6 @@ void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origS
     }
 }
 
-void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
-    ValueBlockPred ref = *(this->pred_references.begin() + 1); // above
-    int numElements = origSize.getNSamples();
-    if (y == 0) ref.available = false;
-    if(ref.available){
-        for (int i = 0; i < numElements ; ++i)
-            out[i] = ref.block4D[i];
-        available = true;
-    }else{
-        for (int i = 0; i < numElements ; ++i)
-            out[i] = 0;
-        available = false;
-    }
-}
 
 void Prediction::get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *this->pred_references.begin(); // left above
@@ -68,19 +54,45 @@ void Prediction::get_referenceAL(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
+
+void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
+    ValueBlockPred ref = *(this->pred_references.begin() + 1); // above
+    int numElements = origSize.getNSamples();
+
+    if (y == 0 ) {
+        ref.available = false;
+    }else{
+        ref.available = true;
+    }
+
+
+    if(ref.available){
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = ref.block4D[i];
+        available = true;
+    }else{
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = 0;
+        available = false;
+    }
+}
 void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available, int block) {
     ValueBlockPred ref = *(this->pred_references.begin() + 2); // above right
     int numElements = origSize.getNSamples();
     this->countLFend;
 
-    if (y == 0) ref.available = false;
+    if (y == 0 ) {
+        ref.available = false;
+    }else{
+        ref.available = true;
+    }
+
     if (block == countLFend) {
         ref.available = false;
         countLFend += 42;
         // std::cout << countLFend << std::endl;
     }
-
-
+    
 
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
@@ -363,7 +375,7 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
 
         for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
             for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-
+                //std::cout << "inner " <<  (blockRef1==blockRef2) << std::endl;
                 pos_ref =
                         (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                         + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
@@ -371,16 +383,18 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
                                + (it_pos_out.v * origSize.x * origSize.u);
 
                 out[pos_out] = blockRef1[pos_ref];
-                
+
 
                 if(availableRef2){
                     out[cont2 + pos_out] = blockRef2[pos_ref];
                 }else{
+
                     pos_ref = (origSize.x - 1) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                               + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                    out[cont2 + pos_out] = blockRef1[pos_ref];
                     
                 }
+
             }
         }
     }
@@ -431,18 +445,19 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
     this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
-    // std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
+     std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
 
-
+//IDM CHECAR CADA CASO DE IF DEPOIS
     if (not availableL && availableA){
         for(int i = 0; i < origSize.getNSamples(); i++){
                 out[i] = refAbove4D[i];
         }
+        //IDM REKAME PARA 512
     }else if(not availableL && not availableA){
-        for(int i = 0; i < origSize.getNSamples(); i++){
+        for(int i = 0; i < origSize.getNSamples(); i++)
                 out[i] = orig_input[i];
-        }
-    }else if(not availableL ^ not availableA){ //sem referência
+        
+    }else if(not availableL ^ not availableA){ //sem uma das referências
         
        
             for(int i = 0; i < origSize.getNSamples(); i++)
@@ -458,6 +473,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     }
     }else{ //com referência
         if(availableA){
+            std::cout << "entrou" << std::endl ;
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
         }
         if(availableL){
@@ -661,7 +677,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
         if(min_mode <= 15 ){ //Horizontal
            
-
+            
             //Reaproveitamento da funcao pra preencher o vetor de referencias para escrita em arquivo
             this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
             
@@ -744,9 +760,9 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             // for(int i = 0; i < (origSize.x * origSize.u * origSize.v)*2; i++){
             //     ref[i] = refAboveGeneratedVector[i];
             // }
-
+            std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, ref);
-
+             std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
             // Horizontal - variable
             it_pos_in.x = 0;
             it_pos_in.u = 0;
@@ -1395,7 +1411,7 @@ void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, 
         }
     }
 }
-
+//original
 void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {
 
     int cont = 0;
@@ -1453,6 +1469,12 @@ void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float *
     }
 }
 
+
+//modificado vertical
+//void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {}
+
+
+//original
 void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
     FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
     if (mViewFilePointer == nullptr) {
@@ -1475,13 +1497,14 @@ void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int 
 
                     WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
 
-                
+
                 }
             }
         }
     }
 }
-//Write Modificado Pra Horizontal
+
+//write modificado para vertical
 void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
     FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
     if (mViewFilePointer == nullptr) {
@@ -1491,85 +1514,83 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u , (origSize.v * origSize.y)*2, mPGMScale);
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale);
 
     Point4D it_pos;
 
-        for (it_pos.y = 0; it_pos.y < origSize.y * 2; it_pos.y += 1) {
-            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
-                    int pos_out = (it_pos.y) + (it_pos.u * origSize.x)
-                                  + (it_pos.v * origSize.x * origSize.u);
+    for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+        for (it_pos.x = 0; it_pos.x < origSize.x * 2; it_pos.x += 1) {
+            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
-                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
-                }
+//                int pos_out = (it_pos.x) + (it_pos.v * origSize.y)
+//                              + (it_pos.v * origSize.y * origSize.u);
+
+                    int pos_out = (it_pos.x) + (it_pos.v * origSize.y)
+                                  + (it_pos.u * origSize.y * origSize.v);
+
+                WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
             }
         }
+    }
 }
 
-/* WRITE ORIGINAL
-void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
-    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
-    if (mViewFilePointer == nullptr) {
-        printf("unable to open %s view file for writing\n", fileName.c_str());
-        //assert(false);
-    }
+//Write Modificado Pra Horizontal ->> FUNCIONANDO PARA A VERTICAL
+//void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
+//    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
+//    if (mViewFilePointer == nullptr) {
+//        printf("unable to open %s view file for writing\n", fileName.c_str());
+//        //assert(false);
+//    }
+//
+//    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+//
+//    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u , (origSize.v * origSize.y)*2, mPGMScale);
+//
+//    Point4D it_pos;
+//
+//        for (it_pos.y = 0; it_pos.y < origSize.y * 2; it_pos.y += 1) {
+//            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+//                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+//
+//                    int pos_out = (it_pos.y) + (it_pos.u * origSize.x)
+//                                  + (it_pos.v * origSize.x * origSize.u);
+//
+//                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+//                }
+//            }
+//        }
+//}
 
-    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+// WRITE ORIGINAL
+//void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
+//    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
+//    if (mViewFilePointer == nullptr) {
+//        printf("unable to open %s view file for writing\n", fileName.c_str());
+//        //assert(false);
+//    }
+//
+//    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+//
+//    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x) * 2, origSize.v, mPGMScale);
+//
+//    Point4D it_pos;
+//
+//        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+//            for (it_pos.x = 0; it_pos.x < origSize.x *2; it_pos.x += 1) {
+//                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+//
+//                    int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+//                                  + (it_pos.v * origSize.x * origSize.u);
+//
+//                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+//                }
+//            }
+//        }
+//
+//}
 
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x) * 2, origSize.v, mPGMScale);
 
-    Point4D it_pos;
-
-        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-            for (it_pos.x = 0; it_pos.x < origSize.x *2; it_pos.x += 1) {
-                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-                    int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
-                                  + (it_pos.v * origSize.x * origSize.u);
-
-                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
-                }
-            }
-        }
-
-} */
-
- //writeVector modificado para vertical
-
-//PROXIMO PASSO: VERIFICAR SE WRITE NAO ESCREVE NEM INICIO DO VETOR QUE AI EH NO PREENCHIMENTO
-
-/*
-// IDM  writeVector alterado pra imprimir vizinhos na vertical
-void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
-    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
-    if (mViewFilePointer == nullptr) {
-        printf("unable to open %s view file for writing\n", fileName.c_str());
-        //assert(false);
-    }
-
-    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
-
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.v * origSize.y) * 2, origSize.u, mPGMScale);
-
-    Point4D it_pos;
-
-        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-            for (it_pos.y = 0; it_pos.y < origSize.y *2; it_pos.y += 1) {
-                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-                    int pos_out = (it_pos.y) + it_pos.v + it_pos.u;
-
-                    
-
-                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
-                }
-            }
-        }
-
-}
-*/
 
 
 

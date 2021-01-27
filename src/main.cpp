@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
                                                                        encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel, lf.mPGMScale, encoderParameters.getPathOutput());
 
-                            std::cout << *refVBlock[it_channel] << endl;
+
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
 #if STATISTICS_LOCAL
