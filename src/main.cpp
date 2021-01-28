@@ -462,7 +462,7 @@ int main(int argc, char **argv) {
 #pragma clang optimize off
     if (encoderParameters.display_stages)
         display_stage("[Writing reconstructed Light Fields on disk]");
-    lf.write(encoderParameters.getPathOutput());
+    //lf.write(encoderParameters.getPathOutput());
 #pragma clang optimize on
 
     if (encoderParameters.getEntropyType() == "arithmetic"){

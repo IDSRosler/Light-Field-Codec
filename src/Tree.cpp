@@ -138,27 +138,12 @@ void Tree::HypercubePosition(Point_4D *middle) {
     this->hy_pos.v = (this->next_start_position.v != 0) ? this->next_start_position.v / middle->v : this->next_start_position.v;
 }
 
-void Tree::ComputeLast(int &last, EntropyReport &report) {
+void Tree::ComputeLast(int &last) {
     int index;
 
     this->SortBufferPositions();
 
     for (index = static_cast<int>(this->order4_SubPartitionsBuffer.size() - 1); index >= 0; --index) {
-
-        report.writeSubpartitions(index,
-                                  this->order4_SubPartitionsBuffer[index]->node_pos.x,
-                                  this->order4_SubPartitionsBuffer[index]->node_pos.y,
-                                  this->order4_SubPartitionsBuffer[index]->node_pos.u,
-                                  this->order4_SubPartitionsBuffer[index]->node_pos.v,
-                                  this->order4_SubPartitionsBuffer[index]->att->hypercubo_size,
-                                  this->order4_SubPartitionsBuffer[index]->att->n_zero,
-                                  this->order4_SubPartitionsBuffer[index]->att->n_one,
-                                  this->order4_SubPartitionsBuffer[index]->att->n_two,
-                                  this->order4_SubPartitionsBuffer[index]->att->n_greater_than_two,
-                                  this->order4_SubPartitionsBuffer[index]->att->max_value,
-                                  this->order4_SubPartitionsBuffer[index]->att->mean_value,
-                                  this->order4_SubPartitionsBuffer[index]->att->significant_value);
-
         if (this->order4_SubPartitionsBuffer[index]->att->significant_value){
             break;
         }
@@ -167,6 +152,26 @@ void Tree::ComputeLast(int &last, EntropyReport &report) {
         index = 0;
     }
     last = index;
+}
+
+void Tree::subpartitionReport(EntropyReport &report) {
+    for (int index = static_cast<int>(this->order4_SubPartitionsBuffer.size() - 1); index >= 0; --index) {
+        report.writeSubpartitions(
+          index,
+          this->order4_SubPartitionsBuffer[index]->node_pos.x,
+          this->order4_SubPartitionsBuffer[index]->node_pos.y,
+          this->order4_SubPartitionsBuffer[index]->node_pos.u,
+          this->order4_SubPartitionsBuffer[index]->node_pos.v,
+          this->order4_SubPartitionsBuffer[index]->att->hypercubo_size,
+          this->order4_SubPartitionsBuffer[index]->att->n_zero,
+          this->order4_SubPartitionsBuffer[index]->att->n_one,
+          this->order4_SubPartitionsBuffer[index]->att->n_two,
+          this->order4_SubPartitionsBuffer[index]->att->n_greater_than_two,
+          this->order4_SubPartitionsBuffer[index]->att->max_value,
+          this->order4_SubPartitionsBuffer[index]->att->mean_value,
+          this->order4_SubPartitionsBuffer[index]->att->significant_value
+        );
+    }
 }
 
 void Tree::ComputeRun(vector<int> &v_run, int last) {

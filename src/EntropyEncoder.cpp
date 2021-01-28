@@ -63,7 +63,9 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
 
     this->report.setAtt(this->hypercube, this->ch);
 
-    this->tree.ComputeLast(last_block, this->report);   // compute last (block level)
+    this->tree.ComputeLast(last_block);   // compute last (block level)
+
+    this->tree.subpartitionReport(this->report);
 
     this->last = last_block;
 

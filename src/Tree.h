@@ -114,12 +114,14 @@ public:
     Tree();
     Node* CreateRoot(const int *bitstream, const Point4D &dim_block);
 
-    void ComputeLast(int &last, EntropyReport &report);
+    void ComputeLast(int &last);
     void ComputeRun(vector<int> &v_run, int last);
     void ComputeSyntacticElements(vector<SyntacticElements> &lfbpu_elements, int last);
 
     void CreateTree(Node * root, const Point4D &pos, Point_4D middle_before);
     void DeleteTree(Node** node_ref);
+
+    void subpartitionReport(EntropyReport &report);
 
     ~Tree();
 
