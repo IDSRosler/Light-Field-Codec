@@ -323,7 +323,7 @@ float Prediction::sseVertical(const float *orig_input, const float *prediction_i
 void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
     Point4D it_pos_out;
     Point4D it_pos_in;
-    it_pos_out.x = origSize.x - 1;
+    it_pos_out.x = origSize.x - 1; // fixed
     it_pos_out.y = 0;
     it_pos_out.u = 0;
     it_pos_out.v = 0;
@@ -332,29 +332,23 @@ void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool 
     int pos_ref, pos_out;
     availableRef2 = false;
 
-    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-
+    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) { // spatial
         for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-            for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
 
-                pos_ref =
-                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                pos_out = (it_pos_out.y) + (it_pos_out.u * origSize.y)
-                               + (it_pos_out.v * origSize.y * origSize.u);
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) { // angular
+
+                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.y * origSize.x) +
+                          (it_pos_out.v * origSize.u * origSize.y * origSize.x);
+
+                pos_out = it_pos_out.y + (it_pos_out.u * origSize.y) + (it_pos_out.v * origSize.y * origSize.u);
+
                 out[pos_out] = blockRef1[pos_ref];
 
-
-                if(availableRef2){
+                if (availableRef2) {
                     out[cont2 + pos_out] = blockRef2[pos_ref];
-                }else{
-                    pos_ref = (it_pos_out.x) + ((origSize.y - 1) * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                    out[cont2 + pos_out] = blockRef2[pos_ref];
-
-                    
+                } else {
+                    out[cont2 + pos_out] = blockRef1[pos_ref];
                 }
-
             }
         }
     }
@@ -364,37 +358,30 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
     Point4D it_pos_out;
     Point4D it_pos_in;
     it_pos_out.x = 0;
-    it_pos_out.y = origSize.y - 1; //fixed
+    it_pos_out.y = origSize.y - 1; // fixed
     it_pos_out.u = 0;
     it_pos_out.v = 0;
 
-    int cont = 0, cont2 = origSize.x * origSize.u * origSize.v -1; //15*13*13 = 2535
+    int cont = 0, cont2 = origSize.x * origSize.u * origSize.v; //15*13*13 = 2535
     int pos_ref, pos_out;
 
-    for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) { // spatial
+        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) { // angular
+
                 //std::cout << "inner " <<  (blockRef1==blockRef2) << std::endl;
-                pos_ref =
-                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                pos_out = (it_pos_out.x) + (it_pos_out.u * origSize.x)
-                               + (it_pos_out.v * origSize.x * origSize.u);
+                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) +  (it_pos_out.u * origSize.y * origSize.x) + (it_pos_out.v * origSize.u * origSize.y * origSize.x)  ;
+
+                pos_out = it_pos_out.x + (it_pos_out.u * origSize.x) + (it_pos_out.v * origSize.x * origSize.u);
 
                 out[pos_out] = blockRef1[pos_ref];
-
 
                 if(availableRef2){
                     out[cont2 + pos_out] = blockRef2[pos_ref];
                 }else{
-
-                    pos_ref = (origSize.x - 1) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
                     out[cont2 + pos_out] = blockRef1[pos_ref];
-                    
                 }
-
             }
         }
     }
@@ -672,7 +659,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        min_mode = 14; //fix mode
+        min_mode = 16; //fix mode
         min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
@@ -1514,25 +1501,59 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale);
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
 
     Point4D it_pos;
 
+    int pos_out;
 
     for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-        for (it_pos.x = 0; it_pos.x < origSize.x * 2; it_pos.x += 1) {
-            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+        for (int i = 0; i < 2; ++i) {
+            for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
-//                int pos_out = (it_pos.x) + (it_pos.v * origSize.y)
-//                              + (it_pos.v * origSize.y * origSize.u);
+                    if (i == 0){
+                        pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+                                      + (it_pos.v * origSize.x * origSize.u);
+                    }
+                    else {
+                        pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+                                  + (it_pos.v * origSize.x * origSize.u) + (origSize.x * origSize.u * origSize.v);
+                    }
 
-                    int pos_out = (it_pos.x) + (it_pos.v * origSize.y)
-                                  + (it_pos.u * origSize.y * origSize.v);
 
-                WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                }
             }
         }
     }
+
+    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
+
+    Point4D it_pos;
+
+    int pos_out;
+
+    for (int i = 0; i < 2; ++i) {
+        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    if (i == 0){
+                        pos_out = (it_pos.y) + (it_pos.u * origSize.y)
+                                  + (it_pos.v * origSize.y * origSize.u);
+                    }
+                    else {
+                        pos_out = (it_pos.y) + (it_pos.u * origSize.y)
+                                  + (it_pos.v * origSize.y * origSize.u) + (origSize.y * origSize.u * origSize.v);
+                    }
+
+
+                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                }
+            }
+        }
+    }*/
 }
 
 //Write Modificado Pra Horizontal ->> FUNCIONANDO PARA A VERTICAL
