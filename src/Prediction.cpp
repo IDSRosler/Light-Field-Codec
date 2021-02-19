@@ -1556,65 +1556,6 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
     }*/
 }
 
-//Write Modificado Pra Horizontal ->> FUNCIONANDO PARA A VERTICAL
-//void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
-//    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
-//    if (mViewFilePointer == nullptr) {
-//        printf("unable to open %s view file for writing\n", fileName.c_str());
-//        //assert(false);
-//    }
-//
-//    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
-//
-//    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u , (origSize.v * origSize.y)*2, mPGMScale);
-//
-//    Point4D it_pos;
-//
-//        for (it_pos.y = 0; it_pos.y < origSize.y * 2; it_pos.y += 1) {
-//            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-//                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-//
-//                    int pos_out = (it_pos.y) + (it_pos.u * origSize.x)
-//                                  + (it_pos.v * origSize.x * origSize.u);
-//
-//                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
-//                }
-//            }
-//        }
-//}
-
-// WRITE ORIGINAL
-//void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
-//    FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
-//    if (mViewFilePointer == nullptr) {
-//        printf("unable to open %s view file for writing\n", fileName.c_str());
-//        //assert(false);
-//    }
-//
-//    int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
-//
-//    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x) * 2, origSize.v, mPGMScale);
-//
-//    Point4D it_pos;
-//
-//        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-//            for (it_pos.x = 0; it_pos.x < origSize.x *2; it_pos.x += 1) {
-//                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-//
-//                    int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
-//                                  + (it_pos.v * origSize.x * origSize.u);
-//
-//                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
-//                }
-//            }
-//        }
-//
-//}
-
-
-
-
-
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
 
     for (int component_index = 0; component_index < 3; component_index++) {
