@@ -14,13 +14,13 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
         std::string flag = argv[it];
 
         if (flag == "-blx") {
-            this->dim_block.x = (short)strtol(argv[++it], nullptr, 10);
-        } else if (flag == "-bly") {
-            this->dim_block.y = (short)strtol(argv[++it], nullptr, 10);
-        } else if (flag == "-blu") {
             this->dim_block.u = (short)strtol(argv[++it], nullptr, 10);
-        } else if (flag == "-blv") {
+        } else if (flag == "-bly") {
             this->dim_block.v = (short)strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-blu") {
+            this->dim_block.x = (short)strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-blv") {
+            this->dim_block.y = (short)strtol(argv[++it], nullptr, 10);
         } else if (flag == "-qx") {
             this->quant_weight_100.x = 100 * strtof(argv[++it], nullptr);
         } else if (flag == "-qy") {

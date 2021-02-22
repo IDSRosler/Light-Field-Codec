@@ -119,9 +119,6 @@ int main(int argc, char **argv) {
     total_steps *= std::ceil(dimLF.v / (float) encoderParameters.dim_block.v);
     float current_step = 1;
 
-    
-
-
     std::vector<index_t> scan_order;
     Point4D stride = make_stride(encoderParameters.dim_block);
     
@@ -167,18 +164,21 @@ int main(int argc, char **argv) {
     }
 
     int contDC = 0, contIBC = 0, contAng = 0;
+
     float *predBlock[3], *predBlockRGB[3], *refVBlock[3], *refVBlockRGB[3];
+
+    float *origBlock[3], *origBlockRGB[3];
+
     for(int i = 0; i <3; ++i) {
+
+        origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
         predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
         predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
         refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
-    }
-    float *testBlock[3], *testBlockRGB[3];
-    for(int i = 0; i <3; ++i) {
-        testBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        testBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
     }
 
     std::string transform_descriptor;
@@ -211,7 +211,13 @@ int main(int argc, char **argv) {
                                            encoderParameters.dim_block.x *
                                            encoderParameters.dim_block.y);
 
-
+                   /* std::cout << "-------------------------------------------------------------------------------\n";
+                    std::cout << "Corte (x, y, u, v): [" << to_string(it_pos.x) + "," << to_string(it_pos.y) + "," << to_string(it_pos.u) + ","  << to_string(it_pos.v) << "]\n";
+                    std::cout << "Dimensões do Bloco (x, y, u, v): [" << to_string(dimBlock.x) + "," << to_string(dimBlock.y) + "," << to_string(dimBlock.u) + ","  << to_string(dimBlock.v) << "]\n";
+                    std::cout << "Stride do LF (x, y, u, v): [" << to_string(stride_lf.x) + "," << to_string(stride_lf.y) + "," << to_string(stride_lf.u) + ","  << to_string(stride_lf.v) << "]\n";
+                    std::cout << "Stride do Bloco (x, y, u, v): [" << to_string(stride_block.x) + "," << to_string(stride_block.y) + "," << to_string(stride_block.u) + ","  << to_string(stride_block.v) << "]\n";
+                    std::cout << "-------------------------------------------------------------------------------" << std::endl;
+*/
                     block++;
 
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
@@ -225,6 +231,8 @@ int main(int argc, char **argv) {
 
                         lf.getBlock(orig4D, it_pos, dimBlock, stride_block,
                                     encoderParameters.dim_block, stride_lf, it_channel);
+
+                        std::copy(orig4D, orig4D + SIZE, origBlock[it_channel]);
 
 #if STATISTICS_TIME
                         getBlock.toc();
@@ -305,30 +313,32 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         }
 
-                        for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                            //predBlock[it_channel][i] = orig4D[i];
-                            predBlock[it_channel][i] = pf4D[i];
-                        }
-
-
+                        std::copy(pf4D, pf4D + SIZE, predBlock[it_channel]);
 
                         std::cout << std::to_string(block) << std::endl;
 
                         if(it_channel == 2){
+                            newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB,
+                                                    lf.mPGMScale);
+
+                            newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                                                lf.start_s,
+                                                encoderParameters.getPathOutput() + "Orig/orig_" + std::to_string(block));
+
                             newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB,
                                                     lf.mPGMScale);
 
                             newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
-                                                encoderParameters.getPathOutput() + "pred_" + std::to_string(block));
+                                                encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
 
-                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB,
+                            newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB,
                                                            lf.mPGMScale);
 
-                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                            newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
-                                                 encoderParameters.getPathOutput() + "ref_" + std::to_string(block));
-                        }
+                                                 encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
+                            }
 
 #if STATISTICS_TIME
                         t.toc();
@@ -390,7 +400,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         rebuild.tic();
 #endif // STATISTICS_TIME
-                            lf.rebuild(pf4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
+                            lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
                                        it_channel);
 
 #if STATISTICS_TIME
