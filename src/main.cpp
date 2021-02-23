@@ -53,6 +53,11 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Loading light field]");
 
+    encoderParameters.dim_LF.u = encoderParameters.isLytro() ? encoderParameters.dim_LF.u - 2 : encoderParameters.dim_LF.u;
+    encoderParameters.dim_LF.v = encoderParameters.isLytro() ? encoderParameters.dim_LF.v - 2 : encoderParameters.dim_LF.v;
+    encoderParameters.dim_block.u = encoderParameters.isLytro() ? encoderParameters.dim_block.u - 2 : encoderParameters.dim_block.u;
+    encoderParameters.dim_block.v = encoderParameters.isLytro() ? encoderParameters.dim_block.v - 2 : encoderParameters.dim_block.v;
+
     LightField lf(encoderParameters.dim_LF, encoderParameters.getPathInput(),
                   encoderParameters.isLytro());
 
@@ -195,7 +200,7 @@ int main(int argc, char **argv) {
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
 
                     dimBlock = Point4D(
-                            std::min(encoderParameters.dim_block.x,  dimLF.x - it_pos.x),
+                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
                             std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
                             std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
                             std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v));
@@ -211,7 +216,7 @@ int main(int argc, char **argv) {
                                            encoderParameters.dim_block.x *
                                            encoderParameters.dim_block.y);
 
-                   /* std::cout << "-------------------------------------------------------------------------------\n";
+                    /*std::cout << "-------------------------------------------------------------------------------\n";
                     std::cout << "Corte (x, y, u, v): [" << to_string(it_pos.x) + "," << to_string(it_pos.y) + "," << to_string(it_pos.u) + ","  << to_string(it_pos.v) << "]\n";
                     std::cout << "Dimensões do Bloco (x, y, u, v): [" << to_string(dimBlock.x) + "," << to_string(dimBlock.y) + "," << to_string(dimBlock.u) + ","  << to_string(dimBlock.v) << "]\n";
                     std::cout << "Stride do LF (x, y, u, v): [" << to_string(stride_lf.x) + "," << to_string(stride_lf.y) + "," << to_string(stride_lf.u) + ","  << to_string(stride_lf.v) << "]\n";
