@@ -74,9 +74,9 @@ int main(int argc, char **argv) {
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
-    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
-                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
-                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)}};
+    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)}};
     float ref4D[SIZE];
     float res4D[SIZE];
     float pfAngular4D[SIZE];
@@ -182,6 +182,9 @@ int main(int argc, char **argv) {
         predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
         predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
+        /*refVBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        refVBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];*/
+
         refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
         refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
     }
@@ -200,10 +203,10 @@ int main(int argc, char **argv) {
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
 
                     dimBlock = Point4D(
-                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
-                            std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
-                            std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
-                            std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v));
+                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),  // 13
+                            std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),  // 13
+                            std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),  // 15
+                            std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v)); // 15
 
                     stride_lf =
                             Point4D(1, dimLF.x - dimBlock.x, dimLF.x * (dimLF.y - dimBlock.y),
@@ -326,6 +329,7 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB,
                                                     lf.mPGMScale);
 
+
                             newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
                                                 encoderParameters.getPathOutput() + "Orig/orig_" + std::to_string(block));
@@ -343,6 +347,13 @@ int main(int argc, char **argv) {
                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
                                                 lf.start_s,
                                                  encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
+
+                            /*newPredictor->YCbCR2RGB(refVBlock, encoderParameters.dim_block, refVBlockRGB,
+                                                    lf.mPGMScale);
+
+                            newPredictor->write(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t,
+                                                lf.start_s,
+                                                encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*/
                             }
 
 #if STATISTICS_TIME

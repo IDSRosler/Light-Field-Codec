@@ -23,7 +23,7 @@ Prediction::Prediction(uint resol_x) : resol_x(resol_x) {
 }
 
 void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
-    ValueBlockPred ref = *(this->pred_references.end() - 1); // left
+    ValueBlockPred ref = this->pred_references.back(); // left
     int numElements = origSize.getNSamples();
     if (x == 0) ref.available = false;
     if(ref.available){
@@ -340,7 +340,7 @@ void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool 
                 pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.y * origSize.x) +
                           (it_pos_out.v * origSize.u * origSize.y * origSize.x);
 
-                pos_out = it_pos_out.y + (it_pos_out.u * origSize.y) + (it_pos_out.v * origSize.y * origSize.u);
+                pos_out = it_pos_out.y + (it_pos_out.u * origSize.y) + (it_pos_out.v * origSize.u * origSize.y);
 
                 out[pos_out] = blockRef1[pos_ref];
 
@@ -370,8 +370,7 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
 
             for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) { // angular
 
-                //std::cout << "inner " <<  (blockRef1==blockRef2) << std::endl;
-                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) +  (it_pos_out.u * origSize.y * origSize.x) + (it_pos_out.v * origSize.u * origSize.y * origSize.x)  ;
+                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.y * origSize.x) + (it_pos_out.v * origSize.u * origSize.y * origSize.x);
 
                 pos_out = it_pos_out.x + (it_pos_out.u * origSize.x) + (it_pos_out.v * origSize.x * origSize.u);
 
@@ -432,6 +431,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
     this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
+
      std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
 
 //IDM CHECAR CADA CASO DE IF DEPOIS
@@ -460,10 +460,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     }
     }else{ //com referência
         if(availableA){
-            std::cout << "entrou" << std::endl ;
+            std::cout << "Entrou em (com referência) availableA" << std::endl ;
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
         }
         if(availableL){
+            std::cout << "Entrou em (com referência) availableL" << std::endl ;
             this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, refLeftGeneratedVector);
         }
 
@@ -659,16 +660,19 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        min_mode = 16; //fix mode
+        min_mode = 15; //fix mode
         min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
-           
-            
             //Reaproveitamento da funcao pra preencher o vetor de referencias para escrita em arquivo
-            this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
-            
 
+            std::cout << "Horizontal mode" << std::endl ;
+
+            std::cout << "Left: " << availableL << std::endl ;
+            std::cout << "Above: " << availableA << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;
+
+            this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
@@ -747,9 +751,14 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             // for(int i = 0; i < (origSize.x * origSize.u * origSize.v)*2; i++){
             //     ref[i] = refAboveGeneratedVector[i];
             // }
-            std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
+
+            std::cout << "Vertical mode" << std::endl ;
+
+            std::cout << "Left: " << availableL << std::endl ;
+            std::cout << "Above: " << availableA << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;
+
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, ref);
-             std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
             // Horizontal - variable
             it_pos_in.x = 0;
             it_pos_in.u = 0;
@@ -1501,7 +1510,7 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
+    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
 
     Point4D it_pos;
 
@@ -1526,9 +1535,9 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
                 }
             }
         }
-    }
+    }*/
 
-    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
 
     Point4D it_pos;
 
@@ -1553,7 +1562,7 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
                 }
             }
         }
-    }*/
+    }
 }
 
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
