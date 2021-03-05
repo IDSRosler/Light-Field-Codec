@@ -23,7 +23,7 @@ Prediction::Prediction(uint resol_x) : resol_x(resol_x) {
 }
 
 void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
-    ValueBlockPred ref = this->pred_references.back(); // left
+    ValueBlockPred ref = *(this->pred_references.end() - 1); // left
     int numElements = origSize.getNSamples();
     if (x == 0) ref.available = false;
     if(ref.available){
@@ -64,7 +64,6 @@ void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origS
     }else{
         ref.available = true;
     }
-
 
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
@@ -432,27 +431,34 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
     this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
 
-     std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;
+     /*std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;*/
 
 //IDM CHECAR CADA CASO DE IF DEPOIS
     if (not availableL && availableA){
+        std::cout << "Not L and A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++){
                 out[i] = refAbove4D[i];
         }
         //IDM REKAME PARA 512
     }else if(not availableL && not availableA){
+        std::cout << "Not L and Not A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++)
                 out[i] = orig_input[i];
         
     }else if(not availableL ^ not availableA){ //sem uma das referências
-        
-       
-            for(int i = 0; i < origSize.getNSamples(); i++)
-                out[i] = refLeft4D[i];
-            
+       if(availableL){
+           std::cout << "L and Not A" << std::endl;
+           for(int i = 0; i < origSize.getNSamples(); i++)
+               out[i] = refLeft4D[i];
+       }else{
+           std::cout << "Not L and A" << std::endl;
+           for(int i = 0; i < origSize.getNSamples(); i++)
+               out[i] = refAbove4D[i];
+       }
             // std::cout << " ENTROU NO 1" << std::endl ;
 
     }else if( not availableAR ){{
+        std::cout << "Not AR" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++)
             out[i] = refLeft4D[i];  
         
