@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 
     float *predBlock[3], *predBlockRGB[3], *refVBlock[3], *refVBlockRGB[3];
 
-    float *origBlock[3], *origBlockRGB[3], *recBlock[3], *recBlockRGB[3];
+    float *origBlock[3], *origBlockRGB[3], *recBlock[3], *recBlockRGB[3], *resBlock[3], *resBlockRGB[3];
 
     for(int i = 0; i <3; ++i) {
 
@@ -184,6 +184,9 @@ int main(int argc, char **argv) {
 
         recBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
         recBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        resBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        resBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
         refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
@@ -378,6 +381,7 @@ int main(int argc, char **argv) {
                                            [](auto value) { return value + 512; });
                         } else if(encoderParameters.getPrediction() != "none"){
                             newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
+                            //newPredictor->recResiduePred(res4D, pf4D, encoderParameters.dim_block, pi4D);
                         } else{
                             std::copy(ti4D, ti4D + SIZE, pi4D);
                         }
@@ -398,6 +402,7 @@ int main(int argc, char **argv) {
                         }
 
                         std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
+                        std::copy(res4D, res4D + SIZE, resBlock[it_channel]);
 
                         if(it_channel == 2){
                             newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
@@ -415,6 +420,11 @@ int main(int argc, char **argv) {
 
                             newPredictor->write(recBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Rec_block/rec_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGB(resBlock, encoderParameters.dim_block, resBlockRGB, lf.mPGMScale);
+
+                            newPredictor->write(resBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Res/res_" + std::to_string(block));
 
                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
 

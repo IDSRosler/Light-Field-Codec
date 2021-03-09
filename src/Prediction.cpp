@@ -449,7 +449,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
        if(availableL){
            std::cout << "L and Not A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
-               out[i] = refLeft4D[i];
+               //out[i] = refLeft4D[i];
+               out[i] = orig_input[i];
        }else{
            std::cout << "Not L and A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
@@ -666,7 +667,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        min_mode = 15; //fix mode
+        min_mode = 16; //fix mode
         min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
@@ -1516,7 +1517,7 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
 
     Point4D it_pos;
 
@@ -1541,9 +1542,9 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
                 }
             }
         }
-    }*/
+    }
 
-    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
+    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
 
     Point4D it_pos;
 
@@ -1568,7 +1569,7 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
                 }
             }
         }
-    }
+    }*/
 }
 
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
