@@ -449,8 +449,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
        if(availableL){
            std::cout << "L and Not A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
-               //out[i] = refLeft4D[i];
-               out[i] = orig_input[i];
+               out[i] = refLeft4D[i];
        }else{
            std::cout << "Not L and A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
