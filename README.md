@@ -28,14 +28,14 @@ From the `build` directory, run the binary `./LF_Codec`.
 |-----------------------------|:---------:|:------:|-------------|
 | -input                      | String    | Required | Path to folder containing the *.ppm files to be encoded |
 | -output                     | String    | Required | Path to folder where the reconstructed *.ppm files will be stored alongside with any execution file|
-| -blx                        | Int       | Required | Block size in x dimension
-| -bly                        | Int       | Required | Block size in y dimension
-| -blu                        | Int       | Required | Block size in u dimension
-| -blv                        | Int       | Required | Block size in v dimension
-| -lfx                        | Int       | Required | Light field size in x dimension
-| -lfy                        | Int       | Required | Light field size in y dimension
-| -lfu                        | Int       | Required | Light field size in u dimension
-| -lfv                        | Int       | Required | Light field size in v dimension 
+| -lfx                        | Int       | Required | Light field size in x dimension (number of horizontal pixels per Sub-aperture Image)
+| -lfy                        | Int       | Required | Light field size in y dimension (number of vertical pixels per Sub-aperture Image)
+| -lfu                        | Int       | Required | Light field size in u dimension (number of horizontal Sub-aperture Images)
+| -lfv                        | Int       | Required | Light field size in v dimension (number of vertical Sub-aperture Images)
+| -blx                        | Int       | Required | Block size in x dimension (number of horizontal Micro images per block)
+| -bly                        | Int       | Required | Block size in y dimension (number of vertical Micro images per block)
+| -blu                        | Int       | Required | Block size in u dimension (number of horizontal pixels per Micro Image)
+| -blv                        | Int       | Required | Block size in v dimension (number of vertical pixels per Micro Image)
 | -qp                         | Float     | Default: 1 | Linear quantization parameter for the quantization 4D-volumn
 | -qx                         | Int       | Default: 1 | Quantization weight in x dimension
 | -qy                         | Int       | Default: 1 | Quantization weight in y dimension

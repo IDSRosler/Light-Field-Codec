@@ -32,7 +32,7 @@ public:
     void write(const std::string &path);
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;
-    int start_t{0}, start_s{0};
+    int start_t{0}, start_s{0}, end_t{0}, end_s{0};
     int mFirstPixelPosition, mNumberOfFileBytesPerPixelComponent;
 
     char fullTag[265];

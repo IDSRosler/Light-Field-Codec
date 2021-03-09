@@ -1,4 +1,3 @@
-
 #ifndef PREDICTION_H
 #define PREDICTION_H
 
@@ -7,9 +6,7 @@
 #include "Point4D.h"
 #include <string>
 #include <cstring>
-//EDUARDO BEGIN
 #include <vector>
-
 
 class ValueBlockPred {
 public:
@@ -22,24 +19,17 @@ public:
     ValueBlockPred(float *block4D, bool available, uint blockSize);
 
 };
-//EDUARDO END
 
 class Prediction {
-
 public:
     explicit Prediction();
 
-    ~Prediction();
+    int l, countLFend = 41;
 
-    LFSample *rgb[3];
-    LFSample predictors[3];
-    LFSample predictor;
-    int l;
+    float *refBlock[3], *refBlockRGB[3];
+
     int mode_Selected[1218],  sse_Selected[1218] = {0};
 
-    uint num_elementos;
-
-    //EDUARDO BEGIN
     uint resol_x; //tamanho
 
     std::vector<ValueBlockPred> pred_references;
@@ -49,6 +39,7 @@ public:
     void writeHeatMap(const std::string  output_path);
 
     float sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+
     float sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
   
     Prediction(uint resol_x);
@@ -61,15 +52,15 @@ public:
 
     void get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void get_referenceLA(uint x, uint y, float *out, const Point4D &origSize);
+    void get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available);
 
-    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available);
+    void get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available, int block);
 
-    void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+    void DC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out, int channel);
 
-    float sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+    void IBC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out );
 
-    float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+    float sseBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
     float sseHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
@@ -79,7 +70,7 @@ public:
 
     void generateReferenceVectorVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out );
 
-    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref);
+    void angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel, int mPGMScale, std::string outputPath);
 
     void angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref );
 
@@ -103,22 +94,7 @@ public:
 
     void blockGenerator(const Point4D &origSize, int mode, int mPGMScale, int start_t, int start_s, const std::string fileName);
 
-    void recRef(const float *input, const Point4D &origSize, float *out );
-
-    //EDUARDO END
-
-    int mNumberOfHorizontalViews, mNumberOfVerticalViews;
-
-    int mColumns, mLines;
-
-    int start_t{0}, start_s{0};
-
     void predict(const float *orig_input, const Point4D &origSize, float *out );
-
-    void getBlock(float *block, const Point4D &pos, const Point4D &dim_block, const Point4D &stride_block,
-                  const Point4D &origSize, const Point4D &stride_lf, int channel);
-
-    void rec(float *input, float *out, Point4D &dim_block);
 
 };
 

@@ -3,7 +3,6 @@
 #include <cstdlib>
 
 LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
-
     this->mNumberOfHorizontalViews = dim_lf.u;
     this->mNumberOfVerticalViews = dim_lf.v;
     this->numberOfViewCacheLines = dim_lf.v;
@@ -14,6 +13,8 @@ LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
 
     this->start_t = isLytro ? 1 : 0;
     this->start_s = isLytro ? 1 : 0;
+    this->end_t = isLytro ? mNumberOfVerticalViews + 1 : mNumberOfVerticalViews;
+    this->end_s = isLytro ? mNumberOfHorizontalViews + 1 : mNumberOfHorizontalViews;
 
     this->offset = Point4D(1, dim_lf.x,
                            dim_lf.x * dim_lf.y,
@@ -35,8 +36,8 @@ void LightField::read(const std::string &path) {
 
     int cont = 0;
 
-    for (int index_t = this->start_t; index_t < start_t + mNumberOfVerticalViews; index_t++) {
-        for (int index_s = this->start_s; index_s < start_s + mNumberOfHorizontalViews; index_s++) {
+    for (int index_t = this->start_t; index_t < end_t; index_t++) {
+        for (int index_s = this->start_s; index_s < end_s; index_s++) {
             char tag[256];
             fullTag[0] = '\0';
 
@@ -199,6 +200,9 @@ unsigned short LightField::change_endianness_16b(unsigned short val) {
 void LightField::getBlock(float *block, const Point4D &pos, const Point4D &dim_block, const Point4D &stride_block,
                           const Point4D &origSize, const Point4D &stride_lf, int channel) {
     float *it_block = block;
+
+    /*float *it_input = &this->yCbCr[channel][pos.x * this->offset.x + pos.y * this->offset.y +
+                                            pos.u * this->offset.u + pos.v * this->offset.v + 625]; // elimina a primeira linha do LF para evitar os blocos pretos*/
 
     float *it_input = &this->yCbCr[channel][pos.x * this->offset.x + pos.y * this->offset.y +
                                             pos.u * this->offset.u + pos.v * this->offset.v];

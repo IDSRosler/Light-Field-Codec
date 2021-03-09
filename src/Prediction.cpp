@@ -1,8 +1,6 @@
 #include "Prediction.h"
-//EDUARDO BEGIN
 #include <cmath>
 #include <iostream>
-//EDUARDO END
 
 //idm bibliotecas pra escrita do arquivo CSV
 #include <iostream>
@@ -10,42 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
 Prediction::Prediction(){
-    this->predictor = 0;
-    this->predictors[0] = 0;
-    this->predictors[1] = 0;
-    this->predictors[2] = 0;
 }
 
-Prediction::~Prediction(){
-
-}
-
-//Preditor atual é apenas uma média do LF.
-void Prediction::predict(const float *orig_input, const Point4D &origSize, float *out ){
-    this->predictor = 0;
-
-    this->num_elementos = origSize.getNSamples();
-
-    for (int i = 0; i < this->num_elementos; ++i)
-        this->predictor += orig_input[i];
-
-    this->predictor = this->predictor/this->num_elementos;
-
-    for (int i = 0; i < this->num_elementos; ++i){
-        out[i] = orig_input[i] - this->predictor;
-    }
-}
-
-void Prediction::rec(float *input, float *out, Point4D &dim_block){
-    for (int i = 0; i < this->num_elementos ; ++i)
-        out[i] = input[i] + this->predictor;
-}
-
-
-//EDUARDO BEGIN
 ValueBlockPred::ValueBlockPred(float *block4D, bool available, uint blockSize){
     this->available = available;
     for(int i = 0; i < blockSize ; ++i){
@@ -72,22 +37,8 @@ void Prediction::get_referenceL(uint x, uint y, float *out, const Point4D &origS
     }
 }
 
-void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
-    ValueBlockPred ref = *(this->pred_references.begin() + 1); // above
-    int numElements = origSize.getNSamples();
-    if (y == 0) ref.available = false;
-    if(ref.available){
-        for (int i = 0; i < numElements ; ++i)
-            out[i] = ref.block4D[i];
-        available = true;
-    }else{
-        for (int i = 0; i < numElements ; ++i)
-            out[i] = 0;
-        available = false;
-    }
-}
 
-void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &origSize) {
+void Prediction::get_referenceAL(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
     ValueBlockPred ref = *this->pred_references.begin(); // left above
     int numElements = origSize.getNSamples();
     if (y == 0) ref.available = false;
@@ -95,17 +46,53 @@ void Prediction::get_referenceLA(uint x, uint y, float *out, const Point4D &orig
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
+        available = true;
     }else{
         for (int i = 0; i < numElements ; ++i)
             out[i] = 0;
+        available = false;
     }
 }
 
-void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
+
+void Prediction::get_referenceA(uint x, uint y, float *out, const Point4D &origSize, bool &available) {
+    ValueBlockPred ref = *(this->pred_references.begin() + 1); // above
+    int numElements = origSize.getNSamples();
+
+    if (y == 0 ) {
+        ref.available = false;
+    }else{
+        ref.available = true;
+    }
+
+    if(ref.available){
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = ref.block4D[i];
+        available = true;
+    }else{
+        for (int i = 0; i < numElements ; ++i)
+            out[i] = 0;
+        available = false;
+    }
+}
+void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &origSize, bool &available, int block) {
     ValueBlockPred ref = *(this->pred_references.begin() + 2); // above right
     int numElements = origSize.getNSamples();
-    if (y == 0) ref.available = false;
-    if (x == 0) ref.available = false;
+    this->countLFend;
+
+    if (y == 0 ) {
+        ref.available = false;
+    }else{
+        ref.available = true;
+    }
+
+    if (block == countLFend) {
+        ref.available = false;
+        countLFend += 42;
+        // std::cout << countLFend << std::endl;
+    }
+    
+
     if(ref.available){
         for (int i = 0; i < numElements ; ++i)
             out[i] = ref.block4D[i];
@@ -117,68 +104,167 @@ void Prediction::get_referenceAR(uint x, uint y, float *out, const Point4D &orig
     }
 }
 
-void Prediction::predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out ){
-    this->predictor = 0;
-    int numElements = origSize.getNSamples();
+void Prediction::DC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out, int channel){
+    float refAbove4D[origSize.getNSamples()],
+            refLeft4D[origSize.getNSamples()],
+            refAboveRight4D[origSize.getNSamples()],
+            refAboveLeft4D[origSize.getNSamples()];
 
-    for (int i = 0; i < numElements; ++i)
-        this->predictor += ref[i];
+    bool availableL, availableA, availableAR, availableAL;
+    float medL = 0, medA = 0, medAR = 0,  medAL = 0, medTotal = 0;
+    int cont = 0;
 
-    this->predictor = this->predictor/numElements;
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
+    this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
 
-    for (int i = 0; i < numElements; ++i)
-        out[i] = orig_input[i] - this->predictor;
+    if(availableL){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            medL += refLeft4D[i];
+        }
+        medL = medL/origSize.getNSamples();
+        medTotal += medL;
+        cont++;
+    }
+    if(availableA){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            medA += refAbove4D[i];
+        }
+        medA = medA/origSize.getNSamples();
+        medTotal += medA;
+        cont++;
+    }
+    if(availableAR){
+        for(int i = 0; i < origSize.getNSamples(); ++i){
+            medAR += refAboveRight4D[i];
+        }
+        medAR = medAR/origSize.getNSamples();
+        medTotal += medAR;
+        cont++;
+    }
+    if(availableAL){
+        for(int i = 0; i < origSize.getNSamples(); ++i){
+            medAL += refAboveLeft4D[i];
+        }
+        medAL = medAL/origSize.getNSamples();
+        medTotal += medAL;
+        cont++;
+    }
+    if(cont == 0){
+        medTotal = 0;
+    } else{
+        medTotal = medTotal/cont;
+    }
+    //for (int i = 0; i < origSize.getNSamples(); ++i){
+    //    out[i] = medTotal;
+    //}
 
-}
-
-float Prediction::sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     Point4D it_pos;
 
-    // Horizontal
-    it_pos.x = origSize.x - 1;
-    it_pos.u = floor(origSize.u / 2);
-
-    it_pos.y = 0;
-    it_pos.v = 0;
-
-    float sum = 0;
-    int pos = 0;
 
     for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-
+        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
             for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
-                pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                sum += abs(orig_input[pos] - prediction_input[pos]);
+                    int pos_out = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                                  + (it_pos.v * origSize.x * origSize.y * origSize.u);
+
+                    if (it_pos.u == 0 && (it_pos.v == 0 || it_pos.v == origSize.v - 1)
+                        || it_pos.u == origSize.u - 1 && (it_pos.v == 0 || it_pos.v == origSize.v - 1)) {//pixels pretos
+
+                        if(channel == 0){
+                            out[pos_out] = -448;
+                        }else{
+                            out[pos_out] = 0;
+                        }
+
+                    } else {
+                        out[pos_out] = medTotal;
+                    }
+                }
             }
-    }
-    return sum;
-}
-
-float Prediction::sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
-
-    // Horizontal - variable
-    it_pos.x = 0;
-    it_pos.u = 0;
-
-    // Vertical - fixed
-    it_pos.y = origSize.y - 1;
-    it_pos.v = floor(origSize.v / 2);
-
-    float sum = 0;
-    int pos = 0;
-
-    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-
-        for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-            pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                  + (it_pos.v * origSize.x * origSize.y * origSize.u);
-            sum += abs(orig_input[pos] - prediction_input[pos]);
         }
     }
+}
+
+void Prediction::IBC(uint pos_x, uint pos_y, int block, const float *orig_input, const Point4D &origSize, float *out ){
+    float refAbove4D[origSize.getNSamples()],
+            refLeft4D[origSize.getNSamples()],
+            refAboveRight4D[origSize.getNSamples()],
+            refAboveLeft4D[origSize.getNSamples()];
+
+    bool availableL, availableA, availableAR, availableAL;
+    float sseA = 0, sseL = 0, sseAR = 0, sseAL = 0, sse = 0;
+    int index = 0;
+
+    this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
+    this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
+    this->get_referenceAL(pos_x, pos_y, refAboveLeft4D, origSize, availableAL);
+
+    if(availableA) {
+        sseA = this->sseBlock(orig_input, refAbove4D, origSize);
+        sse = sseA;
+        index = 1;
+    }
+    if(availableL) {
+        sseL = this->sseBlock(orig_input, refLeft4D, origSize);
+        if(availableA){
+            if(sseL < sse){
+                sse = sseL;
+                index = 2;
+            }
+        } else{
+            sse = sseL;
+        }
+    }
+    if(availableAR) {
+        sseAR = this->sseBlock(orig_input, refAboveRight4D, origSize);
+        if(availableA || availableL){
+            if(sseAR < sse){
+                sse = sseAR;
+                index = 3;
+            }
+        } else{
+            sse = sseAR;
+        }
+    }
+    if(availableAL) {
+        sseAL = this->sseBlock(orig_input, refAboveLeft4D, origSize);
+        if(availableA || availableL || availableAR){
+            if(sseAL < sse){
+                sse = sseAL;
+                index = 4;
+            }
+        } else{
+            sse = sseAR;
+        }
+    }
+
+    if(index == 1){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAbove4D[i];
+    } else if(index == 2){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refLeft4D[i];
+    } else if(index == 3){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAboveRight4D[i];
+    } else if(index == 4){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = refAboveLeft4D[i];
+    } else if(index == 0){
+        for (int i = 0; i < origSize.getNSamples(); ++i)
+            out[i] = 0;
+    }
+}
+
+float Prediction::sseBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    float sum = 0;
+    for (int i = 0; i < origSize.getNSamples() ; ++i)
+        sum += pow(orig_input[i] - prediction_input[i], 2);
     return sum;
 }
 
@@ -207,39 +293,6 @@ float Prediction::sseHorizontal(const float *orig_input, const float *prediction
     return sum;
 }
 
-/*
-float Prediction::sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
-
-    // Horizontal
-    it_pos.x = 0;
-    it_pos.u = 0;
-    it_pos.y = 0;
-    it_pos.v = 0;
-
-    float sum = 0;
-    int pos = 0;
-
-    // percorre vetor out na ordem horizontal espacial
-    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-
-            // percorre vetor out na ordem horizontal angular
-            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-
-                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
-                }
-            }
-        }
-    }
-
-    return sum;
-}
- */
-
 float Prediction::sseVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     Point4D it_pos;
 
@@ -266,51 +319,10 @@ float Prediction::sseVertical(const float *orig_input, const float *prediction_i
     return sum;
 }
 
-/*
-float Prediction::sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    Point4D it_pos;
-
-    it_pos.x = 0;
-    it_pos.u = 0;
-    it_pos.y = 0;
-    it_pos.v = 0;
-
-    float sum = 0;
-    int pos = 0;
-
-    // percorre vetor out na ordem vertical espacial
-    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
-        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
-
-            // percorre vetor out na ordem vertical angular
-            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
-                for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
-                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
-                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
-                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
-                }
-            }
-        }
-    }
-    return sum;
-}
- */
-
-/*
-float Prediction::sad(const float *orig_input, const float *prediction_input, const Point4D &origSize){
-    float sum = 0;
-    for (int i = 0; i < origSize.getNSamples(); ++i){
-        sum += abs(orig_input[i] - prediction_input[i]);
-        //printf("%d\n",  i);
-    }
-    return sum;
-}*/
-
-
 void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
     Point4D it_pos_out;
     Point4D it_pos_in;
-    it_pos_out.x = origSize.x - 1;
+    it_pos_out.x = origSize.x - 1; // fixed
     it_pos_out.y = 0;
     it_pos_out.u = 0;
     it_pos_out.v = 0;
@@ -319,25 +331,23 @@ void Prediction::generateReferenceVectorHorizontal(const float *blockRef1, bool 
     int pos_ref, pos_out;
     availableRef2 = false;
 
-    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) { // spatial
+        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) { // angular
 
-                pos_ref =
-                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                pos_out = (it_pos_out.y) + (it_pos_out.u * origSize.y)
-                               + (it_pos_out.v * origSize.y * origSize.u);
+                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.y * origSize.x) +
+                          (it_pos_out.v * origSize.u * origSize.y * origSize.x);
+
+                pos_out = it_pos_out.y + (it_pos_out.u * origSize.y) + (it_pos_out.v * origSize.u * origSize.y);
+
                 out[pos_out] = blockRef1[pos_ref];
-                if(availableRef2){
-                    out[cont2 + pos_out] = blockRef2[pos_ref];
-                }else{
-                    pos_ref = (it_pos_out.x) + ((origSize.y - 1) * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                    out[cont2 + pos_out] = blockRef2[pos_ref];
-                }
 
+                if (availableRef2) {
+                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                } else {
+                    out[cont2 + pos_out] = blockRef1[pos_ref];
+                }
             }
         }
     }
@@ -347,38 +357,42 @@ void Prediction::generateReferenceVectorVertical(const float *blockRef1, bool av
     Point4D it_pos_out;
     Point4D it_pos_in;
     it_pos_out.x = 0;
-    it_pos_out.y = origSize.y - 1; //fixed
+    it_pos_out.y = origSize.y - 1; // fixed
     it_pos_out.u = 0;
     it_pos_out.v = 0;
 
     int cont = 0, cont2 = origSize.x * origSize.u * origSize.v; //15*13*13 = 2535
     int pos_ref, pos_out;
 
-    for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) { // spatial
+        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) { // angular
 
-                pos_ref =
-                        (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                        + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                pos_out = (it_pos_out.x) + (it_pos_out.u * origSize.x)
-                               + (it_pos_out.v * origSize.x * origSize.u);
+                pos_ref = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.y * origSize.x) + (it_pos_out.v * origSize.u * origSize.y * origSize.x);
+
+                pos_out = it_pos_out.x + (it_pos_out.u * origSize.x) + (it_pos_out.v * origSize.x * origSize.u);
 
                 out[pos_out] = blockRef1[pos_ref];
+
                 if(availableRef2){
                     out[cont2 + pos_out] = blockRef2[pos_ref];
                 }else{
-                    pos_ref = (origSize.x - 1) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
-                              + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
-                    out[cont2 + pos_out] = blockRef2[pos_ref];
+                    out[cont2 + pos_out] = blockRef1[pos_ref];
                 }
             }
         }
     }
 }
 
-void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref){
+
+// void Prediction::fillRefVertical(const float *blockRef1, bool availableRef1, const float *blockRef2, bool availableRef2, const Point4D &origSize, float *out ){
+ 
+
+// }
+
+
+void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref, int channel, int mPGMScale, std::string outputPath){
     Point4D it_pos_in;
     Point4D it_pos_out;
 
@@ -392,7 +406,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     it_pos_out.v = 0;
     it_pos_out.y = 0;
 
-    int num_modes = 33; //33
+    int num_modes = 0; //33
     int d = 0;
     int C = 0;
     int ind = 0;
@@ -415,17 +429,48 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
     this->get_referenceA(pos_x, pos_y, refAbove4D, origSize, availableA);
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
-    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR);
+    this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
 
-    if(not availableL && not availableA){ //sem referência
+     /*std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;*/
+
+//IDM CHECAR CADA CASO DE IF DEPOIS
+    if (not availableL && availableA){
+        std::cout << "Not L and A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++){
-            out[i] = orig_input[i];
+                out[i] = refAbove4D[i];
         }
+        //IDM REKAME PARA 512
+    }else if(not availableL && not availableA){
+        std::cout << "Not L and Not A" << std::endl;
+        for(int i = 0; i < origSize.getNSamples(); i++)
+                out[i] = orig_input[i];
+        
+    }else if(not availableL ^ not availableA){ //sem uma das referências
+       if(availableL){
+           std::cout << "L and Not A" << std::endl;
+           for(int i = 0; i < origSize.getNSamples(); i++)
+               out[i] = refLeft4D[i];
+       }else{
+           std::cout << "Not L and A" << std::endl;
+           for(int i = 0; i < origSize.getNSamples(); i++)
+               out[i] = refAbove4D[i];
+       }
+            // std::cout << " ENTROU NO 1" << std::endl ;
+
+    }else if( not availableAR ){{
+        std::cout << "Not AR" << std::endl;
+        for(int i = 0; i < origSize.getNSamples(); i++)
+            out[i] = refLeft4D[i];  
+        
+        // std::cout << " ENTROU NO 2" << std::endl ;
+    }
     }else{ //com referência
         if(availableA){
+            std::cout << "Entrou em (com referência) availableA" << std::endl ;
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
         }
         if(availableL){
+            std::cout << "Entrou em (com referência) availableL" << std::endl ;
             this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, refLeftGeneratedVector);
         }
 
@@ -621,14 +666,19 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        //min_mode = 15; //fix mode
-        //min_d = 0; //fix d
+        min_mode = 16; //fix mode
+        min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
+            //Reaproveitamento da funcao pra preencher o vetor de referencias para escrita em arquivo
 
-            for(int i = 0; i < origSize.getNSamples(); i++){
-                ref[i] = refLeft4D[i];
-            }
+            std::cout << "Horizontal mode" << std::endl ;
+
+            std::cout << "Left: " << availableL << std::endl ;
+            std::cout << "Above: " << availableA << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;
+
+            this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
@@ -649,11 +699,14 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
+                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
 
-                                out[pos_out] = refLeft4D[pos_out];
+                                if(channel == 0){
+                                    out[pos_out] = -448;
+                                }else{
+                                    out[pos_out] = 0;
+                                }
 
                             } else {
 
@@ -667,20 +720,22 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                 pos = ind + 1;
 
 
-                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (ind == 1 && it_pos_out.u <= 1)
-                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (pos == 1 && it_pos_out.u <= 1)
-                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                    out[pos_out] = refLeft4D[pos_out];
-                                } else{
+//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (ind == 1 && it_pos_out.u <= 1)
+//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (pos == 1 && it_pos_out.u <= 1)
+//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+//
+//                                    out[pos_out] = refLeft4D[pos_out];
+//                                } else{
 
                                     R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
                                                                 (ind * origSize.y * origSize.u)];
-                                    R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
+                                    R1 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
                                                                 (pos * origSize.y * origSize.u)];
+
+                                    // std::cout << "\n Referencias: " << R0 << " - " << R1 << std::endl;
 
                                     /*
                                     R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
@@ -690,7 +745,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                     */
 
                                     out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                }
+                                    
+                                //}
                             }
                         }
                     }
@@ -698,10 +754,17 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             }
         } else{ //Vertical
 
-            for(int i = 0; i < origSize.getNSamples(); i++){
-                ref[i] = refAbove4D[i];
-            }
+            // for(int i = 0; i < (origSize.x * origSize.u * origSize.v)*2; i++){
+            //     ref[i] = refAboveGeneratedVector[i];
+            // }
 
+            std::cout << "Vertical mode" << std::endl ;
+
+            std::cout << "Left: " << availableL << std::endl ;
+            std::cout << "Above: " << availableA << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;
+
+            this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, ref);
             // Horizontal - variable
             it_pos_in.x = 0;
             it_pos_in.u = 0;
@@ -721,11 +784,14 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                             int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if((it_pos_out.v == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                               || (it_pos_out.v == 1 && it_pos_out.u <= 1)
-                               || ((it_pos_out.v == 2 || it_pos_out.v == 3 || it_pos_out.v > origSize.v - 3) && it_pos_out.u == 0)){ //pixels pretos
+                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
+                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
 
-                                out[pos_out] = refAbove4D[pos_out];
+                                if(channel == 0){
+                                    out[pos_out] = -448;
+                                }else{
+                                    out[pos_out] = 0;
+                                }
 
                             } else {
 
@@ -738,15 +804,15 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                 }
                                 pos = ind + 1;
 
-                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (ind == 1 && it_pos_out.u <= 1)
-                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-                                    || (pos == 1 && it_pos_out.u <= 1)
-                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-
-                                    out[pos_out] = refAbove4D[pos_out];
-                                } else {
+//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (ind == 1 && it_pos_out.u <= 1)
+//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
+//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
+//                                    || (pos == 1 && it_pos_out.u <= 1)
+//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
+//
+//                                    out[pos_out] = refAbove4D[pos_out];
+//                                } else {
                                     /*
                                     if(ind > origSize.u){
                                         int aux = origSize.u - ind;
@@ -758,10 +824,19 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                     }
                                      */
 
+                                    // if(it_pos_out.u == 6 && it_pos_out.v == origSize.v - 1 && block == 42){
+                                    //     std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
+                                    // }
+
                                     R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
                                     R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
+
+                                    
+
+
+
 
                                     /*
                                     R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
@@ -770,7 +845,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                                     (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
                                     */
                                     out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                }
+                                //}
                             }
                         }
                     }
@@ -1177,8 +1252,8 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
 
 // //IDM begin Heat Map for Mode Selected
 
-//     mode_Selected[l] = min_mode;
-//     std::cout << mode_Selected[l] << '\n';
+     //mode_Selected[l] = min_mode;
+    // std::cout <<  "modo = " << min_mode << '\n';
 //     l++;
     
 //IDM end
@@ -1338,7 +1413,7 @@ void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, 
         }
     }
 }
-
+//original
 void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {
 
     int cont = 0;
@@ -1396,6 +1471,12 @@ void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float *
     }
 }
 
+
+//modificado vertical
+//void Prediction::YCbCR2RGBVector(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {}
+
+
+//original
 void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
     FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
     if (mViewFilePointer == nullptr) {
@@ -1417,12 +1498,15 @@ void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int 
                                   + (it_pos.v * origSize.x * origSize.y * origSize.u);
 
                     WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+
+
                 }
             }
         }
     }
 }
 
+//write modificado para vertical
 void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName) {
     FILE *mViewFilePointer = fopen(fileName.c_str(), "w");
     if (mViewFilePointer == nullptr) {
@@ -1432,22 +1516,59 @@ void Prediction::writeVector(float **rgb, const Point4D &origSize, int mPGMScale
 
     int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
 
-    fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", origSize.x * origSize.u, origSize.y * origSize.v, mPGMScale);
+    fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", (origSize.u * origSize.x)*2, origSize.v, mPGMScale); // Horizontal Vector
 
     Point4D it_pos;
 
-        for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+    int pos_out;
+
+    for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+        for (int i = 0; i < 2; ++i) {
             for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
                 for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
 
-                    int pos_out = (it_pos.x) + (it_pos.u * origSize.x)
-                                  + (it_pos.v * origSize.x * origSize.u);
+                    if (i == 0){
+                        pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+                                      + (it_pos.v * origSize.x * origSize.u);
+                    }
+                    else {
+                        pos_out = (it_pos.x) + (it_pos.u * origSize.x)
+                                  + (it_pos.v * origSize.x * origSize.u) + (origSize.x * origSize.u * origSize.v);
+                    }
+
 
                     WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
                 }
             }
         }
+    }
 
+    /*fprintf(mViewFilePointer,"P6\n%d %d\n%d\n", origSize.u, (origSize.v * origSize.x)*2, mPGMScale); // Vertical vector
+
+    Point4D it_pos;
+
+    int pos_out;
+
+    for (int i = 0; i < 2; ++i) {
+        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    if (i == 0){
+                        pos_out = (it_pos.y) + (it_pos.u * origSize.y)
+                                  + (it_pos.v * origSize.y * origSize.u);
+                    }
+                    else {
+                        pos_out = (it_pos.y) + (it_pos.u * origSize.y)
+                                  + (it_pos.v * origSize.y * origSize.u) + (origSize.y * origSize.u * origSize.v);
+                    }
+
+
+                    WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                }
+            }
+        }
+    }*/
 }
 
 void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
@@ -1461,8 +1582,12 @@ void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPG
         unsigned short bigEndianPixelValue = (mNumberOfFileBytesPerPixelComponent == 2) ? change_endianness_16b(
                 ClippedPixelValue) : ClippedPixelValue;
 
+
         fwrite(&bigEndianPixelValue, mNumberOfFileBytesPerPixelComponent, 1, mViewFilePointer);
+        fflush(mViewFilePointer);
     }
+
+       // std::cout << rgb[2][pixelPositionInCache] << std::endl;
 
 }
 
@@ -1593,13 +1718,6 @@ void Prediction::blockGenerator(const Point4D &origSize, int mode, int mPGMScale
 
     this->write(origRGB, origSize, mPGMScale, start_t, start_s, fileName + "_gen_" + std::to_string(mode) + ".ppm");
     this->write(predRGB, origSize, mPGMScale, start_t, start_s, fileName + "_pred_" + std::to_string(mode) + ".ppm");
-}
-
-void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
-    int numElements = origSize.getNSamples();
-
-    for (int i = 0; i < numElements; ++i)
-        out[i] = input[i] + this->predictor;
 }
 
 void Prediction::update(float *curr, bool available, uint blockSize) {

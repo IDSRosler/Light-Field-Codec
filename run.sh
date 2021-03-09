@@ -8,7 +8,7 @@ if [ "$BINARY" == "" ]; then
 fi
 if [ "$DATASET_DIR" == "" ]; then
   echo "Variable DATASET_DIR not found. Using default value."
-  DATASET_DIR="/home/igor/Documentos/Git/Full_datasets"
+  DATASET_DIR="/home/italo/Documentos/Light-Field-Codec/LFs/"
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
@@ -26,7 +26,7 @@ TRANSFORM=DCT_II
 PREDICTION_MODE=none
 ENTROPY_TYPE=lre
 LOG_OUTPUT=no
-FLAGS="-lytro -experimental"
+FLAGS="-lytro -experimental -lossless"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -63,7 +63,7 @@ LOG_OUTPUT=yes
 
 TRANSFORM=(DCT_II)
 NODES=0
-FLAGS="-lytro -verbose -experimental"
+FLAGS="-lytro -verbose -export-statistics -"
 simulation
 #
 #FLAGS="${FLAGS} -experimental"

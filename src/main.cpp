@@ -53,6 +53,11 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Loading light field]");
 
+    encoderParameters.dim_LF.u = encoderParameters.isLytro() ? encoderParameters.dim_LF.u - 2 : encoderParameters.dim_LF.u;
+    encoderParameters.dim_LF.v = encoderParameters.isLytro() ? encoderParameters.dim_LF.v - 2 : encoderParameters.dim_LF.v;
+    encoderParameters.dim_block.u = encoderParameters.isLytro() ? encoderParameters.dim_block.u - 2 : encoderParameters.dim_block.u;
+    encoderParameters.dim_block.v = encoderParameters.isLytro() ? encoderParameters.dim_block.v - 2 : encoderParameters.dim_block.v;
+
     LightField lf(encoderParameters.dim_LF, encoderParameters.getPathInput(),
                   encoderParameters.isLytro());
 
@@ -69,14 +74,14 @@ int main(int argc, char **argv) {
 
     static const std::vector<std::string> ch_names = {"Y", "Cb", "Cr"};
 
-
-    Prediction predictor;
-    //EDUARDO BEGIN
-    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
-                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)},
-                               {(uint) ceil(encoderParameters.dim_LF.x / encoderParameters.dim_block.x)}};
-    float ref4D[encoderParameters.dim_block.getNSamples()],
-            res4D[encoderParameters.dim_block.getNSamples()];
+    Prediction newPredictor[3]{{(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)},
+                               {(uint) ceil(encoderParameters.dim_LF.x / (float)encoderParameters.dim_block.x)}};
+    float ref4D[SIZE];
+    float res4D[SIZE];
+    float pfAngular4D[SIZE];
+    float pfDC4D[SIZE];
+    float pfIBC4D[SIZE];
 
     Transform transform(encoderParameters);
 
@@ -126,9 +131,6 @@ int main(int argc, char **argv) {
     total_steps *= std::ceil(dimLF.v / (float) encoderParameters.dim_block.v);
     float current_step = 1;
 
-    
-
-
     std::vector<index_t> scan_order;
     Point4D stride = make_stride(encoderParameters.dim_block);
     
@@ -173,6 +175,29 @@ int main(int argc, char **argv) {
         });
     }
 
+    int contDC = 0, contIBC = 0, contAng = 0;
+
+    float *predBlock[3], *predBlockRGB[3], *refVBlock[3], *refVBlockRGB[3];
+
+    float *origBlock[3], *origBlockRGB[3], *recBlock[3], *recBlockRGB[3], *resBlock[3], *resBlockRGB[3];
+
+    for(int i = 0; i <3; ++i) {
+
+        origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        recBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        recBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        resBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        resBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+
+        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+        refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+    }
 
     std::string transform_descriptor;
     double rd_cost;
@@ -188,10 +213,10 @@ int main(int argc, char **argv) {
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
 
                     dimBlock = Point4D(
-                            std::min(encoderParameters.dim_block.x,  dimLF.x - it_pos.x),
-                            std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
-                            std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),
-                            std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v));
+                            std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),  // 13
+                            std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),  // 13
+                            std::min(encoderParameters.dim_block.u, dimLF.u - it_pos.u),  // 15
+                            std::min(encoderParameters.dim_block.v, dimLF.v - it_pos.v)); // 15
 
                     stride_lf =
                             Point4D(1, dimLF.x - dimBlock.x, dimLF.x * (dimLF.y - dimBlock.y),
@@ -204,7 +229,13 @@ int main(int argc, char **argv) {
                                            encoderParameters.dim_block.x *
                                            encoderParameters.dim_block.y);
 
-
+                    /*std::cout << "-------------------------------------------------------------------------------\n";
+                    std::cout << "Corte (x, y, u, v): [" << to_string(it_pos.x) + "," << to_string(it_pos.y) + "," << to_string(it_pos.u) + ","  << to_string(it_pos.v) << "]\n";
+                    std::cout << "Dimensões do Bloco (x, y, u, v): [" << to_string(dimBlock.x) + "," << to_string(dimBlock.y) + "," << to_string(dimBlock.u) + ","  << to_string(dimBlock.v) << "]\n";
+                    std::cout << "Stride do LF (x, y, u, v): [" << to_string(stride_lf.x) + "," << to_string(stride_lf.y) + "," << to_string(stride_lf.u) + ","  << to_string(stride_lf.v) << "]\n";
+                    std::cout << "Stride do Bloco (x, y, u, v): [" << to_string(stride_block.x) + "," << to_string(stride_block.y) + "," << to_string(stride_block.u) + ","  << to_string(stride_block.v) << "]\n";
+                    std::cout << "-------------------------------------------------------------------------------" << std::endl;
+*/
                     block++;
 
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
@@ -219,6 +250,8 @@ int main(int argc, char **argv) {
                         lf.getBlock(orig4D, it_pos, dimBlock, stride_block,
                                     encoderParameters.dim_block, stride_lf, it_channel);
 
+                        std::copy(orig4D, orig4D + SIZE, origBlock[it_channel]);
+
 #if STATISTICS_TIME
                         getBlock.toc();
 #endif // STATISTICS_TIME
@@ -231,7 +264,9 @@ int main(int argc, char **argv) {
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         } else if(encoderParameters.getPrediction() == "angular"){
                             newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
-                                                                       encoderParameters.dim_block, pf4D, block, ref4D);
+                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel, lf.mPGMScale, encoderParameters.getPathOutput());
+
+
                             //newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                             newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
 #if STATISTICS_LOCAL
@@ -240,14 +275,54 @@ int main(int argc, char **argv) {
                                 input.push_back(res4D[i]);
                             }
                             statistics.compute_prediction_statistics(input);
-                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
+                            //statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel]);
 #endif
                         } else if(encoderParameters.getPrediction() == "all"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+
+                            std::cout << "ENTORU ONDE NAO DEVIA" << std::endl;
+                            newPredictor[it_channel].angularPredictionVector(it_pos.x, it_pos.y, orig4D,
+                                                                       encoderParameters.dim_block, pf4D, block, refVBlock[it_channel], it_channel, lf.mPGMScale, encoderParameters.getPathOutput());
+
+                            float sseAngular = newPredictor[it_channel].sseBlock(orig4D, pfAngular4D, encoderParameters.dim_block);
+
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pfDC4D, it_channel);
+                            float sseDC = newPredictor[it_channel].sseBlock(orig4D, pfDC4D, encoderParameters.dim_block);
+
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pfIBC4D);
+                            float sseIBC = newPredictor[it_channel].sseBlock(orig4D, pfIBC4D, encoderParameters.dim_block);
+                            std::string predMode = "";
+
+                            if(sseAngular <= sseDC && sseAngular <= sseIBC){
+                                std::copy(pfAngular4D, pfAngular4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfAngular4D, encoderParameters.dim_block, res4D);
+                                contAng ++;
+                                predMode = "angular";
+                            } else if(sseDC <= sseAngular && sseDC <= sseIBC){
+                                std::copy(pfDC4D, pfDC4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfDC4D, encoderParameters.dim_block, res4D);
+                                contDC ++;
+                                predMode = "DC";
+                            } else{
+                                std::copy(pfIBC4D, pfIBC4D + SIZE, pf4D);
+                                newPredictor[it_channel].residuePred(orig4D, pfIBC4D, encoderParameters.dim_block, res4D);
+                                contIBC ++;
+                                predMode = "IBC";
+                            }
+                            //newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+
+                            input.clear();
+                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
+                                input.push_back(res4D[i]);
+                            }
+                            statistics.compute_prediction_statistics(input);
+                            statistics.write_prediction_statistics(hypercube, it_pos, dimBlock, ch_names[it_channel], predMode);
+
                         } else if(encoderParameters.getPrediction() == "DC"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+                            newPredictor[it_channel].DC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pf4D, it_channel);
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "IBC"){
-                            std::copy(orig4D, orig4D + SIZE, res4D);
+                            newPredictor[it_channel].IBC(it_pos.x, it_pos.y, block, orig4D, encoderParameters.dim_block, pf4D);
+                            newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
                         } else if(encoderParameters.getPrediction() == "SHIFT"){
                             std::transform(orig4D, orig4D + SIZE, res4D,
                                            [](auto value) { return value - 512; });
@@ -255,6 +330,11 @@ int main(int argc, char **argv) {
                             encoderParameters.prediction = "none";
                             std::copy(orig4D, orig4D + SIZE, res4D);
                         }
+
+                        std::copy(pf4D, pf4D + SIZE, predBlock[it_channel]);
+
+                        std::cout << std::to_string(block) << std::endl;
+
 
 #if STATISTICS_TIME
                         t.toc();
@@ -312,6 +392,7 @@ int main(int argc, char **argv) {
                                            [](auto value) { return value + 512; });
                         } else if(encoderParameters.getPrediction() != "none"){
                             newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
+                            //newPredictor->recResiduePred(res4D, pf4D, encoderParameters.dim_block, pi4D);
                         } else{
                             std::copy(ti4D, ti4D + SIZE, pi4D);
                         }
@@ -327,12 +408,40 @@ int main(int argc, char **argv) {
                         rebuild.toc();
 #endif // STATISTICS_TIME
 
-                        //EDUARDO BEGIN
-
                         if(encoderParameters.getPrediction() != "none") {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
-                        //EDUARDO END
+
+                        std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
+                        std::copy(res4D, res4D + SIZE, resBlock[it_channel]);
+
+                        if(it_channel == 2){
+                            newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
+
+
+                            newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Orig/orig_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
+
+                            newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGB(recBlock, encoderParameters.dim_block, recBlockRGB, lf.mPGMScale);
+
+                            newPredictor->write(recBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Rec_block/rec_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGB(resBlock, encoderParameters.dim_block, resBlockRGB, lf.mPGMScale);
+
+                            newPredictor->write(resBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Res/res_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
+
+                            newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
+                        }
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
                             encoder->write_completedBytes();
@@ -497,6 +606,9 @@ int main(int argc, char **argv) {
         display_report(std::cout, "SSIM-U", ssim[1]);
         display_report(std::cout, "SSIM-V", ssim[2]);
         display_report(std::cout, "SSIM-YUV", mean_ssim);
+        display_report(std::cout, "Angular", contAng);
+        display_report(std::cout, "DC", contDC);
+        display_report(std::cout, "IBC", contIBC);
 #if STATISTICS_TIME
         display_report(std::cout, "Transform::forward time: ", t.getTotalTime());
         display_report(std::cout, "Transform::inverse time: ", ti.getTotalTime());
