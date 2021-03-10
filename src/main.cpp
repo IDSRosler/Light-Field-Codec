@@ -85,8 +85,6 @@ int main(int argc, char **argv) {
 
     Transform transform(encoderParameters);
 
-    Quantization quantization(encoderParameters.dim_block, encoderParameters);
-
     LRE lre(encoderParameters.dim_block);
 #if DPCM_DC
     DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},
@@ -181,22 +179,26 @@ int main(int argc, char **argv) {
 
     float *origBlock[3], *origBlockRGB[3], *recBlock[3], *recBlockRGB[3], *resBlock[3], *resBlockRGB[3];
 
+    float *quantBlock[3], *quantBlockRGB[3];
+
     for(int i = 0; i <3; ++i) {
+        quantBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        quantBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+//        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+//        predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         recBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        recBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+//        recBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         resBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-        resBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+//        resBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
-        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
-        refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+//        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+//        refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
     }
 
     std::string transform_descriptor;
@@ -333,7 +335,7 @@ int main(int argc, char **argv) {
 
                         std::copy(pf4D, pf4D + SIZE, predBlock[it_channel]);
 
-                        std::cout << std::to_string(block) << std::endl;
+                        std::cout << "Block: " << std::to_string(block) << std::endl;
 
 
 #if STATISTICS_TIME
@@ -341,14 +343,13 @@ int main(int argc, char **argv) {
 #endif // STATISTICS_TIME
                         if (encoderParameters.enable_transforms) {
                             transform.set_position(it_channel, it_pos);
-                            auto[_desc, _rd_cost] = transform.forward(res4D, tf4D, dimBlock);
+                            auto[_desc, _rd_cost] = transform.forward(res4D, qf4D, dimBlock);
                             transform_descriptor = _desc;
                             rd_cost = _rd_cost;
                         } else {
-                            std::copy(res4D, res4D + SIZE, tf4D);
+                            std::copy(res4D, res4D + SIZE, qf4D);
                         }
 
-                        quantization.foward(tf4D, qf4D);
 #if STATISTICS_TIME
                         t.tic();
 #endif // STATISTICS_TIME
@@ -368,14 +369,11 @@ int main(int argc, char **argv) {
                             auto lre_size = encoderLRE->write4DBlock(temp_lre, SIZE, lre_result);
                         }
 
-                        //std::copy(temp_lre, temp_lre + SIZE, qi4D);
-
+                        std::copy(temp_lre, temp_lre + SIZE, qi4D);
 
 #if STATISTICS_TIME
                         ti.tic();
 #endif
-                        quantization.inverse(qf4D, qi4D);
-
                         if (encoderParameters.enable_transforms) {
                             transform.inverse(transform_descriptor, qi4D, ti4D, dimBlock);
                         } else {
@@ -414,15 +412,22 @@ int main(int argc, char **argv) {
 
                         std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
                         std::copy(res4D, res4D + SIZE, resBlock[it_channel]);
+                        std::transform(temp_lre, temp_lre + SIZE, quantBlock[it_channel], [](auto value) { return static_cast<float>(value);});
 
                         if(it_channel == 2){
-                            newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
+                            /*newPredictor->YCbCR2RGB(quantBlock, encoderParameters.dim_block, quantBlockRGB, lf.mPGMScale);*/
+
+
+                            newPredictor->write(quantBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Quant/quant_" + std::to_string(block));
+
+                            /*newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);*/
 
 
                             newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Orig/orig_" + std::to_string(block));
 
-                            newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
+                            /*newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
@@ -440,7 +445,7 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
 
                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
+                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*/
                         }
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){

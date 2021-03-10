@@ -12,6 +12,8 @@ DATASETS=(Bikes DangerDeMort FountainVincent2 StonePillarsOutside)
 LAMBDA=1
 PREDICTION_MODE=none
 TRANSFORM=(DCT_II)
+SPATIAL_SIZE=15
+ANGULAR_SIZE=15
 QPS=(1 3 7 20)
 NODES=0
 ENTROPY_TYPE=(arithmetic lre)
@@ -45,7 +47,9 @@ function simulation() {
     -prediction "${PREDICTION_MODE}" \
     -entropy-type "${TYPE}" \
     -use-transforms ${TRANSFORM[@]} \
-    -quadtree-max-inner-nodes ${NODES} \
+    -partition-tree-max-depth ${NODES} \
+    -transform-min-spatial-size ${SPATIAL_SIZE} \
+    -transform-min-angular-size ${ANGULAR_SIZE} \
     ${FLAGS} | tee "${LOGFILE}"
 }
 

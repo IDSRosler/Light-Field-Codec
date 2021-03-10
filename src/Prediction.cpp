@@ -441,24 +441,24 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         }
         //IDM REKAME PARA 512
     }else if(not availableL && not availableA){
-        std::cout << "Not L and Not A" << std::endl;
+//        std::cout << "Not L and Not A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++)
                 out[i] = orig_input[i];
         
     }else if(not availableL ^ not availableA){ //sem uma das referências
        if(availableL){
-           std::cout << "L and Not A" << std::endl;
+//           std::cout << "L and Not A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
                out[i] = refLeft4D[i];
        }else{
-           std::cout << "Not L and A" << std::endl;
+//           std::cout << "Not L and A" << std::endl;
            for(int i = 0; i < origSize.getNSamples(); i++)
                out[i] = refAbove4D[i];
        }
             // std::cout << " ENTROU NO 1" << std::endl ;
 
     }else if( not availableAR ){{
-        std::cout << "Not AR" << std::endl;
+//        std::cout << "Not AR" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++)
             out[i] = refLeft4D[i];  
         
@@ -466,11 +466,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     }
     }else{ //com referência
         if(availableA){
-            std::cout << "Entrou em (com referência) availableA" << std::endl ;
+//            std::cout << "Entrou em (com referência) availableA" << std::endl ;
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, refAboveGeneratedVector);
         }
         if(availableL){
-            std::cout << "Entrou em (com referência) availableL" << std::endl ;
+//            std::cout << "Entrou em (com referência) availableL" << std::endl ;
             this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, refLeftGeneratedVector);
         }
 
@@ -672,11 +672,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         if(min_mode <= 15 ){ //Horizontal
             //Reaproveitamento da funcao pra preencher o vetor de referencias para escrita em arquivo
 
-            std::cout << "Horizontal mode" << std::endl ;
+/*            std::cout << "Horizontal mode" << std::endl ;
 
             std::cout << "Left: " << availableL << std::endl ;
             std::cout << "Above: " << availableA << std::endl ;
-            std::cout << "Above_right: " << availableAR << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;*/
 
             this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
 
@@ -758,11 +758,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             //     ref[i] = refAboveGeneratedVector[i];
             // }
 
-            std::cout << "Vertical mode" << std::endl ;
+/*            std::cout << "Vertical mode" << std::endl ;
 
             std::cout << "Left: " << availableL << std::endl ;
             std::cout << "Above: " << availableA << std::endl ;
-            std::cout << "Above_right: " << availableAR << std::endl ;
+            std::cout << "Above_right: " << availableAR << std::endl ;*/
 
             this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, ref);
             // Horizontal - variable

@@ -23,6 +23,8 @@ QV=20
 LAMBDA=1
 DATASET=Bikes
 TRANSFORM=DCT_II
+SPATIAL_SIZE=15
+ANGULAR_SIZE=15
 PREDICTION_MODE=none
 ENTROPY_TYPE=lre
 LOG_OUTPUT=no
@@ -55,7 +57,9 @@ function simulation() {
     -prediction "${PREDICTION_MODE}" \
     -entropy-type "${ENTROPY_TYPE}" \
     -use-transforms ${TRANSFORM[@]} \
-    -quadtree-max-inner-nodes ${NODES} \
+    -partition-tree-max-depth ${NODES} \
+    -transform-min-spatial-size ${SPATIAL_SIZE} \
+    -transform-min-angular-size ${ANGULAR_SIZE} \
     ${FLAGS} | tee "${LOGFILE}"
 }
 
