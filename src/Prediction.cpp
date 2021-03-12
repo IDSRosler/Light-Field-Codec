@@ -406,7 +406,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     it_pos_out.v = 0;
     it_pos_out.y = 0;
 
-    int num_modes = 0; //33
+    int num_modes = 33; //33
     int d = 0;
     int C = 0;
     int ind = 0;
@@ -435,7 +435,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
 //IDM CHECAR CADA CASO DE IF DEPOIS
     if (not availableL && availableA){
-        std::cout << "Not L and A" << std::endl;
+//        std::cout << "Not L and A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++){
                 out[i] = refAbove4D[i];
         }
@@ -666,8 +666,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
         //}
 
-        min_mode = 16; //fix mode
-        min_d = 0; //fix d
+//        min_mode = 16; //fix mode
+//        min_d = 0; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
             //Reaproveitamento da funcao pra preencher o vetor de referencias para escrita em arquivo

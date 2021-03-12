@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
 
         csv_report->set_separator(",");
         csv_report->header({
-            "Position", "Channel", "Source", "Sum", "AbsSum", "Max", "Min", 
+            "X", "Y", "U", "V", "Channel", "Source", "Sum", "AbsSum", "Max", "Min",
             "Mean", "Std", "Energy", "Entropy", "SSE", "Bitsize",
             "Bin0", "Bin1", "Bin2", "Bin3", "Bin4", "Bin5", "Bin6", 
             "Bin7", "Bin8", "Bin9", "Bin10", "Bin11", "Bin12", "Bin13",
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
         quantBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
-//        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
         predBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
 //        predBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
         resBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
 //        resBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
 
-//        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
+        refVBlock[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
 //        refVBlockRGB[i] = new float[(encoderParameters.dim_block.x * encoderParameters.dim_block.u * encoderParameters.dim_block.v)*2];
     }
 
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
 
                         std::copy(pf4D, pf4D + SIZE, predBlock[it_channel]);
 
-                        std::cout << "Block: " << std::to_string(block) << std::endl;
+//                        std::cout << "Block: " << std::to_string(block) << std::endl;
 
 
 #if STATISTICS_TIME
@@ -410,24 +410,28 @@ int main(int argc, char **argv) {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
 
-                        std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
+                        /*std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
                         std::copy(res4D, res4D + SIZE, resBlock[it_channel]);
                         std::transform(temp_lre, temp_lre + SIZE, quantBlock[it_channel], [](auto value) { return static_cast<float>(value);});
 
                         if(it_channel == 2){
-                            /*newPredictor->YCbCR2RGB(quantBlock, encoderParameters.dim_block, quantBlockRGB, lf.mPGMScale);*/
-
-
                             newPredictor->write(quantBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                encoderParameters.getPathOutput() + "Quant/quant_" + std::to_string(block));
+                                                encoderParameters.getPathOutput() + "Quant_YCbCr/quant_ycbcr_" + std::to_string(block));
 
-                            /*newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);*/
+                            newPredictor->YCbCR2RGB(quantBlock, encoderParameters.dim_block, quantBlockRGB, lf.mPGMScale);
 
+                            newPredictor->write(quantBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Quant_RGB/quant_rgb_" + std::to_string(block));
+
+                            newPredictor->write(origBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                                                encoderParameters.getPathOutput() + "Orig_YCbCr/orig_ycbcr_" + std::to_string(block));
+
+                            newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                encoderParameters.getPathOutput() + "Orig/orig_" + std::to_string(block));
+                                                encoderParameters.getPathOutput() + "Orig_RGB/orig_rgb_" + std::to_string(block));
 
-                            /*newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
+                            *//*newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
@@ -445,8 +449,8 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
 
                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*/
-                        }
+                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*//*
+                        }*/
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
                             encoder->write_completedBytes();
@@ -527,7 +531,10 @@ int main(int argc, char **argv) {
                                 std_dev = std::sqrt(std_dev / samples);
 
 
-                                csv_report->set_key("Position", it_pos);
+                                csv_report->set_key("X", it_pos.x);
+                                csv_report->set_key("Y", it_pos.y);
+                                csv_report->set_key("U", it_pos.u);
+                                csv_report->set_key("V", it_pos.v);
                                 csv_report->set_key("Channel", it_channel);
                                 csv_report->set_key("Source", block_names[i]);
                                 csv_report->set_key("Sum", sum);
@@ -538,7 +545,9 @@ int main(int argc, char **argv) {
                                 csv_report->set_key("Std", std_dev);
                                 csv_report->set_key("Energy", energy);
                                 csv_report->set_key("Entropy", calculate_entropy(values));
+                                csv_report->set_key("SSE", sse);
 #if !ENTROPY_TYPE
+                                int lre_size = encoderLRE->getTotalBytes();
                                 csv_report->set_key("Bitsize", lre_size);
 #endif
                                 for (int bin = 0; bin < 32; bin++)

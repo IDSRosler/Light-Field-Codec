@@ -5,20 +5,20 @@
 BINARY="./cmake-build-debug/LF_Codec"
 DATASET_DIR="/home/igor/Documentos/Git/Full_datasets"
 
-RESULT_DIR_ARITH="./results/Statistics/Arithmetic"
-RESULT_DIR_LRE="./results/Statistics/LRE"
+#RESULT_DIR_ARITH="./results/Statistics/Arithmetic"
+RESULT_DIR_LRE="./results/Prediction/LRE"
 
-DATASETS=(Bikes DangerDeMort FountainVincent2 StonePillarsOutside)
+DATASETS=(Bikes)
 LAMBDA=1
-PREDICTION_MODE=none
+PREDICTION_MODE=angular
 TRANSFORM=(DCT_II)
 SPATIAL_SIZE=15
 ANGULAR_SIZE=15
 QPS=(1 3 7 20)
 NODES=0
-ENTROPY_TYPE=(arithmetic lre)
+ENTROPY_TYPE=(lre)
 LOG_OUTPUT=yes
-FLAGS="-lytro -verbose -experimental"
+FLAGS="-lytro -verbose -experimental -export-statistics"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -40,8 +40,8 @@ function simulation() {
   $BINARY \
     -input "${DATASET_DIR}/${DATASET}/" \
     -output "${RESULT}/${SIMULATION_ID}/" \
-    -lfx 625 -lfy 434 -lfu 13 -lfv 13 \
-    -blx 15 -bly 15 -blu 13 -blv 13 \
+    -lfx 625 -lfy 434 -lfu 15 -lfv 15 \
+    -blx 15 -bly 15 -blu 15 -blv 15 \
     -qx ${QP} -qy ${QP} -qu ${QP} -qv ${QP} -qp ${QP} \
     -lambda "${LAMBDA}" \
     -prediction "${PREDICTION_MODE}" \
