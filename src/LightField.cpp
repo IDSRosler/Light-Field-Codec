@@ -577,7 +577,8 @@ void LightField::YCbCR2RGBDiff() {
     int cont = 0;
 
     int N = 10;
-    float pixel[3];
+    float pixelOrig[3];
+    float pixelPred[3];
     double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
                   -0.187330000000000, 1.855630000000000, 1.574800000000000,
                   -0.468130000000000, 0};
@@ -629,16 +630,21 @@ void LightField::YCbCR2RGBDiff() {
 
                 for (int icomp = 0; icomp < 3; icomp++) {
 
-                    pixel[icomp] = (yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                    pixelPred[icomp] = (yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
                                    + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
-                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6])
-                                   - (yCbCr_original[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
-                                   + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
-                                   + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6])
-                                   + 512;
+                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
 
-                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
-                            double(pixel[icomp] * clipval), 0.0, (double) clipval));
+                    pixelOrig[icomp] = (yCbCr_original[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] =
+                            std::round(clip(double(pixelPred[icomp] * clipval), 0.0, (double) clipval)) -
+                            std::round(clip(double(pixelOrig[icomp] * clipval), 0.0, (double) clipval)) + 100;
+
+//                    rgb[icomp][mFirstPixelPosition + pixelCount] =
+//                            std::round(clip(double(pixelPred[icomp] * clipval), 0.0, (double) clipval)) -
+//                            std::round(clip(double(pixelOrig[icomp] * clipval), 0.0, (double) clipval)) + 512; //Fica cinza
                 }
 
 
