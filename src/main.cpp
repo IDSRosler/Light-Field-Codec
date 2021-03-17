@@ -585,7 +585,10 @@ int main(int argc, char **argv) {
 #pragma clang optimize off
     if (encoderParameters.display_stages)
         display_stage("[Writing reconstructed Light Fields on disk]");
-    //lf.write(encoderParameters.getPathOutput());
+//    lf.write(encoderParameters.getPathOutput());
+    lf.writeLF(encoderParameters.getPathOutput(), "Original");
+    lf.writeLF(encoderParameters.getPathOutput(), "Predict");
+    lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512");
 #pragma clang optimize on
 
     if (encoderParameters.getEntropyType() == "arithmetic"){

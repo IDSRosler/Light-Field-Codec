@@ -30,6 +30,7 @@ public:
     Point4D offset;
 
     void write(const std::string &path);
+    void writeLF(const std::string &path, std::string type);
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;
     int start_t{0}, start_s{0}, end_t{0}, end_s{0};
@@ -57,6 +58,10 @@ public:
     void RGB2YCbCr();
 
     void YCbCR2RGB();
+
+    void YCbCR2RGBOrig();
+
+    void YCbCR2RGBDiff();
 };
 
 

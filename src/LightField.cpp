@@ -13,8 +13,8 @@ LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
 
     this->start_t = isLytro ? 1 : 0;
     this->start_s = isLytro ? 1 : 0;
-    this->end_t = isLytro ? mNumberOfVerticalViews + 1 : mNumberOfVerticalViews;
-    this->end_s = isLytro ? mNumberOfHorizontalViews + 1 : mNumberOfHorizontalViews;
+    this->end_t = mNumberOfVerticalViews;
+    this->end_s = mNumberOfHorizontalViews;
 
     this->offset = Point4D(1, dim_lf.x,
                            dim_lf.x * dim_lf.y,
@@ -36,8 +36,8 @@ void LightField::read(const std::string &path) {
 
     int cont = 0;
 
-    for (int index_t = this->start_t; index_t < end_t; index_t++) {
-        for (int index_s = this->start_s; index_s < end_s; index_s++) {
+    for (int index_t = this->start_t; index_t < start_t + end_t; index_t++) {
+        for (int index_s = this->start_s; index_s < start_s + end_s; index_s++) {
             char tag[256];
             fullTag[0] = '\0';
 
@@ -132,8 +132,9 @@ void LightField::write(const std::string &path) {
 
     int cont = 0;
     int cont2 = 0;
-    for (int index_t = this->start_t; index_t < start_t + mNumberOfVerticalViews; index_t++) {
-        for (int index_s = this->start_s; index_s < start_s + mNumberOfHorizontalViews; index_s++) {
+
+    for (int index_t = this->start_t; index_t < end_t; index_t++) {
+        for (int index_s = this->start_s; index_s < end_s; index_s++) {
 
             std::string indice_t = std::to_string(index_t);
             std::string indice_s = std::to_string(index_s);
@@ -142,8 +143,7 @@ void LightField::write(const std::string &path) {
 
             std::string name_ppm = path + indice_t + "_" + indice_s + ".ppm";
 
-
-            //printf("Opening View %s \n", name_ppm.c_str());
+            printf("Opening View %s \n", name_ppm.c_str());
             mViewFilePointer = fopen(name_ppm.c_str(), "w");
             if (mViewFilePointer == nullptr) {
                 printf("unable to open %s view file for writing\n", name_ppm.c_str());
@@ -158,11 +158,57 @@ void LightField::write(const std::string &path) {
             fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", mColumns, mLines, mPGMScale);
 
             mFirstPixelPosition = cont * mColumns * mLines;
+
             for (int pixelCount = 0; pixelCount < mColumns * mLines; pixelCount++) {
                 WritePixelToFile(pixelCount);
             }
 
             cont++;
+        }
+    }
+}
+
+void LightField::writeLF(const std::string &path, std::string type) {
+
+    if (type == "Original"){
+        this->YCbCR2RGBOrig();
+    } else if (type == "Predict"){
+        this->YCbCR2RGB();
+    } else {
+        this->YCbCR2RGBDiff();
+    }
+
+    int cont = 0;
+    int cont2 = 0;
+
+    std::string name_ppm = path + "LightField_" + type + ".ppm";
+
+    printf("Opening LF %s \n", name_ppm.c_str());
+    mViewFilePointer = fopen(name_ppm.c_str(), "w");
+    if (mViewFilePointer == nullptr) {
+        printf("unable to open %s view file for writing\n", name_ppm.c_str());
+        assert(false);
+    }
+
+    mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+
+    fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", mColumns*end_s , mLines*end_t, mPGMScale);
+
+    int pixelCount;
+
+
+
+    for (int index_y = 0; index_y < mLines; index_y++) {
+        for (int index_t = 0; index_t < end_t; index_t++) {
+            for (int index_x = 0; index_x < mColumns; index_x++) {
+                for (int index_s = 0; index_s < end_s; index_s++) {
+
+                    mFirstPixelPosition = (index_s + (index_t * end_s)) * mColumns * mLines;
+                    pixelCount = index_x + (index_y * mColumns);
+
+                    WritePixelToFile(pixelCount);
+                }
+            }
         }
     }
 }
@@ -394,6 +440,202 @@ void LightField::YCbCR2RGB() {
                     pixel[icomp] = yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
                                    + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
                                    + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval));
+                }
+
+
+#elif USE_YCbCr == 2 /*Other*/
+                yCbCr[0][mFirstPixelPosition+pixelCount] = yCbCr[0][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[1][mFirstPixelPosition+pixelCount] = yCbCr[1][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[2][mFirstPixelPosition+pixelCount] = yCbCr[2][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+
+                rgb[0][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (408.583f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+                rgb[1][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) -
+                        (208.120f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)) -
+                        (100.291f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+                rgb[2][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (516.412f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+#else /*No - RGB*/
+                rgb[0][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[0][mFirstPixelPosition + pixelCount];
+                rgb[1][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[1][mFirstPixelPosition + pixelCount];
+                rgb[2][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[2][mFirstPixelPosition + pixelCount];
+#endif
+            }
+        }
+
+    }
+
+}
+
+void LightField::YCbCR2RGBOrig() {
+
+    int cont = 0;
+
+    int N = 10;
+    float pixel[3];
+    double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
+                  -0.187330000000000, 1.855630000000000, 1.574800000000000,
+                  -0.468130000000000, 0};
+
+
+    double nd = (double) (1 << (N - 8));
+
+    unsigned short clipval = (unsigned short) (1 << N) - 1;  // pow(2, N) - 1;
+
+    double sval1 = 16 * nd;
+    double sval2 = 219 * nd;
+    double sval3 = 128 * nd;
+    double sval4 = 224 * nd;
+
+
+    for (int index_t = 0; index_t < mNumberOfVerticalViews; index_t++) {
+        for (int index_s = 0; index_s < mNumberOfHorizontalViews; index_s++) {
+            mFirstPixelPosition = cont * mColumns * mLines;
+            cont++;
+
+            for (int pixelCount = 0; pixelCount < mColumns * mLines; pixelCount++) {
+
+#if USE_YCbCr == 1 /*Mule*/
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    yCbCr_original[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr_original[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                }
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    pixel[icomp] = yCbCr_original[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval));
+                }
+
+
+#elif USE_YCbCr == 2 /*Other*/
+                yCbCr[0][mFirstPixelPosition+pixelCount] = yCbCr[0][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[1][mFirstPixelPosition+pixelCount] = yCbCr[1][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[2][mFirstPixelPosition+pixelCount] = yCbCr[2][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+
+                rgb[0][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (408.583f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+                rgb[1][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) -
+                        (208.120f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)) -
+                        (100.291f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+                rgb[2][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (516.412f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+#else /*No - RGB*/
+                rgb[0][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[0][mFirstPixelPosition + pixelCount];
+                rgb[1][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[1][mFirstPixelPosition + pixelCount];
+                rgb[2][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[2][mFirstPixelPosition + pixelCount];
+#endif
+            }
+        }
+
+    }
+
+}
+
+void LightField::YCbCR2RGBDiff() {
+
+    int cont = 0;
+
+    int N = 10;
+    float pixel[3];
+    double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
+                  -0.187330000000000, 1.855630000000000, 1.574800000000000,
+                  -0.468130000000000, 0};
+
+
+    double nd = (double) (1 << (N - 8));
+
+    unsigned short clipval = (unsigned short) (1 << N) - 1;  // pow(2, N) - 1;
+
+    double sval1 = 16 * nd;
+    double sval2 = 219 * nd;
+    double sval3 = 128 * nd;
+    double sval4 = 224 * nd;
+
+
+    for (int index_t = 0; index_t < mNumberOfVerticalViews; index_t++) {
+        for (int index_s = 0; index_s < mNumberOfHorizontalViews; index_s++) {
+            mFirstPixelPosition = cont * mColumns * mLines;
+            cont++;
+
+            for (int pixelCount = 0; pixelCount < mColumns * mLines; pixelCount++) {
+
+#if USE_YCbCr == 1 /*Mule*/
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+                    yCbCr[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                    yCbCr_original[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr_original[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                }
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    pixel[icomp] = (yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6])
+                                   - (yCbCr_original[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6])
+                                   + 512;
 
                     rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
                             double(pixel[icomp] * clipval), 0.0, (double) clipval));
