@@ -26,11 +26,14 @@ public:
     LFSample *rgb[3];
     float *yCbCr[3];
     float *yCbCr_original[3];
+    float *yCbCr_Predict[3];
 
     Point4D offset;
 
     void write(const std::string &path);
     void writeLF(const std::string &path, std::string type);
+
+    void generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf,Point4D &dim_block);
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;
     int start_t{0}, start_s{0}, end_t{0}, end_s{0};
@@ -58,6 +61,8 @@ public:
     void RGB2YCbCr();
 
     void YCbCR2RGB();
+
+    void YCbCR2RGBPred();
 
     void YCbCR2RGBOrig();
 

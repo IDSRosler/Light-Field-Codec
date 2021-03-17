@@ -335,6 +335,10 @@ int main(int argc, char **argv) {
 
                         std::copy(pf4D, pf4D + SIZE, predBlock[it_channel]);
 
+                        if (it_channel == 2){
+                            lf.generatePredictLF(predBlock, it_pos, stride_lf, dimBlock);
+                        }
+
 //                        std::cout << "Block: " << std::to_string(block) << std::endl;
 
 
@@ -588,7 +592,8 @@ int main(int argc, char **argv) {
 //    lf.write(encoderParameters.getPathOutput());
     lf.writeLF(encoderParameters.getPathOutput(), "Original");
     lf.writeLF(encoderParameters.getPathOutput(), "Predict");
-    lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512");
+    lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512"); // Se for usado deve ser após a escrita do Original e do Predito devido a modificação feita na memória onde os LFs estão armazenados
+    lf.writeLF(encoderParameters.getPathOutput(), "Rec");
 #pragma clang optimize on
 
     if (encoderParameters.getEntropyType() == "arithmetic"){

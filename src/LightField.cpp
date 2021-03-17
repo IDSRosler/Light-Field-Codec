@@ -24,6 +24,7 @@ LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
         this->rgb[i] = new LFSample[dim_lf.getNSamples()];
         this->yCbCr[i] = new float[dim_lf.getNSamples()];
         this->yCbCr_original[i] = new float[dim_lf.getNSamples()];
+        this->yCbCr_Predict[i] = new float[dim_lf.getNSamples()];
     }
 
     this->read(path);
@@ -173,6 +174,8 @@ void LightField::writeLF(const std::string &path, std::string type) {
     if (type == "Original"){
         this->YCbCR2RGBOrig();
     } else if (type == "Predict"){
+        this->YCbCR2RGBPred();
+    }else if (type == "Rec"){
         this->YCbCR2RGB();
     } else {
         this->YCbCR2RGBDiff();
@@ -481,6 +484,96 @@ void LightField::YCbCR2RGB() {
 
 }
 
+void LightField::YCbCR2RGBPred() {
+
+    int cont = 0;
+
+    int N = 10;
+    float pixel[3];
+    double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
+                  -0.187330000000000, 1.855630000000000, 1.574800000000000,
+                  -0.468130000000000, 0};
+
+
+    double nd = (double) (1 << (N - 8));
+
+    unsigned short clipval = (unsigned short) (1 << N) - 1;  // pow(2, N) - 1;
+
+    double sval1 = 16 * nd;
+    double sval2 = 219 * nd;
+    double sval3 = 128 * nd;
+    double sval4 = 224 * nd;
+
+
+    for (int index_t = 0; index_t < mNumberOfVerticalViews; index_t++) {
+        for (int index_s = 0; index_s < mNumberOfHorizontalViews; index_s++) {
+            mFirstPixelPosition = cont * mColumns * mLines;
+            cont++;
+
+            for (int pixelCount = 0; pixelCount < mColumns * mLines; pixelCount++) {
+
+#if USE_YCbCr == 1 /*Mule*/
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+                    yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                }
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    pixel[icomp] = yCbCr_Predict[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr_Predict[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr_Predict[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval));
+                }
+
+
+#elif USE_YCbCr == 2 /*Other*/
+                yCbCr[0][mFirstPixelPosition+pixelCount] = yCbCr[0][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[1][mFirstPixelPosition+pixelCount] = yCbCr[1][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+                yCbCr[2][mFirstPixelPosition+pixelCount] = yCbCr[2][mFirstPixelPosition+pixelCount] + (mPGMScale+1)/2;
+
+                rgb[0][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (408.583f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+                rgb[1][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) -
+                        (208.120f / 256 * (yCbCr[2][mFirstPixelPosition + pixelCount] - 128.0f)) -
+                        (100.291f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+                rgb[2][mFirstPixelPosition + pixelCount] = (LFSample) round(
+                        (298.082f / 256 * (yCbCr[0][mFirstPixelPosition + pixelCount] - 16.0f)) +
+                        (516.412f / 256 * (yCbCr[1][mFirstPixelPosition + pixelCount] - 128.0f)));
+
+
+#else /*No - RGB*/
+                rgb[0][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[0][mFirstPixelPosition + pixelCount];
+                rgb[1][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[1][mFirstPixelPosition + pixelCount];
+                rgb[2][mFirstPixelPosition + pixelCount] =
+                        (LFSample) yCbCr[2][mFirstPixelPosition + pixelCount];
+#endif
+            }
+        }
+
+    }
+
+}
+
 void LightField::YCbCR2RGBOrig() {
 
     int cont = 0;
@@ -579,6 +672,9 @@ void LightField::YCbCR2RGBDiff() {
     int N = 10;
     float pixelOrig[3];
     float pixelPred[3];
+
+    short rgbPred, rgbOrig;
+
     double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
                   -0.187330000000000, 1.855630000000000, 1.574800000000000,
                   -0.468130000000000, 0};
@@ -603,48 +699,48 @@ void LightField::YCbCR2RGBDiff() {
 
 #if USE_YCbCr == 1 /*Mule*/
 
+//                for (int icomp = 0; icomp < 3; icomp++) {
+//                    yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] =
+//                            yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+//
+//                    if (icomp < 1) {
+//                        yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] = clip(
+//                                (yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+//                    } else {
+//                        yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] = clip(
+//                                (yCbCr_Predict[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+//                    }
+//
+//                    yCbCr_original[icomp][mFirstPixelPosition + pixelCount] =
+//                            yCbCr_original[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+//
+//                    if (icomp < 1) {
+//                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+//                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+//                    } else {
+//                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
+//                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+//                    }
+//
+//                }
+
                 for (int icomp = 0; icomp < 3; icomp++) {
-                    yCbCr[icomp][mFirstPixelPosition + pixelCount] =
-                            yCbCr[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
 
-                    if (icomp < 1) {
-                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
-                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
-                    } else {
-                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
-                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
-                    }
+                    pixelPred[icomp] = (yCbCr_Predict[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                       + yCbCr_Predict[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                       + yCbCr_Predict[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
 
-                    yCbCr_original[icomp][mFirstPixelPosition + pixelCount] =
-                            yCbCr_original[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
-
-                    if (icomp < 1) {
-                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
-                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
-                    } else {
-                        yCbCr_original[icomp][mFirstPixelPosition + pixelCount] = clip(
-                                (yCbCr_original[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
-                    }
-
-                }
-
-                for (int icomp = 0; icomp < 3; icomp++) {
-
-                    pixelPred[icomp] = (yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
-                                   + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
-                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
 
                     pixelOrig[icomp] = (yCbCr_original[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
-                                   + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
-                                   + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
+                                       + yCbCr_original[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                       + yCbCr_original[2][mFirstPixelPosition + pixelCount] * M[icomp + 6]);
 
-                    rgb[icomp][mFirstPixelPosition + pixelCount] =
-                            std::round(clip(double(pixelPred[icomp] * clipval), 0.0, (double) clipval)) -
-                            std::round(clip(double(pixelOrig[icomp] * clipval), 0.0, (double) clipval)) + 100;
 
-//                    rgb[icomp][mFirstPixelPosition + pixelCount] =
-//                            std::round(clip(double(pixelPred[icomp] * clipval), 0.0, (double) clipval)) -
-//                            std::round(clip(double(pixelOrig[icomp] * clipval), 0.0, (double) clipval)) + 512; //Fica cinza
+                    rgbPred = std::round(clip(double(pixelPred[icomp] * clipval), 0.0, (double) clipval));
+                    rgbOrig = std::round(clip(double(pixelOrig[icomp] * clipval), 0.0, (double) clipval));
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = std::round(clip(double((rgbPred - rgbOrig) + 512), 0.0, (double) clipval));
+
                 }
 
 
@@ -679,6 +775,28 @@ void LightField::YCbCR2RGBDiff() {
             }
         }
 
+    }
+
+}
+
+void LightField::generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf,Point4D &dim_block) {
+    for (int c = 0; c < 3; ++c){
+        float* lf_pos = &this->yCbCr_Predict[c][pos.x * this->offset.x + pos.y * this->offset.y + pos.u * this->offset.u + pos.v * this->offset.v];
+
+        for (int it_v = 0; it_v < dim_block.v; ++it_v) {
+            for (int it_u = 0; it_u < dim_block.u; ++it_u) {
+                for (int it_y = 0; it_y < dim_block.y; ++it_y) {
+                    for (int it_x = 0; it_x < dim_block.x; ++it_x) {
+                        *lf_pos = block[c][it_x + (it_y * dim_block.x) + (it_u * dim_block.y * dim_block.x) + (it_v * dim_block.u * dim_block.y * dim_block.x)];
+
+                        lf_pos += stride_lf.x;
+                    }
+                    lf_pos += stride_lf.y;
+                }
+                lf_pos += stride_lf.u;
+            }
+            lf_pos += stride_lf.v;
+        }
     }
 
 }
