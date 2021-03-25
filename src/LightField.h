@@ -33,7 +33,7 @@ public:
     void write(const std::string &path);
     void writeLF(const std::string &path, std::string type);
 
-    void generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf,Point4D &dim_block);
+    void generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf, Point4D &stride_block, Point4D &dim_block);
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;
     int start_t{0}, start_s{0}, end_t{0}, end_s{0};

@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <vector>
+#include <string>
 
 typedef struct Symbol {
     int value;

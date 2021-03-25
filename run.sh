@@ -3,16 +3,16 @@
 # Default values
 if [ "$BINARY" == "" ]; then
   echo "Variable BINARY not found. Using default value."
-  BINARY="./cmake-build-debug/LF_Codec"
-  #BINARY="./cmake-build-release/LF_Codec"
+  #BINARY="./cmake-build-debug/LF_Codec"
+  BINARY="./cmake-build-release/LF_Codec"
 fi
 if [ "$DATASET_DIR" == "" ]; then
   echo "Variable DATASET_DIR not found. Using default value."
-  DATASET_DIR="/home/italo/Documentos/Light-Field-Codec/LFs/"
+  DATASET_DIR="/home/igor/Documentos/Git/Datasets/"
 fi
 if [ "$RESULT_DIR" == "" ]; then
   echo "Variable RESULT_DIR not found. Using default value."
-  RESULT_DIR="./results/test/LRE"
+  RESULT_DIR="./results/TCC1/"
 fi
 
 QP=20
@@ -28,7 +28,7 @@ ANGULAR_SIZE=15
 PREDICTION_MODE=none
 ENTROPY_TYPE=lre
 LOG_OUTPUT=no
-FLAGS="-lytro -experimental -lossless"
+FLAGS="-lytro -experimental"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -67,7 +67,7 @@ LOG_OUTPUT=yes
 
 TRANSFORM=(DCT_II)
 NODES=0
-FLAGS="-lytro -verbose -export-statistics -"
+FLAGS="-lytro -verbose"
 simulation
 #
 #FLAGS="${FLAGS} -experimental"

@@ -3,7 +3,7 @@
 # Directories
 #BINARY="./cmake-build-release/LF_Codec"
 BINARY="./cmake-build-debug/LF_Codec"
-DATASET_DIR="/home/igor/Documentos/Git/Full_datasets"
+DATASET_DIR="/home/igor/Documentos/Git/Datasets/"
 
 #RESULT_DIR_ARITH="./results/Statistics/Arithmetic"
 RESULT_DIR_LRE="./results/Prediction/LRE"

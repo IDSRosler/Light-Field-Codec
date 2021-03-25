@@ -779,22 +779,30 @@ void LightField::YCbCR2RGBDiff() {
 
 }
 
-void LightField::generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf,Point4D &dim_block) {
+void LightField::generatePredictLF(float **block, Point4D &pos, Point4D &stride_lf, Point4D &stride_block,Point4D &dim_block) {
+    float* lf_pos;
+    float *it_block;
+
     for (int c = 0; c < 3; ++c){
-        float* lf_pos = &this->yCbCr_Predict[c][pos.x * this->offset.x + pos.y * this->offset.y + pos.u * this->offset.u + pos.v * this->offset.v];
+        lf_pos = &this->yCbCr_Predict[c][pos.x * this->offset.x + pos.y * this->offset.y + pos.u * this->offset.u + pos.v * this->offset.v];
+        it_block = block[c];
 
         for (int it_v = 0; it_v < dim_block.v; ++it_v) {
             for (int it_u = 0; it_u < dim_block.u; ++it_u) {
                 for (int it_y = 0; it_y < dim_block.y; ++it_y) {
                     for (int it_x = 0; it_x < dim_block.x; ++it_x) {
-                        *lf_pos = block[c][it_x + (it_y * dim_block.x) + (it_u * dim_block.y * dim_block.x) + (it_v * dim_block.u * dim_block.y * dim_block.x)];
+                        *lf_pos = *it_block;
 
+                        it_block += stride_block.x;
                         lf_pos += stride_lf.x;
                     }
+                    it_block += stride_block.y;
                     lf_pos += stride_lf.y;
                 }
+                it_block += stride_block.u;
                 lf_pos += stride_lf.u;
             }
+            it_block += stride_block.v;
             lf_pos += stride_lf.v;
         }
     }

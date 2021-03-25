@@ -696,11 +696,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                     for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
                         for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                            int pos_out = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
-                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
+                            if ((it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == (origSize.v - 1)))
+                                || (it_pos_out.u == (origSize.u - 1) && (it_pos_out.v == 0 || it_pos_out.v == (origSize.v - 1)))) {//pixels pretos
 
                                 if(channel == 0){
                                     out[pos_out] = -448;
@@ -773,19 +773,19 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             it_pos_in.y = (origSize.y - 1) * origSize.x;
             it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
 
-            // percorre vetor out na ordem vertical espacial
-            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
-                for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+            // percorre vetor out na ordem vertical angular
+            for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
-                    // percorre vetor out na ordem vertical angular
-                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-                        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                    // percorre vetor out na ordem vertical espacial
+                    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+                        for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
 
-                            int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                            int pos_out = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                            if (it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)
-                                || it_pos_out.u == origSize.u - 1 && (it_pos_out.v == 0 || it_pos_out.v == origSize.v - 1)) {//pixels pretos
+                            if ((it_pos_out.u == 0 && (it_pos_out.v == 0 || it_pos_out.v == (origSize.v - 1)))
+                                || (it_pos_out.u == (origSize.u - 1) && (it_pos_out.v == 0 || it_pos_out.v == (origSize.v - 1)))) {//pixels pretos
 
                                 if(channel == 0){
                                     out[pos_out] = -448;
@@ -833,8 +833,9 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                     R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
 
-                                    
-
+//                                    if (pos_y == 420){
+//                                        std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
+//                                    }
 
 
 
