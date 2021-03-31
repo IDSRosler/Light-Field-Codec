@@ -407,7 +407,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     it_pos_out.y = 0;
 
     int num_modes = 33; //33
-    int d = 0;
+//    int d = 0;
     int C = 0;
     int ind = 0;
     int pos = 0;
@@ -418,9 +418,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     float min_mode = 0;
     int min_d = 0;
 
+    int d[33] = {32,26,21,17,13,9,5,2,0,-2,-5,-9,-13,-17,-21,-26,-32,-28,-21,-17,-13,-9,-5,-2,0,2,5,9,13,17,21,26,32};
+
     float refAbove4D[origSize.getNSamples()],
-            refLeft4D[origSize.getNSamples()],
-            refAboveRight4D[origSize.getNSamples()];
+    refLeft4D[origSize.getNSamples()],
+    refAboveRight4D[origSize.getNSamples()];
 
     float refAboveGeneratedVector[(origSize.x * origSize.u * origSize.v)*2];
     float refLeftGeneratedVector[(origSize.y * origSize.u * origSize.v)*2];
@@ -431,39 +433,39 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
     this->get_referenceL(pos_x, pos_y, refLeft4D, origSize, availableL);
     this->get_referenceAR(pos_x, pos_y, refAboveRight4D, origSize, availableAR, block);
 
-     /*std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;*/
+    /*std::cout << availableL << " - " << availableA << " - " << availableAR << std::endl ;*/
 
 //IDM CHECAR CADA CASO DE IF DEPOIS
     if (not availableL && availableA){
 //        std::cout << "Not L and A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++){
-                out[i] = refAbove4D[i];
+            out[i] = refAbove4D[i];
         }
         //IDM REKAME PARA 512
     }else if(not availableL && not availableA){
 //        std::cout << "Not L and Not A" << std::endl;
         for(int i = 0; i < origSize.getNSamples(); i++)
-                out[i] = orig_input[i];
-        
+            out[i] = orig_input[i];
+
     }else if(not availableL ^ not availableA){ //sem uma das referências
-       if(availableL){
+        if(availableL){
 //           std::cout << "L and Not A" << std::endl;
-           for(int i = 0; i < origSize.getNSamples(); i++)
-               out[i] = refLeft4D[i];
-       }else{
+            for(int i = 0; i < origSize.getNSamples(); i++)
+                out[i] = refLeft4D[i];
+        }else{
 //           std::cout << "Not L and A" << std::endl;
-           for(int i = 0; i < origSize.getNSamples(); i++)
-               out[i] = refAbove4D[i];
-       }
-            // std::cout << " ENTROU NO 1" << std::endl ;
+            for(int i = 0; i < origSize.getNSamples(); i++)
+                out[i] = refAbove4D[i];
+        }
+        // std::cout << " ENTROU NO 1" << std::endl ;
 
     }else if( not availableAR ){{
 //        std::cout << "Not AR" << std::endl;
-        for(int i = 0; i < origSize.getNSamples(); i++)
-            out[i] = refLeft4D[i];  
-        
-        // std::cout << " ENTROU NO 2" << std::endl ;
-    }
+            for(int i = 0; i < origSize.getNSamples(); i++)
+                out[i] = refLeft4D[i];
+
+            // std::cout << " ENTROU NO 2" << std::endl ;
+        }
     }else{ //com referência
         if(availableA){
 //            std::cout << "Entrou em (com referência) availableA" << std::endl ;
@@ -475,7 +477,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         }
 
         for(int mode = 0; mode < num_modes; mode++) { //num_modes
-            switch (mode)
+            /*switch (mode)
             {
                 case 0:
                 case 32:
@@ -546,13 +548,15 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                     break;
                 default:
                     d = 0;
-            }
+            }*/
 
             if(mode <= 15 && availableL) { //Horizontal
 
+                this->generateReferenceVectorHorizontal(refLeft4D, availableL, refLeft4D, availableL, origSize, ref);
+
                 // Horizontal - fixed
                 it_pos_in.x = origSize.x - 1;
-                it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
+                it_pos_in.u = 0;
 
                 // Vertical - variable
                 it_pos_in.v = 0;
@@ -570,23 +574,30 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                                               (it_pos_out.u * origSize.x * origSize.y)
                                               + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                                //C = (it_pos_out.u * d) >> 5;
-                                C = (int)this->roundTowardsZero((int)(it_pos_out.u * d) / (float)pow(2, 5));
-                                W = (it_pos_out.u * d) & 31;
-                                ind = it_pos_out.v + C;
+                                C = (int)(it_pos_out.x * d[mode]) >> 5;
+                                W = (int)(it_pos_out.x * d[mode]) & 31;
+                                ind = it_pos_out.y + C;
                                 pos = ind + 1;
 
                                 if(ind < 0){
                                     ind = 0;
                                 }
 
-                                if (pos >= origSize.v) {
+                                if (pos >= (origSize.y*2)) {
                                     pos = ind;
                                 }
-                                R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
-                                               (ind * origSize.x * origSize.y * origSize.u)];
-                                R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
-                                               ((pos) * origSize.x * origSize.y * origSize.u)];
+                                /*R0 = refLeft4D[(it_pos_in.x) + (ind * origSize.x)
+                                               + (it_pos_out.u * origSize.x * origSize.y)
+                                               + (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
+
+                                R1 = refLeft4D[(it_pos_in.x) + (pos * origSize.x)
+                                               + (it_pos_out.u * origSize.x * origSize.y)
+                                               + (it_pos_out.v * origSize.x * origSize.y * origSize.u)];*/
+
+                                R0 = ref[ind + (it_pos_out.u * origSize.y) +
+                                         (it_pos_out.v * origSize.y * origSize.u)];
+                                R1 = ref[pos + (it_pos_out.u * origSize.y) +
+                                         (it_pos_out.v * origSize.y * origSize.u)];
 
                                 out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
                             }
@@ -597,51 +608,59 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                 if(mode == 0){
                     min_sse = sse;
                     min_mode = mode;
-                    min_d = d;
+                    min_d = d[mode];
                 } else if (sse < min_sse) {
                     min_sse = sse;
                     min_mode = mode;
-                    min_d = d;
+                    min_d = d[mode];
                 }
 
             } else if(mode > 15 && availableA){ //Vertical
+
+                this->generateReferenceVectorVertical(refAbove4D, availableA, refAboveRight4D, availableAR, origSize, ref);
 
                 // Horizontal - variable
                 it_pos_in.x = 0;
                 it_pos_in.u = 0;
 
                 // Vertical - fixed
-                it_pos_in.y = (origSize.y - 1) * origSize.x;
-                it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
+                it_pos_in.y = origSize.y - 1;
+                it_pos_in.v = 0;
 
                 // percorre vetor out na ordem vertical espacial
-                for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
-                    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-
+                for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+                    for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
                         // percorre vetor out na ordem vertical angular
-                        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-                            for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                        for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                            for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
                                 int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                               + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
 
-                                //C = (it_pos_out.v * d) >> 5;
-                                C = (int)this->roundTowardsZero((int)(it_pos_out.v * d) / (float)pow(2, 5));
-                                W = (it_pos_out.v * d) & 31;
-                                ind = it_pos_out.u + C;
+                                C = (int)(it_pos_out.y * d[mode]) >> 5;
+                                W = (int)(it_pos_out.y * d[mode]) & 31;
+                                ind = it_pos_out.x + C;
                                 pos = ind + 1;
 
                                 if(ind < 0){
                                     ind = 0;
                                 }
 
-                                if (pos >= origSize.v){
+                                if (pos >= (origSize.x*2)){
                                     pos = ind;
                                 }
-                                R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
-                                                (it_pos_in.v)];
-                                R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
-                                                (it_pos_in.v)];
+                                /*R0 = refAbove4D[ind + (it_pos_in.y * origSize.x)
+                                                + (it_pos_out.u * origSize.x * origSize.y)
+                                                + (it_pos_in.v * origSize.x * origSize.y * origSize.u)];
+
+                                R1 = refAbove4D[pos + (it_pos_in.y * origSize.x)
+                                                + (it_pos_out.u * origSize.x * origSize.y)
+                                                + (it_pos_in.v * origSize.x * origSize.y * origSize.u)];*/
+
+                                R0 = ref[ind + (it_pos_out.u * origSize.x) +
+                                         (it_pos_out.v * origSize.x * origSize.u)];
+                                R1 = ref[pos + (it_pos_out.u * origSize.x) +
+                                         (it_pos_out.v * origSize.x * origSize.u)];
 
                                 out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
                             }
@@ -652,11 +671,11 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
                 if(mode == 16 && not availableL){ //primeiro e não passou pelo horizontal
                     min_sse = sse;
                     min_mode = mode;
-                    min_d = d;
+                    min_d = d[mode];
                 } else if (sse < min_sse) {
                     min_sse = sse;
                     min_mode = mode;
-                    min_d = d;
+                    min_d = d[mode];
                 }
 
             }
@@ -682,7 +701,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
             // Horizontal - fixed
             it_pos_in.x = origSize.x - 1;
-            it_pos_in.u = floor(origSize.u / 2) * origSize.x * origSize.y;
+            it_pos_in.u = 0;
 
             // Vertical - variable
             it_pos_in.v = 0;
@@ -710,42 +729,29 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
                             } else {
 
-                                C = (int) this->roundTowardsZero((int) (it_pos_out.u * min_d) / (float) pow(2, 5));
-                                W = (it_pos_out.u * min_d) & 31;
-                                ind = it_pos_out.v + C;
+                                C = (int)(it_pos_out.x * min_d) >> 5;
+                                W = (int)(it_pos_out.x * min_d) & 31;
+                                ind = it_pos_out.y + C;
+                                pos = ind + 1;
 
                                 if (ind < 0) {
                                     ind = 0;
                                 }
                                 pos = ind + 1;
 
+                                if (pos >= (origSize.y*2)){
+                                    pos = ind;
+                                }
 
-//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-//                                    || (ind == 1 && it_pos_out.u <= 1)
-//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-//                                    || (pos == 1 && it_pos_out.u <= 1)
-//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-//
-//                                    out[pos_out] = refLeft4D[pos_out];
-//                                } else{
+                                R0 = ref[ind + (it_pos_out.u * origSize.y) +
+                                                            (it_pos_out.v * origSize.y * origSize.u)];
+                                R1 = ref[pos + (it_pos_out.u * origSize.y) +
+                                                            (it_pos_out.v * origSize.y * origSize.u)];
 
-                                    R0 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
-                                                                (ind * origSize.y * origSize.u)];
-                                    R1 = refLeftGeneratedVector[(it_pos_out.y) + (it_pos_out.u * origSize.y) +
-                                                                (pos * origSize.y * origSize.u)];
+                                // std::cout << "\n Referencias: " << R0 << " - " << R1 << std::endl;
 
-                                    // std::cout << "\n Referencias: " << R0 << " - " << R1 << std::endl;
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
 
-                                    /*
-                                    R0 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                                   (ind * origSize.x * origSize.y * origSize.u)];
-                                    R1 = refLeft4D[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
-                                                   ((pos) * origSize.x * origSize.y * origSize.u)];
-                                    */
-
-                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                    
                                 //}
                             }
                         }
@@ -770,16 +776,15 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
             it_pos_in.u = 0;
 
             // Vertical - fixed
-            it_pos_in.y = (origSize.y - 1) * origSize.x;
-            it_pos_in.v = floor(origSize.v / 2) * origSize.x * origSize.y * origSize.u;
+            it_pos_in.y = origSize.y - 1;
+            it_pos_in.v = 0;
 
-            // percorre vetor out na ordem vertical angular
-            for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
-                for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
-
-                    // percorre vetor out na ordem vertical espacial
-                    for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
-                        for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+            // percorre vetor out na ordem vertical espacial
+            for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+                for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+                    // percorre vetor out na ordem vertical angular
+                    for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                        for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
 
                             int pos_out = it_pos_out.x + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
                                           + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
@@ -795,58 +800,31 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
                             } else {
 
-                                C = (int) this->roundTowardsZero((int) (it_pos_out.v * min_d) / (float) pow(2, 5));
-                                W = (it_pos_out.v * min_d) & 31;
-                                ind = it_pos_out.u + C;
+                                C = (int)(it_pos_out.y * min_d) >> 5;
+                                W = (int)(it_pos_out.y * min_d) & 31;
+                                ind = it_pos_out.x + C;
+                                pos = ind + 1;
 
                                 if (ind < 0) {
                                     ind = 0;
                                 }
                                 pos = ind + 1;
 
-//                                if(((ind == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-//                                    || (ind == 1 && it_pos_out.u <= 1)
-//                                    || ((ind == 2 || ind == 3 || ind > origSize.v - 3) && it_pos_out.u == 0)) ||
-//                                   ((pos == 0 && (it_pos_out.u <= 3 || it_pos_out.u > origSize.u - 3))
-//                                    || (pos == 1 && it_pos_out.u <= 1)
-//                                    || ((pos == 2 || pos == 3 || ind > origSize.v - 3) && it_pos_out.u == 0))){
-//
-//                                    out[pos_out] = refAbove4D[pos_out];
-//                                } else {
-                                    /*
-                                    if(ind > origSize.u){
-                                        int aux = origSize.u - ind;
-                                            int contU = 1;
-                                        if(aux > origSize.u){
-                                            aux = origSize.u - ind;
+                                if (pos >= (origSize.x*2)){
+                                    pos = ind;
+                                }
 
-                                        }
-                                    }
-                                     */
+                                // if(it_pos_out.u == 6 && it_pos_out.v == origSize.v - 1 && block == 42){
+                                //     std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
+                                // }
 
-                                    // if(it_pos_out.u == 6 && it_pos_out.v == origSize.v - 1 && block == 42){
-                                    //     std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
-                                    // }
+                                R0 = ref[ind + (it_pos_out.u * origSize.x) +
+                                                             (it_pos_out.v * origSize.x * origSize.u)];
+                                R1 = ref[pos + (it_pos_out.u * origSize.x) +
+                                                             (it_pos_out.v * origSize.x * origSize.u)];
 
-                                    R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
-                                                                 (it_pos_out.v * origSize.x * origSize.u)];
-                                    R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
-                                                                 (it_pos_out.v * origSize.x * origSize.u)];
+                                out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
 
-//                                    if (pos_y == 420){
-//                                        std::cout << "ind p1: " << ind << " pos p2: " << pos << std::endl;
-//                                    }
-
-
-
-                                    /*
-                                    R0 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + (ind * origSize.x * origSize.y) +
-                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-                                    R1 = refAbove4D[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
-                                                    (it_pos_out.v * origSize.x * origSize.y * origSize.u)];
-                                    */
-                                    out[pos_out] = ((32 - W) * R0 + W * R1 + 16) / pow(2, 5);
-                                //}
                             }
                         }
                     }
@@ -855,6 +833,7 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
         }
     }
 }
+
 
 
 void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out, int block, float *ref){

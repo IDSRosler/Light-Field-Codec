@@ -414,12 +414,12 @@ int main(int argc, char **argv) {
                             newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         }
 
-                        std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
+                        /*std::copy(pi4D, pi4D + SIZE, recBlock[it_channel]);
                         std::copy(res4D, res4D + SIZE, resBlock[it_channel]);
                         std::transform(temp_lre, temp_lre + SIZE, quantBlock[it_channel], [](auto value) { return static_cast<float>(value);});
 
-                        /*if(it_channel == 2){
-                           *//* newPredictor->write(quantBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
+                        if(it_channel == 2){
+                            newPredictor->write(quantBlock, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Quant_YCbCr/quant_ycbcr_" + std::to_string(block));
 
                             newPredictor->YCbCR2RGB(quantBlock, encoderParameters.dim_block, quantBlockRGB, lf.mPGMScale);
@@ -433,14 +433,14 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                encoderParameters.getPathOutput() + "Orig_RGB/orig_rgb_" + std::to_string(block));*//*
+                                                encoderParameters.getPathOutput() + "Orig_RGB/orig_rgb_" + std::to_string(block));
 
-                            newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
+                            *//*newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
 
-                            *//*newPredictor->YCbCR2RGB(recBlock, encoderParameters.dim_block, recBlockRGB, lf.mPGMScale);
+                            newPredictor->YCbCR2RGB(recBlock, encoderParameters.dim_block, recBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(recBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Rec_block/rec_" + std::to_string(block));
@@ -448,12 +448,12 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGB(resBlock, encoderParameters.dim_block, resBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(resBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                encoderParameters.getPathOutput() + "Res/res_" + std::to_string(block));*//*
+                                                encoderParameters.getPathOutput() + "Res/res_" + std::to_string(block));
 
                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
 
                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
+                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*//*
                         }*/
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
@@ -593,7 +593,7 @@ int main(int argc, char **argv) {
     lf.writeLF(encoderParameters.getPathOutput(), "Original");
     lf.writeLF(encoderParameters.getPathOutput(), "Predict");
     lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512"); // Se for usado deve ser após a escrita do Original e do Predito devido a modificação feita na memória onde os LFs estão armazenados
-    lf.writeLF(encoderParameters.getPathOutput(), "Rec");
+//    lf.writeLF(encoderParameters.getPathOutput(), "Rec");
 #pragma clang optimize on
 
     if (encoderParameters.getEntropyType() == "arithmetic"){
