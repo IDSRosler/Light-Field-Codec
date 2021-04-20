@@ -106,7 +106,7 @@ set(SOURCES
     src/EncSymbol.cpp
     src/ArithmeticEncoder.cpp
     src/Tree.cpp
-)
+        src/SubpartitionModel.cpp src/SubpartitionModel.h)
 
 
 add_executable(LF_Codec src/main.cpp)

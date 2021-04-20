@@ -18,6 +18,8 @@
 #include "EntropyEncoder.h"
 #include "Prediction.h"
 
+#include "SubpartitionModel.h"
+
 
 using namespace std;
 
@@ -368,7 +370,9 @@ int main(int argc, char **argv) {
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
-                            encoder->encodeHypercube(temp_lre, encoderParameters.dim_block, hypercube, ch_names[it_channel]);
+//                            encoder->encodeHypercube(temp_lre, encoderParameters.dim_block, hypercube, ch_names[it_channel]);
+                            SubpartitionModel tree(temp_lre, encoderParameters.dim_block);
+                            tree.DeleteTree();
                         } else {
                             auto lre_size = encoderLRE->write4DBlock(temp_lre, SIZE, lre_result);
                         }
@@ -590,9 +594,9 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Writing reconstructed Light Fields on disk]");
 //    lf.write(encoderParameters.getPathOutput());
-    lf.writeLF(encoderParameters.getPathOutput(), "Original");
-    lf.writeLF(encoderParameters.getPathOutput(), "Predict");
-    lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512"); // Se for usado deve ser após a escrita do Original e do Predito devido a modificação feita na memória onde os LFs estão armazenados
+//    lf.writeLF(encoderParameters.getPathOutput(), "Original");
+//    lf.writeLF(encoderParameters.getPathOutput(), "Predict");
+//    lf.writeLF(encoderParameters.getPathOutput(), "Pred-Orig+512"); // Se for usado deve ser após a escrita do Original e do Predito devido a modificação feita na memória onde os LFs estão armazenados
 //    lf.writeLF(encoderParameters.getPathOutput(), "Rec");
 #pragma clang optimize on
 
