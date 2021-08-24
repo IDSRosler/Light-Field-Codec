@@ -815,8 +815,8 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
                                     R0 = refAboveGeneratedVector[(it_pos_out.x) + (ind * origSize.x) +
                                                                  (it_pos_out.v * origSize.x * origSize.u)];
-                                    R1 = refAboveGeneratedVector[(it_pos_out.x) + (pos * origSize.x) +
-                                                                 (it_pos_out.v * origSize.x * origSize.u)];
+                                    R1 = refAboveGeneratedVector[((it_pos_out.x) + (pos * origSize.x) +
+                                                                 (it_pos_out.v * origSize.x * origSize.u)) + 2535];
 
                                     
 
