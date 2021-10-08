@@ -23,8 +23,8 @@ LAMBDA=100
 DATASET=Bikes/Bikes
 TRANSFORM=DCT_II
 PREDICTION_MODE=angular
-LOG_OUTPUT=no
-FLAGS="-lytro -experimental -lossless"
+LOG_OUTPUT=yes
+FLAGS="-lytro -experimental -lossless -export-blocks"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
@@ -42,8 +42,8 @@ function simulation() {
     LOGFILE="/dev/null"
     FLAGS="${FLAGS} -show-progress-bar"
   fi
-
-  $BINARY \
+  BIN="./build/LF_Codec"
+  $BIN \
     -input "${DATASET_DIR}/${DATASET}/" \
     -output "${RESULT_DIR}/${SIMULATION_ID}/" \
     -lfx 625 -lfy 434 -lfu 13 -lfv 13 \
@@ -61,7 +61,11 @@ LOG_OUTPUT=yes
 TRANSFORM=(DCT_II)
 NODES=0
 FLAGS="-lytro -verbose -export-statistics -"
+
+#for i in 2 10 17; do
 simulation
+#done
+
 #
 #FLAGS="${FLAGS} -experimental"
 #simulation

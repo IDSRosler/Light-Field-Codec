@@ -657,10 +657,10 @@ void Prediction::angularPredictionVector(uint pos_x, uint pos_y, const float *or
 
         //if(block == 0){
         //    std::cout << "mode: " << min_mode + 2 << " sse: " << min_sse << " d: " << min_d << std::endl;
-        //}
+        //}--------------''''''''''''''''''''''''''''''''''''
 
-        min_mode = 16; //fix mode
-        min_d = 0; //fix d
+        //min_mode = 34; //fix mode
+        //min_d = 32; //fix d
 
         if(min_mode <= 15 ){ //Horizontal
            
