@@ -157,7 +157,7 @@ void Tree::ComputeLast(int &last) {
 void Tree::subpartitionReport(EntropyReport &report) {
     for (int index = static_cast<int>(this->order4_SubPartitionsBuffer.size() - 1); index >= 0; --index) {
         report.writeSubpartitions(
-          index,
+        0,
           this->order4_SubPartitionsBuffer[index]->node_pos.x,
           this->order4_SubPartitionsBuffer[index]->node_pos.y,
           this->order4_SubPartitionsBuffer[index]->node_pos.u,

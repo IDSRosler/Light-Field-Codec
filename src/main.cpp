@@ -15,7 +15,8 @@
 #include "Timer.h"
 #include "Transform.h"
 #include "TextReport.h"
-#include "EntropyEncoder.h"
+//#include "EntropyEncoder.h"
+#include "ArithmeticEntropyEncoder.h"
 #include "Prediction.h"
 
 #include "SubpartitionModel.h"
@@ -94,11 +95,11 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
-    EntropyEncoder *encoder;
+    ArithmeticEntropyEncoder *encoder;
     EncBitstreamWriter *encoderLRE;
 
     if (encoderParameters.getEntropyType() == "arithmetic"){
-        encoder = new EntropyEncoder(&encoderParameters, 10000000);
+        encoder = new ArithmeticEntropyEncoder(&encoderParameters, 10000000);
         delete(encoderLRE);
     } else {
         encoderLRE = new EncBitstreamWriter(&encoderParameters, 10000000);
@@ -370,9 +371,9 @@ int main(int argc, char **argv) {
                         auto lre_result = lre.encodeCZI(temp_lre, 0, SIZE);
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
-//                            encoder->encodeHypercube(temp_lre, encoderParameters.dim_block, hypercube, ch_names[it_channel]);
-                            SubpartitionModel tree(temp_lre, encoderParameters.dim_block);
-                            tree.DeleteTree();
+                            encoder->encodeHypercube(temp_lre, encoderParameters.dim_block, hypercube, ch_names[it_channel]);
+/*                            SubpartitionModel tree(temp_lre, encoderParameters.dim_block);
+                            tree.DeleteTree();*/
                         } else {
                             auto lre_size = encoderLRE->write4DBlock(temp_lre, SIZE, lre_result);
                         }

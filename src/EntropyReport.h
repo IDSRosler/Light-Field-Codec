@@ -8,36 +8,36 @@ struct EntropyReport {
 
 public:
     void openFiles(const std::string& output_path) {
-        this->statisticsFile.open(output_path + "Entropy_Statistics.csv");
-        this->subpartitionFile.open(output_path + "Entropy_Subpartition.csv");
+        //this->statisticsFile.open(output_path + "Entropy_Statistics.csv");
+        this->subpartitionFile.open(output_path + "reports/tree_csv_report2.csv");
     }
 
     void closeFiles() {
-        if (this->statisticsFile.is_open()) this->statisticsFile.close();
+        //if (this->statisticsFile.is_open()) this->statisticsFile.close();
         if (this->subpartitionFile.is_open()) this->subpartitionFile.close();
     }
 
     void setHeaders() {
-        this->statisticsFile << "Hypercube, "
-                                "Channel, "
-                                "Last_Block_Level, "
-                                "Sig_Subpartitions, "
-                                "Non_Sig_Subpartitions, "
-                                "Sig_Coefficients, "
-                                "Non_Sig_Coefficients, "
-                                "One_Coefficients, "
-                                "Two_Coefficients,"
-                                "Gr_Two,"
-                                "Abs_Max_Value,"
-                                "Abs_Mean_Value" << std::endl;
+//        this->statisticsFile << "Hypercube, "
+//                                "Channel, "
+//                                "Last_Block_Level, "
+//                                "Sig_Subpartitions, "
+//                                "Non_Sig_Subpartitions, "
+//                                "Sig_Coefficients, "
+//                                "Non_Sig_Coefficients, "
+//                                "One_Coefficients, "
+//                                "Two_Coefficients,"
+//                                "Gr_Two,"
+//                                "Abs_Max_Value,"
+//                                "Abs_Mean_Value" << std::endl;
 
         this->subpartitionFile << "Hypercube, "
                                   "Channel, "
-                                  "Index, "
-                                  "P_x, "
-                                  "P_y, "
-                                  "P_u, "
-                                  "P_v, "
+                                  "Level, "
+                                  "Start_Position_x, "
+                                  "Start_Position_y, "
+                                  "End_Position_x, "
+                                  "End_Position_y, "
                                   "Hy_size, "
                                   "N_zero, "
                                   "N_one, "
@@ -49,7 +49,7 @@ public:
 
     }
 
-    void writeStatistics(int last, int sig_sub, int n_sig_sub,
+/*    void writeStatistics(int last, int sig_sub, int n_sig_sub,
                          int sig_coef, int n_sig_coef, int one, int two, int gr_two,
                          int max, float mean){
         this->statisticsFile <<
@@ -65,15 +65,15 @@ public:
                              gr_two << "," <<
                              max << "," <<
                              mean << std::endl;
-    }
+    }*/
 
-    void writeSubpartitions(int index, int px, int py, int pu,
-                            int pv, int hy_size, int zero, int one, int two, int gr_two,
-                            int max, float mean, bool is_sig){
+    void writeSubpartitions(int level, int px, int py, int pu,
+                            int pv, int zero, int one, int two, int gr_two,
+                            int max, float mean, bool is_sig, int hy_size){
         this->subpartitionFile <<
                              this->hy << "," <<
                              this->ch << "," <<
-                             index << "," <<
+                             level << "," <<
                              px << "," <<
                              py << "," <<
                              pu << "," <<
@@ -94,7 +94,7 @@ public:
     }
 
 private:
-    std::ofstream statisticsFile;
+    //std::ofstream statisticsFile;
     std::ofstream subpartitionFile;
     int hy;
     std::string ch;

@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "Point4D.h"
+#include "EntropyReport.h"
 
 #define SUBDIVISIONS 4
 
@@ -52,15 +53,17 @@ struct NodeBlock{
     Position start_index{0,0};
     Position end_index{0,0};
     Point4D dimention{0,0,0,0};
+    int level;
 
     std::vector<NodeBlock *> child;
 
     NodeAttributes attributes;
 
-    NodeBlock(Position start, Position end, Point4D dim){
+    NodeBlock(Position start, Position end, Point4D dim, int level){
         this->start_index = start;
         this->end_index = end;
         this->dimention = dim;
+        this->level = level;
 
         for (int i = 0; i < SUBDIVISIONS; ++i) {
             this->child.push_back(nullptr);
@@ -70,16 +73,14 @@ struct NodeBlock{
 
 class SubpartitionModel {
   public:
-    SubpartitionModel(const int *bitstream, const Point4D &dim_block);
+    SubpartitionModel(const int *bitstream, const Point4D &dim_block, EntropyReport *csv_report);
     ~SubpartitionModel();
     void DeleteTree();
 
   private:
-    bool HasNodeSignificantValue(const NodeBlock& node);
-
-    void MakeTree(NodeBlock *node, Position middleBefore);
+    void MakeTree(NodeBlock *node, Position middleBefore, EntropyReport *csv_report);
     void _deleteTree(NodeBlock *node);
-    void SetNodeAttributes(NodeBlock& node);
+    void SetNodeAttributes(NodeBlock *node, EntropyReport *csv_report);
 
     Position ComputePositions(int index, Position middleBefore, Position middle);
     Position GetStartPosition(int index, Position middle);

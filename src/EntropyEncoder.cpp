@@ -95,10 +95,10 @@ void EntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, i
     this->arith_encoder.Reset();
     this->e_buffer.clear();
 
-    this->report.writeStatistics(this->last, this->sig_sub, this->n_sig_sub,
+   /* this->report.writeStatistics(this->last, this->sig_sub, this->n_sig_sub,
                                  this->sig_coeff, this->n_sig_coeff, this->one, this->two, this->gr_two,
                                  this->max_value, this->mean_value);
-
+*/
     this->tree.DeleteTree(&this->root); // delete tree
 }
 
