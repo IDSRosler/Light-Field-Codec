@@ -9,12 +9,14 @@ struct EntropyReport {
 public:
     void openFiles(const std::string& output_path) {
         //this->statisticsFile.open(output_path + "Entropy_Statistics.csv");
-        this->subpartitionFile.open(output_path + "reports/tree_csv_report2.csv");
+        this->subpartitionFile.open(output_path + "reports/tree_csv_report.csv");
+        this->treeFlagsFile.open(output_path + "reports/tree_flags.txt");
     }
 
     void closeFiles() {
         //if (this->statisticsFile.is_open()) this->statisticsFile.close();
         if (this->subpartitionFile.is_open()) this->subpartitionFile.close();
+        if (this->treeFlagsFile.is_open()) this->treeFlagsFile.close();
     }
 
     void setHeaders() {
@@ -46,6 +48,8 @@ public:
                                   "Abs_max_value, "
                                   "Abs_mean_value, "
                                   "Is_sig" << std::endl;
+
+        this->treeFlagsFile << "(Hypercube - Channel) -> tree flags \n" << std::endl;
 
     }
 
@@ -88,6 +92,18 @@ public:
                              is_sig << std::endl;
     }
 
+    void writeTreeHeader(int hypercube, std::string ch){
+        this->treeFlagsFile << "( " + std::to_string(hypercube) + " - " + ch + " ) -> ";
+    }
+
+    void writeTreeFlag(int flag){
+        this->treeFlagsFile << std::to_string(flag);
+    }
+
+    void endTreeFlagLine(){
+        this->treeFlagsFile << std::endl;
+    }
+
     void setAtt(int hyp, std::string channel){
         this->hy = hyp;
         this->ch = std::move(channel);
@@ -96,6 +112,7 @@ public:
 private:
     //std::ofstream statisticsFile;
     std::ofstream subpartitionFile;
+    std::ofstream treeFlagsFile;
     int hy;
     std::string ch;
 

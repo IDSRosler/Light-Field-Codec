@@ -26,22 +26,26 @@ SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_bl
 
     this->SetNodeAttributes(this->root, csv_report);
 
-    this->MakeTree(this->root, {0,0}, csv_report);
+    this->MakeTree(this->root, csv_report);
 }
 
 SubpartitionModel::~SubpartitionModel() {
 }
 
-void SubpartitionModel::MakeTree(NodeBlock *node, Position middleBefore, EntropyReport *csv_report) {
+void SubpartitionModel::MakeTree(NodeBlock *node, EntropyReport *csv_report) {
     if (!node->attributes.has_significant_value || node->dimention.x < 2 || node->dimention.y < 2) {
+        csv_report->writeTreeFlag(node->attributes.has_significant_value);
         return;
     }
     else{
-        Position middle = {static_cast<int>(std::ceil(static_cast<float>(node->dimention.x/2.0))),
-                           static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
+        csv_report->writeTreeFlag(node->attributes.has_significant_value);
+
+        Position middle = {node->start_index.x + static_cast<int>(std::ceil(static_cast<float>((node->dimention.x)/2.0))),
+                           node->start_index.y + static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
 
         for (int i = 0; i < SUBDIVISIONS; ++i) {
-            Position pos = this->ComputePositions(i, middleBefore, middle);
+            this->startP = this->GetStartPosition(i, node, middle);
+            this->endP = this->GetEndPosition(i, node, middle);
 
             node->child[i] = new NodeBlock(this->startP,
                                            this->endP,
@@ -52,7 +56,7 @@ void SubpartitionModel::MakeTree(NodeBlock *node, Position middleBefore, Entropy
                                             node->level + 1);
 
             this->SetNodeAttributes(node->child[i], csv_report);
-            this->MakeTree(node->child[i], pos, csv_report);
+            this->MakeTree(node->child[i], csv_report);
         }
     }
 }
@@ -111,26 +115,18 @@ void SubpartitionModel::SetNodeAttributes(NodeBlock *node, EntropyReport *csv_re
     );
 }
 
-Position SubpartitionModel::GetStartPosition(int index, Position middle) {
-    if (index == 0) return {0,0};
-    if (index == 1) return {middle.x,0};
-    if (index == 2) return {0, middle.y};
+Position SubpartitionModel::GetStartPosition(int index, NodeBlock *node, Position middle) {
+    if (index == 0) return {node->start_index.x, node->start_index.y};
+    if (index == 1) return {middle.x, node->start_index.y};
+    if (index == 2) return {node->start_index.x, middle.y};
     if (index == 3) return {middle.x,middle.y};
 }
 
-Position SubpartitionModel::ComputePositions(int index, Position middleBefore, Position middle) {
-    Position pos = this->GetStartPosition(index, middle);
-
-    this->startP.x = pos.x + middleBefore.x;
-    this->startP.y = pos.y + middleBefore.y;
-
-    this->endP.x = this->startP.x + middle.x;
-    this->endP.y = this->startP.y + middle.y;
-
-    if(this->endP.x > this->root->dimention.x) this->endP.x = this->root->dimention.x;
-    if(this->endP.y > this->root->dimention.y) this->endP.y = this->root->dimention.y;
-
-    return pos;
+Position SubpartitionModel::GetEndPosition(int index, NodeBlock *node, Position middle) {
+    if (index == 0) return {middle.x, middle.y};
+    if (index == 1) return {node->end_index.x, middle.y};
+    if (index == 2) return {middle.x, node->end_index.y};
+    if (index == 3) return {node->end_index.x, node->end_index.y};
 }
 
 void SubpartitionModel::_deleteTree(NodeBlock *node) {

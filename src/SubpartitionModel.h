@@ -78,12 +78,12 @@ class SubpartitionModel {
     void DeleteTree();
 
   private:
-    void MakeTree(NodeBlock *node, Position middleBefore, EntropyReport *csv_report);
+    void MakeTree(NodeBlock *node, EntropyReport *csv_report);
     void _deleteTree(NodeBlock *node);
     void SetNodeAttributes(NodeBlock *node, EntropyReport *csv_report);
 
-    Position ComputePositions(int index, Position middleBefore, Position middle);
-    Position GetStartPosition(int index, Position middle);
+    Position GetStartPosition(int index, NodeBlock *node, Position middle);
+    Position GetEndPosition(int index, NodeBlock *node, Position middle);
 
     Block4D *block4D = nullptr;
     NodeBlock *root = nullptr;

@@ -17,8 +17,11 @@ void ArithmeticEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &di
     this->ch = std::move(channel);
 
     this->report.setAtt(this->hypercube, this->ch);
+    this->report.writeTreeHeader(hypercube_pos, this->ch);
 
     this->subpartitionModel = new SubpartitionModel(bitstream, dim_block, &this->report);
+
+    this->report.endTreeFlagLine();
 
     this->subpartitionModel->DeleteTree(); // delete tree
 }
