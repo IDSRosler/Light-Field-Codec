@@ -106,7 +106,12 @@ set(SOURCES
     src/EncSymbol.cpp
     src/ArithmeticEncoder.cpp
     src/Tree.cpp
-        src/SubpartitionModel.cpp src/SubpartitionModel.h src/ArithmeticEntropyEncoder.cpp src/ArithmeticEntropyEncoder.h)
+    src/SubpartitionModel.cpp
+    src/SubpartitionModel.h
+    src/ArithmeticEntropyEncoder.cpp
+    src/ArithmeticEntropyEncoder.h
+    src/EntropyLRE.cpp
+    src/EntropyLRE.h src/EncodeSymbol.cpp src/EncodeSymbol.h)
 
 
 add_executable(LF_Codec src/main.cpp)

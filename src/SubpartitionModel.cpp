@@ -1,6 +1,6 @@
 #include "SubpartitionModel.h"
 
-SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, EntropyReport *csv_report) {
+SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, std::vector<bool> &treeFlags, EntropyReport *csv_report) {
 
     this->block4D = new Block4D(dim_block.x,dim_block.y,dim_block.u,dim_block.v);
 
@@ -26,19 +26,21 @@ SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_bl
 
     this->SetNodeAttributes(this->root, csv_report);
 
-    this->MakeTree(this->root, csv_report);
+    this->MakeTree(this->root, treeFlags, csv_report);
 }
 
 SubpartitionModel::~SubpartitionModel() {
 }
 
-void SubpartitionModel::MakeTree(NodeBlock *node, EntropyReport *csv_report) {
+void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, EntropyReport *csv_report) {
     if (!node->attributes.has_significant_value || node->dimention.x < 2 || node->dimention.y < 2) {
         csv_report->writeTreeFlag(node->attributes.has_significant_value);
+        treeFlags.push_back(node->attributes.has_significant_value);
         return;
     }
     else{
         csv_report->writeTreeFlag(node->attributes.has_significant_value);
+        treeFlags.push_back(node->attributes.has_significant_value);
 
         Position middle = {node->start_index.x + static_cast<int>(std::ceil(static_cast<float>((node->dimention.x)/2.0))),
                            node->start_index.y + static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
@@ -56,7 +58,7 @@ void SubpartitionModel::MakeTree(NodeBlock *node, EntropyReport *csv_report) {
                                             node->level + 1);
 
             this->SetNodeAttributes(node->child[i], csv_report);
-            this->MakeTree(node->child[i], csv_report);
+            this->MakeTree(node->child[i], treeFlags, csv_report);
         }
     }
 }

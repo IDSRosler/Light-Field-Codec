@@ -1,12 +1,14 @@
 #ifndef LF_CODEC_ARITHMETICENTROPYENCODER_H
 #define LF_CODEC_ARITHMETICENTROPYENCODER_H
 
-#include "EncSymbol.h"
+#include "EncodeSymbol.h"
 #include "EncoderParameters.h"
 #include "EntropyReport.h"
 #include "SubpartitionModel.h"
+#include "ArithmeticStructures.h"
+#include "EntropyLRE.h"
 
-class ArithmeticEntropyEncoder : public EncSymbol {
+class ArithmeticEntropyEncoder : public EncodeSymbol {
   public:
     ArithmeticEntropyEncoder(EncoderParameters *parameters, uint bufferSize);
     ~ArithmeticEntropyEncoder();
@@ -22,6 +24,10 @@ class ArithmeticEntropyEncoder : public EncSymbol {
 
     // variables
     SubpartitionModel *subpartitionModel = nullptr;
+
+    EntropyLRE *lre = new EntropyLRE();
+
+    std::vector<bool> treeFlags;
 
     uint totalBytes{0};
 
