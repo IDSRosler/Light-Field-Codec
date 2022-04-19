@@ -1,6 +1,8 @@
 #include "SubpartitionModel.h"
 
-SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, std::vector<bool> &treeFlags, EntropyReport *csv_report) {
+#include <utility>
+
+SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, std::vector<bool> &treeFlags, EntropyReport *csv_report, int hy) {
 
     this->block4D = new Block4D(dim_block.x,dim_block.y,dim_block.u,dim_block.v);
 
@@ -26,16 +28,19 @@ SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_bl
 
     this->SetNodeAttributes(this->root, csv_report);
 
-    this->MakeTree(this->root, treeFlags, csv_report);
+    this->MakeTree(this->root, treeFlags, csv_report, hy);
 }
 
 SubpartitionModel::~SubpartitionModel() {
 }
 
-void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, EntropyReport *csv_report) {
+void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, EntropyReport *csv_report, int hy) {
     if (!node->attributes.has_significant_value || node->dimention.x < 2 || node->dimention.y < 2) {
         csv_report->writeTreeFlag(node->attributes.has_significant_value);
         treeFlags.push_back(node->attributes.has_significant_value);
+        if(node->start_index.x == 1 && node->start_index.y == 1 && node->end_index.x == 2 && node->end_index.y == 2 && hy == 0){
+            csv_report->writeblock(this->block4D->data, node);
+        }
         return;
     }
     else{
@@ -58,7 +63,7 @@ void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, 
                                             node->level + 1);
 
             this->SetNodeAttributes(node->child[i], csv_report);
-            this->MakeTree(node->child[i], treeFlags, csv_report);
+            this->MakeTree(node->child[i], treeFlags, csv_report, hy);
         }
     }
 }

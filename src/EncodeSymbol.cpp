@@ -7,6 +7,10 @@
 EncodeSymbol::EncodeSymbol(uint bufferSize) : EncBitstreamBuffer(bufferSize){}
 
 void EncodeSymbol::encodeLREVector(std::vector<LRE_Struct> &lre) {
+    int size = lre.size();
+    if (size >= 0) {
+        this->encodeExpGolomb(size);
+    }
     while (!lre.empty()){
         LRE_Struct lreValue = lre.back();
         this->encodeBit(lreValue.level);
