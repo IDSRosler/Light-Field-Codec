@@ -7,6 +7,8 @@
 
 #define SUBDIVISIONS 4
 
+#include <queue>
+
 #include "Point4D.h"
 
 struct Position{
@@ -74,6 +76,16 @@ struct NodeBlock{
 struct LRE_Struct{
     int level;
     int run;
+};
+
+struct Syntactic_Elements{
+    int last_sig_coeff_u=-1;
+    int last_sig_coeff_v=-1;
+    std::queue<bool> sig_coeff_flag;
+    std::queue<bool> coeff_abs_level_greater1_flag;
+    std::queue<bool> coeff_abs_level_greater2_flag;
+    std::queue<uint> coeff_abs_level_remaining;
+    std::queue<bool> coeff_sign_flag;
 };
 
 #endif //LF_CODEC_ARITHMETICSTRUCTURES_H

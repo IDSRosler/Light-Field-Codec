@@ -22,13 +22,15 @@ void ArithmeticEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &di
 
     //make tree partition
     this->treeFlags.clear();
-    this->subpartitionModel = new SubpartitionModel(bitstream, dim_block, this->treeFlags, &this->report, hypercube_pos);
+    while (this->elements.size() > 0){ this->elements.pop(); }
+    this->subpartitionModel = new SubpartitionModel(bitstream, dim_block, this->treeFlags, this->elements, &this->report, hypercube_pos);
 
     //apply lre in tree header flags
     std::vector<LRE_Struct> lreValues = this->lre->encodeLREVector(this->treeFlags);
     this->encodeLREVector(lreValues);
 
     this->report.endTreeFlagLine();
+    this->report.writeSyntactElements(this->elements);
 
     this->subpartitionModel->DeleteTree(); // delete tree
 }

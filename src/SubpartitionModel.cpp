@@ -2,7 +2,7 @@
 
 #include <utility>
 
-SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, std::vector<bool> &treeFlags, EntropyReport *csv_report, int hy) {
+SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_block, std::vector<bool> &treeFlags,  std::queue<Syntactic_Elements> &elements, EntropyReport *csv_report, int hy) {
 
     this->block4D = new Block4D(dim_block.x,dim_block.y,dim_block.u,dim_block.v);
 
@@ -10,13 +10,10 @@ SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_bl
         for (int it_x = 0; it_x < this->block4D->dimention.x; ++it_x) {
             for (int it_v = 0; it_v < this->block4D->dimention.v; ++it_v) {
                 for (int it_u = 0; it_u < this->block4D->dimention.u; ++it_u) {
-                    /*if (it_x == 16 || it_y == 16){
-                        this->block4D->data[it_x][it_y][it_u][it_v] = 0;
-                    }else*/
-                        this->block4D->data[it_x][it_y][it_u][it_v] = bitstream[it_x +
-                                                                                (it_y * dim_block.x) +
-                                                                                (it_u * dim_block.x * dim_block.y) +
-                                                                                (it_v * dim_block.x * dim_block.y * dim_block.u)];
+                    this->block4D->data[it_x][it_y][it_u][it_v] = bitstream[it_x +
+                                                                            (it_y * dim_block.x) +
+                                                                            (it_u * dim_block.x * dim_block.y) +
+                                                                            (it_v * dim_block.x * dim_block.y * dim_block.u)];
                 }
             }
         }
@@ -28,19 +25,24 @@ SubpartitionModel::SubpartitionModel(const int *bitstream, const Point4D &dim_bl
 
     this->SetNodeAttributes(this->root, csv_report);
 
-    this->MakeTree(this->root, treeFlags, csv_report, hy);
+    this->MakeTree(this->root, treeFlags, elements, csv_report, hy);
 }
 
 SubpartitionModel::~SubpartitionModel() {
 }
 
-void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, EntropyReport *csv_report, int hy) {
+void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, std::queue<Syntactic_Elements> &elements, EntropyReport *csv_report, int hy) {
     if (!node->attributes.has_significant_value || node->dimention.x < 2 || node->dimention.y < 2) {
-        csv_report->writeTreeFlag(node->attributes.has_significant_value);
         treeFlags.push_back(node->attributes.has_significant_value);
-        if(node->start_index.x == 1 && node->start_index.y == 1 && node->end_index.x == 2 && node->end_index.y == 2 && hy == 0){
+        if(node->attributes.has_significant_value){
+            this->findSyntacticElements(node, elements);
+        }
+
+        csv_report->writeTreeFlag(node->attributes.has_significant_value);
+        if(node->start_index.x == 0 && node->start_index.y == 0 && node->end_index.x == 1 && node->end_index.y == 1 && hy == 0){
             csv_report->writeblock(this->block4D->data, node);
         }
+
         return;
     }
     else{
@@ -63,7 +65,7 @@ void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, 
                                             node->level + 1);
 
             this->SetNodeAttributes(node->child[i], csv_report);
-            this->MakeTree(node->child[i], treeFlags, csv_report, hy);
+            this->MakeTree(node->child[i], treeFlags, elements, csv_report, hy);
         }
     }
 }
@@ -120,6 +122,52 @@ void SubpartitionModel::SetNodeAttributes(NodeBlock *node, EntropyReport *csv_re
         node->attributes.has_significant_value,
         static_cast<float>(node->dimention.getNSamples())
     );
+}
+
+void SubpartitionModel::findSyntacticElements(NodeBlock *node, std::queue<Syntactic_Elements> &elements) {
+    Syntactic_Elements elem;
+    int it_u;
+    int it_v;
+
+    for(int line = static_cast<int>(node->dimention.v + node->dimention.u); line > 0; --line) {
+        int start_col = static_cast<int>(std::max(0, line - static_cast<int>(node->dimention.v)));
+        int count = static_cast<int>(std::min(std::min(line, static_cast<int>(node->dimention.u) - start_col), static_cast<int>(node->dimention.v)));
+
+        for (int j = 0; j < count; j++) {
+            it_u = start_col + j;
+            it_v = static_cast<int>(std::min(static_cast<int>(node->dimention.v), line)) - j - 1;
+
+            if(elem.last_sig_coeff_u == -1 && elem.last_sig_coeff_v == -1 && this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v] != 0) {
+                elem.last_sig_coeff_u = it_u;
+                elem.last_sig_coeff_v = it_v;
+            }
+            if(elem.last_sig_coeff_u != -1 && elem.last_sig_coeff_v != -1){
+                if(this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v] != 0){ // find significant
+                    elem.sig_coeff_flag.push(true);
+                    if(this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v] > 0){
+                        elem.coeff_sign_flag.push(false);
+                    }else{
+                        elem.coeff_sign_flag.push(true);
+                    }
+                    if(std::abs(this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v]) > 1){ // greater de one
+                        elem.coeff_abs_level_greater1_flag.push(true);
+                        if(std::abs(this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v]) > 2){ //greater de two
+                            elem.coeff_abs_level_greater2_flag.push(true);
+                            elem.coeff_abs_level_remaining.push(std::abs(this->block4D->data[node->start_index.x][node->start_index.y][it_u][it_v]) - 3); // rem
+                        }else{
+                            elem.coeff_abs_level_greater2_flag.push(false);
+                        }
+                    }else{
+                        elem.coeff_abs_level_greater1_flag.push(false);
+                    }
+                }else{
+                    elem.sig_coeff_flag.push(false);
+                }
+            }
+        }
+    }
+
+    elements.push(elem);
 }
 
 Position SubpartitionModel::GetStartPosition(int index, NodeBlock *node, Position middle) {

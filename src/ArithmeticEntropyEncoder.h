@@ -28,6 +28,7 @@ class ArithmeticEntropyEncoder : public EncodeSymbol {
     EntropyLRE *lre = new EntropyLRE();
 
     std::vector<bool> treeFlags;
+    std::queue<Syntactic_Elements> elements;
 
     uint totalBytes{0};
 
