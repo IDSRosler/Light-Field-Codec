@@ -3,20 +3,24 @@
 # Directories
 #BINARY="./cmake-build-release/LF_Codec"
 BINARY="./cmake-build-debug/LF_Codec"
-DATASET_DIR="/home/igor/Documentos/Git/Datasets/"
+DATASET_DIR="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/CTC_Datasets/Lenslets/"
 
-#RESULT_DIR_ARITH="./results/Statistics/Arithmetic"
-RESULT_DIR_LRE="./results/Prediction/LRE"
+RESULT_DIR_ARITH="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/TCC-output/Arithmetic/Lenslet/"
+#RESULT_DIR_LRE="./results/Prediction/LRE"
 
 DATASETS=(Bikes)
 LAMBDA=1
-PREDICTION_MODE=angular
+PREDICTION_MODE=none
 TRANSFORM=(DCT_II)
-SPATIAL_SIZE=15
-ANGULAR_SIZE=15
+SPATIAL_SIZE=4
+ANGULAR_SIZE=4
 QPS=(1 3 7 20)
+QPX=1
+QPY=1
+QPU=1
+QPV=1
 NODES=0
-ENTROPY_TYPE=(lre)
+ENTROPY_TYPE=(arithmetic)
 LOG_OUTPUT=yes
 FLAGS="-lytro -verbose -experimental -export-statistics"
 
@@ -42,7 +46,7 @@ function simulation() {
     -output "${RESULT}/${SIMULATION_ID}/" \
     -lfx 625 -lfy 434 -lfu 15 -lfv 15 \
     -blx 15 -bly 15 -blu 15 -blv 15 \
-    -qx ${QP} -qy ${QP} -qu ${QP} -qv ${QP} -qp ${QP} \
+    -qx ${QPX} -qy ${QPY} -qu ${QPU} -qv ${QPV} -qp ${QP} \
     -lambda "${LAMBDA}" \
     -prediction "${PREDICTION_MODE}" \
     -entropy-type "${TYPE}" \

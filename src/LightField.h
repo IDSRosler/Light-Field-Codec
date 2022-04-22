@@ -19,7 +19,7 @@ class LightField {
 
 
 public:
-    explicit LightField(Point4D &dim_lf, const std::string &path, bool isLytro);
+    explicit LightField(Point4D &dim_lf, Point4D &dim_block, const std::string &path, bool isLytro);
 
     ~LightField();
 

@@ -2,7 +2,12 @@
 #include "LightField.h"
 #include <cstdlib>
 
-LightField::LightField(Point4D &dim_lf, const std::string &path, bool isLytro) {
+LightField::LightField(Point4D &dim_lf, Point4D &dim_block, const std::string &path, bool isLytro) {
+    dim_lf.u = isLytro ? dim_lf.u - 2 : dim_lf.u;
+    dim_lf.v = isLytro ? dim_lf.v - 2 : dim_lf.v;
+    dim_block.u = isLytro ? dim_block.u - 2 : dim_block.u;
+    dim_block.v = isLytro ? dim_block.v - 2 : dim_block.v;
+
     this->mNumberOfHorizontalViews = dim_lf.u;
     this->mNumberOfVerticalViews = dim_lf.v;
     this->numberOfViewCacheLines = dim_lf.v;
@@ -37,8 +42,8 @@ void LightField::read(const std::string &path) {
 
     int cont = 0;
 
-    for (int index_t = this->start_t; index_t < start_t + end_t; index_t++) {
-        for (int index_s = this->start_s; index_s < start_s + end_s; index_s++) {
+    for (int index_t = this->start_t; index_t < this->start_t + end_t; index_t++) {
+        for (int index_s = this->start_s; index_s < this->start_s + end_s; index_s++) {
             char tag[256];
             fullTag[0] = '\0';
 

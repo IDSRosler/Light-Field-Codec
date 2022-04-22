@@ -56,12 +56,7 @@ int main(int argc, char **argv) {
     if (encoderParameters.display_stages)
         display_stage("[Loading light field]");
 
-    encoderParameters.dim_LF.u = encoderParameters.isLytro() ? encoderParameters.dim_LF.u - 2 : encoderParameters.dim_LF.u;
-    encoderParameters.dim_LF.v = encoderParameters.isLytro() ? encoderParameters.dim_LF.v - 2 : encoderParameters.dim_LF.v;
-    encoderParameters.dim_block.u = encoderParameters.isLytro() ? encoderParameters.dim_block.u - 2 : encoderParameters.dim_block.u;
-    encoderParameters.dim_block.v = encoderParameters.isLytro() ? encoderParameters.dim_block.v - 2 : encoderParameters.dim_block.v;
-
-    LightField lf(encoderParameters.dim_LF, encoderParameters.getPathInput(),
+    LightField lf(encoderParameters.dim_LF, encoderParameters.dim_block, encoderParameters.getPathInput(),
                   encoderParameters.isLytro());
 
     const std::size_t SIZE = encoderParameters.dim_block.getNSamples();
@@ -440,7 +435,7 @@ int main(int argc, char **argv) {
                             newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Orig_RGB/orig_rgb_" + std::to_string(block));
 
-                            *//*newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
+                            newPredictor->YCbCR2RGB(predBlock, encoderParameters.dim_block, predBlockRGB, lf.mPGMScale);
 
                             newPredictor->write(predBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
                                                 encoderParameters.getPathOutput() + "Pred/pred_" + std::to_string(block));
@@ -458,7 +453,7 @@ int main(int argc, char **argv) {
                             newPredictor->YCbCR2RGBVector(refVBlock, encoderParameters.dim_block, refVBlockRGB, lf.mPGMScale);
 
                             newPredictor->writeVector(refVBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s,
-                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));*//*
+                                                      encoderParameters.getPathOutput() + "Ref_vector/ref_" + std::to_string(block));
                         }*/
 
                         if (encoderParameters.getEntropyType() == "arithmetic"){
