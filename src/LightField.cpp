@@ -139,8 +139,8 @@ void LightField::write(const std::string &path) {
     int cont = 0;
     int cont2 = 0;
 
-    for (int index_t = this->start_t; index_t < end_t; index_t++) {
-        for (int index_s = this->start_s; index_s < end_s; index_s++) {
+    for (int index_t = this->start_t; index_t < this->start_t + end_t; index_t++) {
+        for (int index_s = this->start_s; index_s < this->start_s + end_s; index_s++) {
 
             std::string indice_t = std::to_string(index_t);
             std::string indice_s = std::to_string(index_s);
