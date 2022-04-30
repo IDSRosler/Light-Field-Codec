@@ -2,9 +2,10 @@
 // Created by idsrosler on 13/03/2022.
 //
 
-#include "ArithmeticEntropyEncoder.h"
+#include "MultilevelEntropyEncoder.h"
 
-ArithmeticEntropyEncoder::ArithmeticEntropyEncoder(EncoderParameters *parameters, uint bufferSize) : EncodeSymbol(bufferSize){
+MultilevelEntropyEncoder::MultilevelEntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
+    EncodeSymbolsModel(bufferSize){
     this->parameters = parameters;
     this->open_file(this->parameters->getPathOutput() + "LightField.bin");
 
@@ -13,7 +14,7 @@ ArithmeticEntropyEncoder::ArithmeticEntropyEncoder(EncoderParameters *parameters
     this->report.setHeaders();
   }
 
-void ArithmeticEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube_pos, std::string channel) {
+void MultilevelEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube_pos, std::string channel) {
     this->hypercube = hypercube_pos;
     this->ch = std::move(channel);
 
@@ -35,12 +36,12 @@ void ArithmeticEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &di
     this->subpartitionModel->DeleteTree(); // delete tree
 }
 
-void ArithmeticEntropyEncoder::finish_and_write() {
-    this->encodeFinalBits();
+void MultilevelEntropyEncoder::finish_and_write() {
+    this->arithDoneEncoding();
     this->write_completedBytes();
 }
 
-void ArithmeticEntropyEncoder::write_completedBytes() {
+void MultilevelEntropyEncoder::write_completedBytes() {
     if (this->byte_pos == 0) return;
     this->outputFile.write((char *) this->buffer, this->byte_pos);
     this->totalBytes += this->byte_pos;
@@ -48,11 +49,11 @@ void ArithmeticEntropyEncoder::write_completedBytes() {
     this->byte_pos = 0;
 }
 
-uint ArithmeticEntropyEncoder::getTotalBytes() const {
+uint MultilevelEntropyEncoder::getTotalBytes() const {
     return totalBytes;
 }
 
-ArithmeticEntropyEncoder::~ArithmeticEntropyEncoder() {
+MultilevelEntropyEncoder::~MultilevelEntropyEncoder() {
     this->report.closeFiles();
     this->treeFlags.clear();
 
@@ -60,7 +61,7 @@ ArithmeticEntropyEncoder::~ArithmeticEntropyEncoder() {
     delete this->lre;
 }
 
-void ArithmeticEntropyEncoder::open_file(const std::string &filename) {
+void MultilevelEntropyEncoder::open_file(const std::string &filename) {
     this->outputFile.open(filename, std::ios::binary);
     assert(this->outputFile.is_open());
 }

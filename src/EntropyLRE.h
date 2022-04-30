@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "ArithmeticStructures.h"
+#include "EntropyStructsModel.h"
 
 class EntropyLRE {
 public:

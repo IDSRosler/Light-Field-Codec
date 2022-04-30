@@ -4,7 +4,7 @@
 #include <fstream>
 #include <utility>
 
-#include "ArithmeticStructures.h"
+#include "EntropyStructsModel.h"
 
 struct EntropyReport {
 

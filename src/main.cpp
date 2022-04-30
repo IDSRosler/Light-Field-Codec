@@ -16,7 +16,7 @@
 #include "Transform.h"
 #include "TextReport.h"
 //#include "EntropyEncoder.h"
-#include "ArithmeticEntropyEncoder.h"
+#include "MultilevelEntropyEncoder.h"
 #include "Prediction.h"
 
 #include "SubpartitionModel.h"
@@ -90,11 +90,11 @@ int main(int argc, char **argv) {
                      {encoderParameters.dim_LF.x}};
 #endif
 
-    ArithmeticEntropyEncoder *encoder;
+    MultilevelEntropyEncoder *encoder;
     EncBitstreamWriter *encoderLRE;
 
     if (encoderParameters.getEntropyType() == "arithmetic"){
-        encoder = new ArithmeticEntropyEncoder(&encoderParameters, 10000000);
+        encoder = new MultilevelEntropyEncoder(&encoderParameters, 10000000);
         delete(encoderLRE);
     } else {
         encoderLRE = new EncBitstreamWriter(&encoderParameters, 10000000);

@@ -1,33 +1,33 @@
 #!/bin/bash
 
 # Directories
-#BINARY="./cmake-build-release/LF_Codec"
-BINARY="./cmake-build-debug/LF_Codec"
+BINARY="./cmake-build-release/LF_Codec"
+#BINARY="./cmake-build-debug/LF_Codec"
 DATASET_DIR="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/CTC_Datasets/Lenslets/"
 
-RESULT_DIR_ARITH="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/TCC-output/Arithmetic/Lenslet/"
-#RESULT_DIR_LRE="./results/Prediction/LRE"
+#RESULT_DIR_ARITH="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/TCC-output/Arithmetic/Lenslet/"
+RESULT_DIR_LRE="/media/idsrosler/67b63062-c831-4d62-8fbe-11385746955f/igor/Git/TCC-output/RLE/Lenslet/"
 
-DATASETS=(Bikes)
+DATASETS=(Bikes Danger_de_Mort Fountain_Vincent2 Stone_Pillars_Outside)
 LAMBDA=1
 PREDICTION_MODE=none
 TRANSFORM=(DCT_II)
-SPATIAL_SIZE=4
-ANGULAR_SIZE=4
+SPATIAL_SIZE=15
+ANGULAR_SIZE=15
 QPS=(1 3 7 20)
 QPX=1
 QPY=1
 QPU=1
 QPV=1
 NODES=0
-ENTROPY_TYPE=(arithmetic)
+ENTROPY_TYPE=(lre)
 LOG_OUTPUT=yes
 FLAGS="-lytro -verbose -experimental -export-statistics"
 
 function simulation() {
   JOINED_TRANSFORM=$(printf "__%s" "${TRANSFORM[@]}")
   JOINED_TRANSFORM=${JOINED_TRANSFORM:2}
-  SIMULATION_ID="D${DATASET}_T${JOINED_TRANSFORM}_Q${QP}_X${QP}_Y${QP}_U${QP}_V${QP}_L${LAMBDA}_N${NODES}"
+  SIMULATION_ID="D${DATASET}_T${JOINED_TRANSFORM}_Q${QP}_X${QPX}_Y${QPY}_U${QPU}_V${QPV}_L${LAMBDA}_N${NODES}"
 
   mkdir -p "${RESULT}/${SIMULATION_ID}/"
   mkdir -p "${RESULT}/logs/"

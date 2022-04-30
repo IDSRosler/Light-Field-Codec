@@ -1,17 +1,17 @@
-#ifndef LF_CODEC_ARITHMETICENTROPYENCODER_H
-#define LF_CODEC_ARITHMETICENTROPYENCODER_H
+#ifndef LF_CODEC_MULTILEVELENTROPYENCODER_H
+#define LF_CODEC_MULTILEVELENTROPYENCODER_H
 
-#include "EncodeSymbol.h"
+#include "EncodeSymbolsModel.h"
 #include "EncoderParameters.h"
 #include "EntropyReport.h"
 #include "SubpartitionModel.h"
-#include "ArithmeticStructures.h"
+#include "EntropyStructsModel.h"
 #include "EntropyLRE.h"
 
-class ArithmeticEntropyEncoder : public EncodeSymbol {
+class MultilevelEntropyEncoder: public EncodeSymbolsModel {
   public:
-    ArithmeticEntropyEncoder(EncoderParameters *parameters, uint bufferSize);
-    ~ArithmeticEntropyEncoder();
+    MultilevelEntropyEncoder(EncoderParameters *parameters, uint bufferSize);
+    ~MultilevelEntropyEncoder();
 
     void encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube_pos, std::string channel);
     void finish_and_write();
@@ -44,4 +44,4 @@ class ArithmeticEntropyEncoder : public EncodeSymbol {
 
 };
 
-#endif // LF_CODEC_ARITHMETICENTROPYENCODER_H
+#endif // LF_CODEC_MULTILEVELENTROPYENCODER_H

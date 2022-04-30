@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "EntropyReport.h"
-#include "ArithmeticStructures.h"
+#include "EntropyStructsModel.h"
 
 class SubpartitionModel {
   public:

@@ -2,8 +2,8 @@
 // Created by igor on 09/04/2022.
 //
 
-#ifndef LF_CODEC_ARITHMETICSTRUCTURES_H
-#define LF_CODEC_ARITHMETICSTRUCTURES_H
+#ifndef LF_CODEC_ENTROPYSTRUCTSMODEL_H
+#define LF_CODEC_ENTROPYSTRUCTSMODEL_H
 
 #define SUBDIVISIONS 4
 
@@ -88,4 +88,4 @@ struct Syntactic_Elements{
     std::queue<bool> coeff_sign_flag;
 };
 
-#endif //LF_CODEC_ARITHMETICSTRUCTURES_H
+#endif // LF_CODEC_ENTROPYSTRUCTSMODEL_H
