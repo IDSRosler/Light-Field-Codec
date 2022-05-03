@@ -210,6 +210,64 @@ void EncodeSymbolsModel::arithStartModel(int number_of_symbols, int model) {
     }
 }
 
+void EncodeSymbolsModel::arithUpdateModel(int symbol, int m) {
+    int i;
+    unsigned long int cum;
+
+    symbol = this->model[m].symbol_to_index[symbol];
+
+    if (this->model[m].cumulative_frequency[0]==Max_freq)
+    {
+        cum = 0;
+
+        for (i = this->model[m].number_of_symbols; i>=0; i--)
+        {
+            this->model[m].frequency[i] = (model[m].frequency[i]+1)/2;
+            this->model[m].cumulative_frequency[i] = cum;
+            cum += this->model[m].frequency[i];
+        }
+    }
+    this->model[m].frequency[0] = 0;
+
+    for (i = symbol; this->model[m].frequency[i]==this->model[m].frequency[i-1]; i--) ;
+    if (i<symbol)
+    {
+        int ch_i, ch_symbol;
+
+        ch_i = this->model[m].index_to_symbol[i];
+        ch_symbol = this->model[m].index_to_symbol[symbol];
+        this->model[m].index_to_symbol[i] = ch_symbol;
+        this->model[m].index_to_symbol[symbol] = ch_i;
+        this->model[m].symbol_to_index[ch_i] = symbol;
+        this->model[m].symbol_to_index[ch_symbol] = i;
+    }
+
+    this->model[m].frequency[i] += 1;
+
+    while (i>0)
+    {
+        i--;
+        this->model[m].cumulative_frequency[i]++;
+    }
+}
+
+void EncodeSymbolsModel::arithRestartModel(int m) {
+    int number_of_symbols = this->model[m].number_of_symbols;
+    for (int i = 0; i < number_of_symbols; ++i) {
+        this->model[m].symbol_to_index[i] = i+1;
+        this->model[m].index_to_symbol[i+1] = i;
+    }
+
+    this->model[m].cumulative_frequency[number_of_symbols] = 0;
+    this->model[m].frequency[0] = 0;
+
+    for (int j = number_of_symbols; j > 0; --j) {
+        this->model[m].frequency[j] = 1;
+        this->model[m].cumulative_frequency[j-1] = this->model[m].cumulative_frequency[j] +
+                                                         this->model[m].frequency[j];
+    }
+}
+
 void EncodeSymbolsModel::arithPrintModel(int model) {
     cout << "Frequency[model = " << model << "] = [";
     for (int i = 0; i <= this->model[model].number_of_symbols; ++i) {

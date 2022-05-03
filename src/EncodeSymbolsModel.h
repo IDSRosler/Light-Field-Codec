@@ -20,6 +20,7 @@ typedef unsigned long int CodeValue;                            // Type of arith
 #define First_qtr ((unsigned long int)Max_Value/4 + 1)           // Point after first quarter
 #define Half ((unsigned long int)2*First_qtr)                    // Point after second quarter
 #define Third_qtr ((unsigned long int)3*First_qtr)               // point after third quarter
+#define Max_freq 131071
 
 typedef struct Symbol {
     int value;
@@ -49,6 +50,8 @@ public:
     //PROBABILISTIC MODELS
     int arithAddModel(void);
     void arithStartModel(int number_of_symbols, int model);
+    void arithUpdateModel(int symbol, int m);
+    void arithRestartModel(int m);
     void arithPrintModel(int model);
 private:
     void writeCode2Buffer(Symbol *sym);
@@ -56,8 +59,6 @@ private:
     void encodeBit(int bit);
 
     void arithBitPlusFollow(int bit);
-    void arithOutputBit(int bit);
-    void arithDoneOutputBits(void);
 
     //CURRENT STATE OF THE ENCODING
     CodeValue low, high;                                       // End values in a range of current code-region

@@ -32,7 +32,7 @@ SubpartitionModel::~SubpartitionModel() {
 }
 
 void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, std::queue<Syntactic_Elements> &elements, EntropyReport *csv_report, int hy) {
-    if (!node->attributes.has_significant_value || node->dimention.x < 2 || node->dimention.y < 2) {
+    if (!node->attributes.has_significant_value || (node->dimention.x < 2 && node->dimention.y < 2)) {
         treeFlags.push_back(node->attributes.has_significant_value);
         if(node->attributes.has_significant_value){
             this->findSyntacticElements(node, elements);
