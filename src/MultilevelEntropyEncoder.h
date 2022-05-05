@@ -22,6 +22,7 @@ class MultilevelEntropyEncoder: public EncodeSymbolsModel {
     // functions
     void open_file(const std::string &filename);
     void encodeSyntacticElements(std::queue<Syntactic_Elements> elem);
+    void initModels();
 
     // variables
     SubpartitionModel *subpartitionModel = nullptr;
@@ -46,6 +47,7 @@ class MultilevelEntropyEncoder: public EncodeSymbolsModel {
         sigModel,
         grt1Model,
         grt2Model,
+        remModel,
         signModel;
 
     // report

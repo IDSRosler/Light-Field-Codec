@@ -10,10 +10,7 @@ MultilevelEntropyEncoder::MultilevelEntropyEncoder(EncoderParameters *parameters
     this->open_file(this->parameters->getPathOutput() + "LightField.bin");
 
     //  add models
-    this->lastModelU = this->arithAddModel();
-    this->arithStartModel(this->parameters->dim_block.u, this->lastModelU);
-    this->lastModelV = this->arithAddModel();
-    this->arithStartModel(this->parameters->dim_block.v, this->lastModelV);
+    this->initModels();
 
     // reports files
     this->report.openFiles(this->parameters->getPathOutput());
@@ -48,6 +45,23 @@ void MultilevelEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &di
     this->subpartitionModel->DeleteTree(); // delete tree
 }
 
+void MultilevelEntropyEncoder::initModels() {
+    this->lastModelU = this->arithAddModel();
+    this->arithStartModel(this->parameters->dim_block.u, this->lastModelU);
+    this->lastModelV = this->arithAddModel();
+    this->arithStartModel(this->parameters->dim_block.v, this->lastModelV);
+    this->sigModel = this->arithAddModel();
+    this->arithStartModel(2, this->sigModel);
+    this->grt1Model = this->arithAddModel();
+    this->arithStartModel(2, this->grt1Model);
+    this->grt2Model = this->arithAddModel();
+    this->arithStartModel(2, this->grt2Model);
+    this->remModel = this->arithAddModel();
+    this->arithStartModel(100000, this->remModel);
+    this->signModel = this->arithAddModel();
+    this->arithStartModel(2, this->signModel);
+}
+
 void MultilevelEntropyEncoder::encodeSyntacticElements(std::queue<Syntactic_Elements> elem) {
     Syntactic_Elements blockElements;
     while (!elem.empty()){
@@ -58,6 +72,36 @@ void MultilevelEntropyEncoder::encodeSyntacticElements(std::queue<Syntactic_Elem
         //encode last v
         this->arithEncodeSymbol(blockElements.last_sig_coeff_v, this->lastModelV);
         this->arithUpdateModel(blockElements.last_sig_coeff_v, this->lastModelV);
+        // encode sig flags
+        while (!blockElements.sig_coeff_flag.empty()){
+            this->arithEncodeSymbol(blockElements.sig_coeff_flag.front(), this->sigModel);
+            this->arithUpdateModel(blockElements.sig_coeff_flag.front(), this->sigModel);
+            blockElements.sig_coeff_flag.pop();
+        }
+        // encode gr1 flags
+        while (!blockElements.coeff_abs_level_greater1_flag.empty()){
+            this->arithEncodeSymbol(blockElements.coeff_abs_level_greater1_flag.front(), this->grt1Model);
+            this->arithUpdateModel(blockElements.coeff_abs_level_greater1_flag.front(), this->grt1Model);
+            blockElements.coeff_abs_level_greater1_flag.pop();
+        }
+        // encode gr2 flags
+        while (!blockElements.coeff_abs_level_greater2_flag.empty()){
+            this->arithEncodeSymbol(blockElements.coeff_abs_level_greater2_flag.front(), this->grt2Model);
+            this->arithUpdateModel(blockElements.coeff_abs_level_greater2_flag.front(), this->grt2Model);
+            blockElements.coeff_abs_level_greater2_flag.pop();
+        }
+        // encode rem
+        while (!blockElements.coeff_abs_level_remaining.empty()){
+            this->arithEncodeSymbol(blockElements.coeff_abs_level_remaining.front(), this->remModel);
+            this->arithUpdateModel(blockElements.coeff_abs_level_remaining.front(), this->remModel);
+            blockElements.coeff_abs_level_remaining.pop();
+        }
+        // encode sign flags
+        while (!blockElements.coeff_sign_flag.empty()){
+            this->arithEncodeSymbol(blockElements.coeff_sign_flag.front(), this->signModel);
+            this->arithUpdateModel(blockElements.coeff_sign_flag.front(), this->signModel);
+            blockElements.coeff_sign_flag.pop();
+        }
         elem.pop();
     }
 }
