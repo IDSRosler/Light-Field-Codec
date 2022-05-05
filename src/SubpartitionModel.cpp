@@ -49,23 +49,35 @@ void SubpartitionModel::MakeTree(NodeBlock *node, std::vector<bool> &treeFlags, 
         csv_report->writeTreeFlag(node->attributes.has_significant_value);
         treeFlags.push_back(node->attributes.has_significant_value);
 
-        Position middle = {node->start_index.x + static_cast<int>(std::ceil(static_cast<float>((node->dimention.x)/2.0))),
-                           node->start_index.y + static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
+        Position middle;
+        if(node->dimention.x > 1 && node->dimention.y > 1){
+            middle = {node->start_index.x + static_cast<int>(std::ceil(static_cast<float>((node->dimention.x)/2.0))),
+                               node->start_index.y + static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
+        }else if(node->dimention.x > 1){
+            middle = {node->start_index.x + static_cast<int>(std::ceil(static_cast<float>((node->dimention.x)/2.0))),
+                               node->start_index.y + static_cast<int>(node->dimention.y)};
+        }else{
+            middle = {node->start_index.x + static_cast<int>(node->dimention.x),
+                      node->start_index.y + static_cast<int>(std::ceil(static_cast<float>(node->dimention.y/2.0)))};
+        }
 
         for (int i = 0; i < SUBDIVISIONS; ++i) {
             this->startP = this->GetStartPosition(i, node, middle);
             this->endP = this->GetEndPosition(i, node, middle);
 
-            node->child[i] = new NodeBlock(this->startP,
-                                           this->endP,
-                                           {(uint)(this->endP.x - this->startP.x),
-                                            (uint)(this->endP.y - this->startP.y),
-                                            node->dimention.u,
-                                            node->dimention.v},
-                                            node->level + 1);
+            if(this->startP.x != this->endP.x && this->startP.y != this->endP.y){
+                node->child[i] = new NodeBlock(this->startP,
+                                               this->endP,
+                                               {(uint)(this->endP.x - this->startP.x),
+                                                (uint)(this->endP.y - this->startP.y),
+                                                node->dimention.u,
+                                                node->dimention.v},
+                                               node->level + 1);
 
-            this->SetNodeAttributes(node->child[i], csv_report);
-            this->MakeTree(node->child[i], treeFlags, elements, csv_report, hy);
+                this->SetNodeAttributes(node->child[i], csv_report);
+                this->MakeTree(node->child[i], treeFlags, elements, csv_report, hy);
+            }
+
         }
     }
 }
