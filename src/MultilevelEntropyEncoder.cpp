@@ -5,17 +5,35 @@
 #include "MultilevelEntropyEncoder.h"
 
 MultilevelEntropyEncoder::MultilevelEntropyEncoder(EncoderParameters *parameters, uint bufferSize) :
-    EncodeSymbolsModel(bufferSize){
-    this->parameters = parameters;
-    this->open_file(this->parameters->getPathOutput() + "LightField.bin");
+EncodeSymbolsModel(bufferSize){
+this->parameters = parameters;
+this->open_file(this->parameters->getPathOutput() + "LightField.bin");
 
-    //  add models
-    this->initModels();
+this->encodeHeaders();
 
-    // reports files
-    this->report.openFiles(this->parameters->getPathOutput());
-    this->report.setHeaders();
-  }
+//  add models
+this->initModels();
+
+// reports files
+this->report.openFiles(this->parameters->getPathOutput());
+this->report.setHeaders();
+}
+
+void MultilevelEntropyEncoder::encodeHeaders() {
+    this->encodeExpGolomb(this->parameters->dim_LF.x);
+    this->encodeExpGolomb(this->parameters->dim_LF.y);
+    this->encodeExpGolomb(this->parameters->dim_LF.u);
+    this->encodeExpGolomb(this->parameters->dim_LF.v);
+    this->encodeExpGolomb(this->parameters->dim_block.x);
+    this->encodeExpGolomb(this->parameters->dim_block.y);
+    this->encodeExpGolomb(this->parameters->dim_block.u);
+    this->encodeExpGolomb(this->parameters->dim_block.v);
+    this->encodeExpGolomb(this->parameters->quant_weight_100.x);
+    this->encodeExpGolomb(this->parameters->quant_weight_100.y);
+    this->encodeExpGolomb(this->parameters->quant_weight_100.u);
+    this->encodeExpGolomb(this->parameters->quant_weight_100.v);
+    this->encodeExpGolomb(floor(this->parameters->getQp() * 100));
+}
 
 void MultilevelEntropyEncoder::encodeHypercube(int *bitstream, const Point4D &dim_block, int hypercube_pos, std::string channel) {
     this->hypercube = hypercube_pos;

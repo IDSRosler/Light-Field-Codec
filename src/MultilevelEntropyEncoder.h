@@ -22,6 +22,7 @@ class MultilevelEntropyEncoder: public EncodeSymbolsModel {
     // functions
     void open_file(const std::string &filename);
     void encodeSyntacticElements(std::queue<Syntactic_Elements> elem);
+    void encodeHeaders();
     void initModels();
 
     // variables

@@ -41,6 +41,7 @@ public:
   EncodeSymbolsModel(uint bufferSize = 50);
     void encodeLREVector(std::vector<LRE_Struct> &lre);
     void encodeFinalBits();
+    void encodeExpGolomb(int symbol);
 
     //ARITHMETIC ENCODER
     void arithEncodeSymbol(int symbol, int model);
@@ -55,7 +56,6 @@ public:
     void arithPrintModel(int model);
 private:
     void writeCode2Buffer(Symbol *sym);
-    void encodeExpGolomb(int symbol);
     void encodeBit(int bit);
 
     void arithBitPlusFollow(int bit);
